@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>新员工仿真培训系统 · 产品总览</title>
+<link rel="stylesheet" href="assets/shell.css">
+<style>
+  .hero{
+    position:relative;overflow:hidden;border-radius:18px;border:1px solid var(--line);
+    background:
+      radial-gradient(760px 300px at 92% -18%, color-mix(in srgb,var(--acc) 20%,transparent), transparent 66%),
+      linear-gradient(180deg, color-mix(in srgb,var(--panel2) 55%,var(--panel)), var(--panel));
+    padding:38px 36px 32px;margin:24px 0 26px;
+    box-shadow:var(--shadow-sm);
+  }
+  html[data-theme]:not([data-theme="light"]) .hero{box-shadow:var(--shadow-sm),var(--hi)}
+  .hero::after{content:"";position:absolute;left:0;right:0;top:0;height:1px;
+    background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--acc) 55%,transparent),transparent)}
+  .hero .kick{font-size:11.5px;letter-spacing:.16em;color:var(--acc-txt);text-transform:uppercase;
+    margin-bottom:14px;font-weight:600}
+  .hero h1{margin:0 0 14px;font-size:34px;font-weight:700;letter-spacing:-1.1px;line-height:1.22}
+  .hero .lead{margin:0;color:var(--txt2);font-size:14.5px;max-width:820px;line-height:1.9}
+  .hero .lead b{color:var(--txt);font-weight:600}
+  .hero .meta{margin-top:22px;display:flex;gap:8px;flex-wrap:wrap}
+  .stat-strip{display:flex;gap:26px;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+  .stat-strip .s .n{font-size:25px;font-weight:600;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .stat-strip .s .n small{font-size:13px;font-weight:400;color:var(--txt2);margin-left:3px}
+  .stat-strip .s .l{font-size:12px;color:var(--txt3);margin-top:1px}
+
+  .entry{
+    display:block;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:20px;transition:.2s;position:relative;overflow:hidden;height:100%;
+  }
+  .entry:hover{border-color:var(--acc-bd);transform:translateY(-2px);box-shadow:var(--shadow)}
+  .entry .ic{
+    width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+    font-size:19px;margin-bottom:14px;background:var(--acc-soft);color:var(--acc-txt);border:1px solid var(--acc-bd);
+  }
+  .entry.b .ic{background:var(--blue-soft);color:var(--blue);border-color:var(--blue-bd)}
+  .entry.c .ic{background:var(--acc-soft);color:var(--acc-txt);border-color:var(--acc-bd)}
+  .entry.p .ic{background:var(--purple-soft);color:var(--purple);border-color:var(--purple-bd)}
+  .entry.o .ic{background:var(--amber-soft);color:var(--amber);border-color:var(--amber-bd)}
+  .entry h3{margin:0 0 7px;font-size:16px;font-weight:600}
+  .entry p{margin:0 0 13px;font-size:13px;color:var(--txt2);line-height:1.72;min-height:66px}
+  .entry .go{font-size:12.5px;color:var(--acc-txt);display:flex;align-items:center;gap:5px}
+  .entry .tagline{position:absolute;right:16px;top:18px}
+
+  .layer{
+    display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:11px;
+    border:1px solid var(--line);background:var(--panel2);
+  }
+  .layer .lb{font-size:11px;color:var(--txt3);writing-mode:vertical-rl;letter-spacing:.16em;
+    border-right:1px solid var(--line);padding-right:12px;flex:0 0 auto;align-self:stretch;text-align:center}
+  .layer .cells{display:flex;gap:9px;flex-wrap:wrap;flex:1}
+  .cell{
+    font-size:12.5px;padding:8px 13px;border-radius:9px;border:1px solid var(--line2);
+    background:var(--panel);display:flex;flex-direction:column;gap:2px;
+  }
+  .cell b{font-weight:500;font-size:13px}
+  .cell span{font-size:11px;color:var(--txt3)}
+  .cell.hi{border-color:var(--acc-bd);background:var(--acc-soft)}
+  .cell.hi b{color:var(--acc-txt)}
+
+  .chg{display:flex;gap:13px;padding:14px 0;border-bottom:1px dashed var(--line)}
+  .chg:last-child{border-bottom:0}
+  .chg .no{
+    flex:0 0 26px;height:26px;border-radius:8px;background:var(--acc-soft);border:1px solid var(--acc-bd);
+    color:var(--acc-txt);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:600;
+  }
+  .chg .bd{flex:1;min-width:0}
+  .chg .bd .t{font-size:13.5px;font-weight:500;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .chg .bd .d{font-size:12.5px;color:var(--txt2);line-height:1.72}
+  .chg .bd code{background:var(--panel3);border:1px solid var(--line);border-radius:5px;
+    padding:1px 6px;font-size:11.5px;color:var(--txt2);font-family:ui-monospace,Consolas,monospace}
+
+  .quick{display:flex;gap:8px;flex-wrap:wrap}
+  .quick a{font-size:12.5px;padding:7px 13px;border-radius:999px;border:1px solid var(--line2);
+    background:var(--panel2);color:var(--txt2);transition:.18s}
+  .quick a:hover{border-color:var(--acc-bd);color:var(--acc-txt)}
+  .quick a b{color:var(--txt);font-weight:500}
+  .foot{margin-top:34px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--txt3);
+    display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in wrap-wide">
+    <div class="brand">
+      <div class="logo">训</div>
+      <div>新员工仿真培训系统<small id="orgLine">—</small></div>
+    </div>
+    <div class="nav-tabs">
+      <a href="#entries">产品入口</a>
+      <a href="#arch">系统架构</a>
+      <a href="#metrics">运行数据</a>
+      <a href="#changelog">迭代记录</a>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn sm" data-theme-toggle>浅色模式</button>
+    <div class="who"><span class="av">王</span>培训运营组 · 王倩</div>
+  </div>
+</div>
+
+<div class="wrap wrap-wide">
+
+  <!-- ================= 头部 ================= -->
+  <div class="hero">
+    <div class="kick">AI 情景对练 · 新员工培训</div>
+    <h1>把销售话术训练，从「老带新靠悟性」<br>变成可下发、可评分、可复盘的标准动作</h1>
+    <p class="lead">
+      学员在<b>仿真微信对话</b>里面对真实刁难的客户（压价、客诉、冷场），用文字、语音条甚至<b>微信语音通话</b>应对；
+      系统按 5 个能力维度<b>实时打分</b>、逐句点评、生成训练报告；培训运营据此<b>下发任务、设达标线、识别高风险学员</b>并安排复训。
+    </p>
+    <div class="meta">
+      <span class="tag g"><span class="dot g"></span><span id="mOrg">—</span></span>
+      <span class="tag b" id="mVer">—</span>
+      <span class="tag" id="mUpd">—</span>
+    </div>
+    <div class="stat-strip" id="strip"></div>
+  </div>
+
+  <!-- ================= 产品入口 ================= -->
+  <div class="page-head" id="entries" style="margin-top:34px">
+    <h2 style="font-size:19px;font-weight:600;margin:0 0 7px">产品入口</h2>
+    <p>本套原型共 5 个部分，全部零依赖、可离线双击打开。建议按 ① → ② → ③ 的顺序体验。</p>
+  </div>
+  <div class="grid g4">
+    <a class="entry" href="仿真培训原型-微信风格.html">
+      <span class="tag g tagline">已交付</span>
+      <div class="ic">微</div>
+      <h3>① 学员端 · 微信陪练</h3>
+      <p>微信风格的仿真对话：会话列表 → 1 对 1 对话（含语音条）→ 微信语音通话 → 训练报告。3 个客户场景，三条作答路径都计入评分。</p>
+      <div class="go">打开学员端 →</div>
+    </a>
+    <a class="entry b" href="管理后台-仿真培训.html">
+      <span class="tag b tagline">已交付</span>
+      <div class="ic">管</div>
+      <h3>② 管理后台 · 运营端</h3>
+      <p>数据看板 / 任务下发向导 / 任务列表与达标线 / 学员报告与风险分层 / 场景库 / 场景剧本编辑器，六个模块。编辑器支持场景落库、版本回滚与「草稿→待审→已发布」审批流。三端共用同一份数据源与同一个评分引擎。</p>
+      <div class="go">打开管理后台 →</div>
+    </a>
+    <a class="entry c" href="教练工作台-带教主管.html">
+      <span class="tag g tagline">已交付</span>
+      <div class="ic">教</div>
+      <h3>③ 教练工作台 · 带教主管</h3>
+      <p>承接「谁来带教」这一环：今日待办、我的学员（趋势折线 + 弱项 + 风险）、一对一辅导（弱项建议 + 逐轮复盘 + 辅导记录）、对话质检（抽检 / 统一话术）。已接服务端：登录后按<b>数据可见范围</b>只看到自己带教的学员，辅导记录与质检结论真正落库、跨会话可交接。</p>
+      <div class="go">打开教练工作台 →</div>
+    </a>
+    <a class="entry p" href="产品规划-新员工培训系统.html">
+      <span class="tag tagline">已交付</span>
+      <div class="ic">规</div>
+      <h3>④ 产品规划</h3>
+      <p>产品定位、角色与场景、业务闭环、信息架构、数据模型、评分机制、P0–P7 路线、大模型接入方案与指标定义。</p>
+      <div class="go">打开产品规划 →</div>
+    </a>
+    <a class="entry o" href="refs/开源陪练系统参考图库.html">
+      <div class="ic">参</div>
+      <h3>⑤ 开源参考图库</h3>
+      <p>10 张来自 AWS / Azure 官方开源项目的真实界面截图（已内嵌，可离线看），含品类术语、四层架构与 12 个项目对照表。</p>
+      <div class="go">打开参考图库 →</div>
+    </a>
+  </div>
+
+  <!-- ================= 演示直达 ================= -->
+  <div class="card mt20">
+    <div class="card-h">
+      <h2>演示直达</h2>
+      <span class="sub">评审 / 录屏 / 截图时可跳过操作步骤直接定位</span>
+    </div>
+    <div class="quick">
+      <a href="仿真培训原型-微信风格.html?demo=chat">学员端 · <b>对话中</b></a>
+      <a href="仿真培训原型-微信风格.html?demo=call">学员端 · <b>语音通话中</b></a>
+      <a href="仿真培训原型-微信风格.html?demo=report">学员端 · <b>训练报告</b></a>
+      <a href="管理后台-仿真培训.html#dash">管理后台 · <b>数据看板</b></a>
+      <a href="管理后台-仿真培训.html#assign">管理后台 · <b>任务下发</b></a>
+      <a href="管理后台-仿真培训.html#tasks">管理后台 · <b>任务列表</b></a>
+      <a href="管理后台-仿真培训.html#report">管理后台 · <b>学员报告</b></a>
+      <a href="管理后台-仿真培训.html#scenes">管理后台 · <b>场景库</b></a>
+      <a href="管理后台-仿真培训.html#editor">管理后台 · <b>场景编辑器</b></a>
+      <a href="管理后台-仿真培训.html#server">管理后台 · <b>服务端 / AI</b></a>
+      <a href="教练工作台-带教主管.html#overview">教练端 · <b>带教总览</b></a>
+      <a href="教练工作台-带教主管.html#students">教练端 · <b>我的学员</b></a>
+      <a href="教练工作台-带教主管.html#coach">教练端 · <b>一对一辅导</b></a>
+      <a href="教练工作台-带教主管.html#quality">教练端 · <b>对话质检</b></a>
+      <a href="产品规划-新员工培训系统.html#roadmap">产品规划 · <b>迭代路线</b></a>
+      <a href="产品规划-新员工培训系统.html#tech">产品规划 · <b>技术方案</b></a>
+    </div>
+  </div>
+
+  <!-- ================= 系统架构 ================= -->
+  <div class="page-head" id="arch" style="margin-top:34px">
+    <h2 style="font-size:19px;font-weight:600;margin:0 0 7px">系统架构</h2>
+    <p>三端一源一引擎。学员端、管理后台、教练工作台不各自维护数据与算法——它们读同一份 <code style="background:var(--panel3);padding:1px 6px;border-radius:5px;font-size:12px">data/app-data.js</code>、调同一个评分模块 <code style="background:var(--panel3);padding:1px 6px;border-radius:5px;font-size:12px">data/scoring-engine.js</code>，所以后台下的任务、学员练出的成绩、教练看到的弱项，三边天然一致。</p>
+  </div>
+
+  <div class="grid" style="gap:12px">
+    <div class="layer">
+      <div class="lb">表现层</div>
+      <div class="cells">
+        <div class="cell hi"><b>学员端</b><span>微信风格 · 4 屏 · 文字/语音条/语音通话</span></div>
+        <div class="cell hi"><b>管理后台</b><span>看板/下发/任务/报告/场景 · 5 模块</span></div>
+        <div class="cell hi"><b>教练工作台</b><span>总览/我的学员/一对一辅导/对话质检 · 4 模块</span></div>
+        <div class="cell"><b>产品规划</b><span>PRD · 数据模型 · 路线图</span></div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="lb">数据层</div>
+      <div class="cells">
+        <div class="cell hi"><b>app-data.js</b><span>场景 Scene / 学员 Learner / 任务 Task / 成绩 Record / 维度 Dim</span></div>
+        <div class="cell hi"><b>scoring-engine.js</b><span>唯一评分闸门：scoreTurn / scoreSession / suggestionsFor</span></div>
+        <div class="cell"><b>TRAIN.helpers</b><span>统一统计口径：statsOf / riskOf / taskProgress / overview</span></div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="lb">能力层</div>
+      <div class="cells">
+        <div class="cell"><b>评分引擎</b><span id="capScore">—</span></div>
+        <div class="cell"><b>风险分层</b><span>红 / 黄 / 绿三级规则</span></div>
+        <div class="cell"><b>话术库</b><span>建议话术卡片 · 语音条脚本池 · 弱项建议</span></div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="lb">服务层<br><span class="muted" style="font-size:11px">可选</span></div>
+      <div class="cells">
+        <div class="cell hi"><b>Node 服务层</b><span>零 npm 依赖 · <code>node:sqlite</code> + <code>node:http</code></span></div>
+        <div class="cell hi"><b>登录与可见范围</b><span>无状态 token · all / dept / mentor 三档</span></div>
+        <div class="cell"><b>LLM 双角色</b><span>评分官 + NPC 并行，各自独立降级</span></div>
+        <div class="cell"><b>治理与留痕</b><span>场景版本审批 · 任务下发 · 辅导记录 · 对话质检 · 审计日志</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 运行数据 ================= -->
+  <div class="page-head" id="metrics" style="margin-top:34px">
+    <h2 style="font-size:19px;font-weight:600;margin:0 0 7px">运行数据</h2>
+    <p>以下数字全部由本页直接读取 <code style="background:var(--panel3);padding:1px 6px;border-radius:5px;font-size:12px">data/app-data.js</code> 实时计算，与两个端显示的口径完全一致——改数据源，三处同时变。</p>
+  </div>
+  <div class="grid g4" id="kpis"></div>
+
+  <div class="grid g2 mt20">
+    <div class="card">
+      <div class="card-h"><h2>能力维度均分</h2><span class="sub">五个维度 · 百分制</span></div>
+      <div id="dims"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>风险分层分布</h2><span class="sub">点击可跳转管理后台查看明细</span></div>
+      <div id="risk"></div>
+      <div class="hint" id="riskHint"></div>
+    </div>
+  </div>
+
+  <!-- ================= 迭代记录 ================= -->
+  <div class="page-head" id="changelog" style="margin-top:34px">
+    <h2 style="font-size:19px;font-weight:600;margin:0 0 7px">迭代记录</h2>
+    <p>按产品经理的迭代节奏推进，每轮都留下可验收的产物。</p>
+  </div>
+  <div class="card">
+    <div id="changes"></div>
+  </div>
+
+  <div class="foot">
+    <div id="footL">—</div>
+    <div>原型环境 · 数据均为演示数据 · 不依赖任何外部服务</div>
+  </div>
+</div>
+
+<script src="data/app-data.js"></script>
+<script>
+(function () {
+  'use strict';
+  if (!window.TRAIN) { document.body.innerHTML = '<div class="empty">数据源 data/app-data.js 加载失败，请确认文件与本页在同一目录结构下。</div>'; return; }
+  var T = window.TRAIN, H = T.helpers;
+  var $ = function (s) { return document.querySelector(s); };
+
+  /* 主题切换 */
+  try {
+    var saved = localStorage.getItem('train-hub-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+  function syncThemeBtn() {
+    var b = document.querySelector('[data-theme-toggle]');
+    if (b) b.textContent = document.documentElement.dataset.theme === 'light' ? '深色模式' : '浅色模式';
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-theme-toggle]')) {
+      var d = document.documentElement;
+      d.dataset.theme = d.dataset.theme === 'light' ? 'dark' : 'light';
+      try { localStorage.setItem('train-hub-theme', d.dataset.theme); } catch (er) {}
+      syncThemeBtn();
+    }
+  });
+  syncThemeBtn();
+
+  /* 头部元信息 */
+  $('#orgLine').textContent = T.meta.org;
+  $('#mOrg').textContent = T.meta.org;
+  $('#mVer').textContent = T.meta.product + ' · ' + T.meta.version;
+  $('#mUpd').textContent = '更新于 ' + T.meta.updatedAt;
+  $('#footL').textContent = T.meta.product + ' · ' + T.meta.version + ' · 维护：' + T.meta.owner;
+
+  /* 概览统计 */
+  var ov = H.overview();
+  $('#strip').innerHTML = [
+    { n: T.scenes.length, u: '个', l: '训练场景' },
+    { n: T.learners.length, u: '名', l: '在职学员' },
+    { n: T.tasks.length, u: '个', l: '任务（' + ov.runningTasks + ' 个进行中）' },
+    { n: ov.totalRecords, u: '场', l: '累计练习' },
+    { n: ov.passRate, u: '%', l: '整体达标率' }
+  ].map(function (s) {
+    return '<div class="s"><div class="n">' + s.n + '<small>' + s.u + '</small></div><div class="l">' + s.l + '</div></div>';
+  }).join('');
+
+  /* KPI */
+  $('#kpis').innerHTML = [
+    { lab: '平均综合分', val: ov.avgScore, u: '分', foot: '全部 ' + ov.totalRecords + ' 场练习的算术平均' },
+    { lab: '整体达标率', val: ov.passRate, u: '%', foot: '以各任务自身达标线为准' },
+    { lab: '高风险学员', val: ov.risk.red, u: '人', foot: '占 ' + Math.round(ov.risk.red / ov.learnerCount * 100) + '%，需主管介入辅导' },
+    { lab: '最弱能力维度', val: ov.weakest.avg, u: '分', foot: '「' + ov.weakest.name + '」，建议优先安排专项训练' }
+  ].map(function (k) {
+    return '<div class="kpi"><div class="lab">' + k.lab + '</div>' +
+      '<div class="val">' + k.val + '<small>' + k.u + '</small></div>' +
+      '<div class="foot">' + k.foot + '</div></div>';
+  }).join('');
+
+  /* 维度均分 */
+  $('#dims').innerHTML = ov.dimAvg.map(function (d) {
+    var dim = T.dims.filter(function (x) { return x.id === d.id; })[0];
+    var lv = H.level(d.avg);
+    var cls = lv.key === 'good' ? '' : (lv.key === 'mid' ? 'a' : 'r');
+    var weak = d.id === ov.weakest.id ? ' <span class="tag a" style="margin-left:6px">最弱环节</span>' : '';
+    return '<div class="dim"><div class="top"><span>' + d.name +
+      ' <span class="muted" style="font-size:11px">权重 ' + dim.weight + '%</span>' + weak + '</span>' +
+      '<span>' + d.avg + '</span></div>' +
+      '<div class="bar"><i class="' + cls + '" style="width:' + d.avg + '%"></i></div></div>';
+  }).join('');
+
+  /* 风险分布 */
+  var order = ['red', 'yellow', 'green'];
+  var total = T.learners.length;
+  $('#risk').innerHTML =
+    '<div style="display:flex;height:26px;border-radius:8px;overflow:hidden;margin-bottom:14px">' +
+    order.map(function (k) {
+      var pct = ov.risk[k] / total * 100;
+      if (!ov.risk[k]) return '';
+      return '<div style="width:' + pct + '%;background:' + T.riskRules[k].color +
+        ';display:flex;align-items:center;justify-content:center;font-size:11.5px;color:#fff;font-weight:600;text-shadow:0 1px 1px rgba(0,0,0,.18)" title="' +
+        T.riskRules[k].label + ' ' + ov.risk[k] + ' 人">' + (pct > 9 ? ov.risk[k] + ' 人' : '') + '</div>';
+    }).join('') + '</div>' +
+    order.map(function (k) {
+      var r = T.riskRules[k], n = ov.risk[k];
+      return '<div class="kvline"><span class="k"><span class="dot ' + (k === 'red' ? 'r' : k === 'yellow' ? 'a' : 'g') +
+        '"></span> ' + r.label + '</span><span class="v">' + n + ' 人 <span class="muted">· ' +
+        Math.round(n / total * 100) + '%</span></span></div>';
+    }).join('');
+  $('#riskHint').innerHTML = '判定规则来自 <code style="background:var(--panel3);padding:1px 5px;border-radius:4px;font-size:11.5px">TRAIN.helpers.riskOf()</code>：' +
+    order.map(function (k) { return '<b style="color:' + T.riskRules[k].color + '">' + T.riskRules[k].label + '</b> = ' + T.riskRules[k].desc; }).join('；') + '。';
+
+  /* 能力层说明 */
+  $('#capScore').textContent = '已接入真实大模型（LLM 双角色：客户 NPC + Rubric 评分官，' +
+    T.dims.reduce(function (a, d) { return a + T.kw[d.id].length; }, 0) + ' 条关键词为降级兜底，走 scoring-engine.js）· 服务未启动时三端自动离线 · 管理端已接入登录鉴权、服务端落库、任务下发闭环与按角色数据范围隔离 · 教练台已接入登录身份、可见范围与辅导/质检落库 · 学员端已接入「已发布场景池」热更新（运营新发布的场景刷新即可练到） · 逐轮对话已可回读：教练台逐轮复盘与对话质检、管理端学员报告都能看到学员<b>真实作答</b>（离线时明确标注为剧本参考）';
+
+  /* 迭代记录 */
+  var CHANGES = [
+    { v: 'P0', tag: 'g', t: '学员端原型交付', d: '微信风格四屏仿真陪练（会话列表 / 1 对 1 对话含语音条 / 微信语音通话 / 训练报告），3 个客户场景，5 维实时评分 + 目标清单逐轮判定。单文件零依赖，可离线双击打开。' },
+    { v: 'P1', tag: 'b', t: '数据层抽出：三端一源', d: '新增 <code>data/app-data.js</code> 作为唯一真相源（场景 / 学员 / 任务 / 成绩 / 维度）与 <code>TRAIN.helpers</code> 统一统计口径；学员端改为读取该数据源，行为与重构前逐项对齐（同场景得分、目标达成数完全一致）。' },
+    { v: 'P1', tag: 'b', t: '评分引擎抽出：唯一评分闸门', d: '新增 <code>data/scoring-engine.js</code>（<code>window.SCORER</code>）：纯函数、双端可用（node <code>module.exports</code> + 浏览器 <code>window.SCORER</code>）。导出 <code>detectHits / scoreTurn / scoreSession / compareWithHistory / suggestionsFor</code>。学员端判分、教练端弱项建议、管理端复核全部调它——一处修改三端同步。抽取前后学员端两条路径得分逐项一致（文字 70 / 语音+通话 54）。' },
+    { v: 'P1', tag: 'b', t: '管理后台交付', d: '新增 <code>管理后台-仿真培训.html</code>：数据看板（KPI / 风险分层 / 维度均分 / 任务进度 / 最近动态）、四步任务下发向导、任务列表与达标线、学员报告抽屉（手写 SVG 成绩趋势 + 五维得分 + 逐条记录 + AI 带教建议）、场景库。' },
+    { v: 'P1', tag: 'b', t: '场景剧本编辑器', d: '管理后台新增第六个模块：培训运营可自助维护场景——元信息 / 训练目标 / 剧本轮次 / 语音条脚本池 / 评分关键词，共 5 个编辑区。内置 <b>7 类校验</b>（达标线区间、维度权重合计须 100、目标与剧本轮次对齐、语音脚本池覆盖、关键词维度覆盖等），有阻断项时禁止保存。保存后立即在「场景库」与「任务下发向导」同步生效，无需改代码。' },
+    { v: 'P1', tag: 'b', t: '教练工作台交付', d: '新增 <code>教练工作台-带教主管.html</code>：四个模块——总览（今日待办 / 我的学员 / 最近动态）、我的学员（趋势折线 + 弱项 + 风险）、一对一辅导（弱项建议 + 逐轮复盘 + 辅导记录留存）、对话质检（抽检 / 待统一话术 / 已通过）。补上「谁来带教」这一环。' },
+    { v: 'P1', tag: 'b', t: '视觉体系统一', d: '新增 <code>assets/shell.css</code> 共享外观底座（深/浅色双主题），四个页面视觉一致；全部图形（折线、条形、环形、流程图、ER 图、架构图）均为手写内联 SVG / CSS，无任何 CDN 依赖。' },
+    { v: 'P1', tag: 'b', t: '产品规划文档', d: '新增 <code>产品规划-新员工培训系统.html</code>：产品定位、4 个角色、业务闭环、信息架构、数据模型、评分机制两阶段对比、P0/P1/P2 路线、大模型接入技术方案与接口设计、指标定义与风险清单。' },
+    { v: 'P1', tag: 'b', t: '场景落库 · 版本管理 · 审批流', d: '编辑器补上「能不能真的用起来」的三件事：<b>①落库</b>——保存结果写入 <code>localStorage</code>（<code>TRAIN_SCENE_STORE_V1</code>），刷新/重开自动恢复，不再刷新即丢；<b>②版本</b>——每次保存自动归档快照（版本号 / 时间 / 操作人 / 变更摘要，保留最近 20 版），支持版本对比与一键回滚，回滚会生成新版本不丢历史；<b>③审批</b>——场景走「草稿 → 待审 → 已发布」状态机，<b>只有已发布场景可下发</b>，已发布场景被改动后自动回到待审。同时把评分关键词从 <code>T.kw</code> 直读改为页内工作副本，修掉关键词与场景两套状态不同步的问题。' },
+    { v: 'P2', tag: 'g', t: '接入真实大模型（双角色）', d: '新增零依赖 Node 服务层 <code>server/</code>：<b>LLM 双角色</b>——同一模型同时扮演客户 NPC（生成下一句 + 情绪 + 语音时长，保持人设）与 Rubric 评分官（输出结构化 JSON：五维分 / 目标达成 / 点评 / 置信度）。评分权重取自 <code>TRAIN.dims</code>，<b>Rubric 即代码</b>（<code>server/rubric.js</code> 同时生成两个角色的人格 prompt 与评分标准）。<b>服务不可用时自动降级</b>：模型故障回关键词引擎、NPC 回剧本，返回体 <code>source</code> 标记 <code>llm / keyword-fallback / script-fallback</code>，练习不中断。<code>scoreTurn()</code> 接口形状不变，<b>三端调用代码零改动</b>。附 <code>server/mock-llm.js</code>（OpenAI 兼容的本地模拟模型），无 Key 即可跑通全链路。' },
+    { v: 'P2', tag: 'g', t: '服务端落库与权限', d: '用 SQLite（<code>node:sqlite</code>，Node 22 内置，无 npm 依赖）替换浏览器 <code>localStorage</code>：13 张表覆盖场景 / 版本 / 审批 / 用户 / 成绩 / 会话逐轮 / 审计 / Rubric / 金标集。<b>按部门下放编辑权限</b>（<code>can_edit</code>）与<b>审核角色分离</b>（<code>can_review</code>，且<b>提交人不能审批自己提交的场景</b>），越权返回 403；所有写操作写入 <code>audit_log</code>（谁 / 何时 / 对什么 / 做了什么）。场景治理升级为服务端状态机：已发布场景编辑后自动转待审，<code>canAssign</code> 严格等于「已发布」。' },
+    { v: 'P2', tag: 'g', t: '金标集校准与一致性报告', d: '新增 <b>10 条人工双盲标注</b>金标样本（<code>server/store/goldset-seed.json</code>，覆盖 33–90 分全区间），校准计算「模型综合分 vs 人工总分」的 <b>Pearson 相关系数</b>（目标 ≥ 0.8）与 <b>MAE</b>（目标 ≤ 8），并给出分维一致性。mock 模型实测 <b>Pearson 0.885 ✅ / MAE 13.8 ❌</b>——排序一致性好但绝对分偏高，直接指出 Rubric 需收紧；分维上「需求挖掘 0.918、促成推进 0.879」强、「方案讲解 0.577」最弱，是最该补锚点的维度。仅 <code>channel=llm</code> 的结果具备校准意义，关键词引擎结果会明确标注「无校准意义，仅验证链路可通」。' },
+    { v: 'P2', tag: 'g', t: '管理后台「服务端 / AI」模块', d: '管理后台新增第七个板块：服务端连接状态（接口地址 / 模型 / 上游 / Rubric 版本 / 在线探活耗时）、服务端数据统计、<b>一键运行金标集校准</b>（页内直接看 Pearson / MAE / 分维一致性）、<b>操作审计日志表</b>（谁在何时改了什么）。前端通过可选加载的 <code>assets/admin-server-sync.js</code> 与服务端通信，<b>服务未启动时自动退回 localStorage，页面行为零变化</b>。' },
+    { v: 'P3', tag: 'g', t: '真实登录鉴权（补掉最大的越权口子）', d: '此前服务端在收不到操作人时会<b>默认当成超管</b>，且无密码、无 token、无登录页——改一下 URL 就能变管理员，权限是「自觉遵守」而非「强制拦截」。现在新增 <code>server/auth.js</code> 与 <code>server/password.js</code>：账号口令经 <b>scrypt 加盐哈希</b>存储（服务端不保存明文），登录签发 <b>HMAC-SHA256 无状态 token</b>（默认 12 小时，签名密钥持久化在库中，重启不踢人）。接口按<b>公开 / 练习 / 管理</b>三档校验身份：管理类接口必须可解析出身份，练习通道允许匿名（保住「学员没登录也能练」）。<code>AUTH_MODE=open</code>（默认）带 token 时严格按 token 身份、不带 token 时回落演示身份；<code>AUTH_MODE=enforce</code> 则<b>无 token 一律 401</b>。管理后台配套登录门（顶栏显示当前身份与角色，可退出、可查账号权限矩阵）。' },
+    { v: 'P3', tag: 'g', t: '场景编辑真正写入服务端', d: '此前 <code>saveScene()</code> 只写 <code>localStorage</code>，同步层仅接了「状态查询」和「金标校准」两处——<b>运营 A 编的场景运营 B 打开看不到，多人协作是假的</b>。现在新建 / 保存 / 提交审核 / 审批 / 驳回 / 下线 / 回滚 / 删除<b>全部先写服务端</b>，再把服务端结果合并回本地工作副本（<code>applyServerScene</code> 同步审批状态与版本号）；服务端不可用时自动回落 <code>localStorage</code>，页面行为零变化。<b>403 / 400 会如实提示，且界面回滚为服务端真实状态</b>，不再出现「界面看着成功了、其实服务端拒绝了」的假象。场景库新增「↻ 从服务端刷新」，版本历史抽屉在线时直接读服务端版本。' },
+    { v: 'P3', tag: 'g', t: '同源基址 · 监听可配 · CORS 收紧', d: '前端 API 基址不再硬编码 <code>127.0.0.1:8848</code>：改为<b>依次尝试「同源 /api/v1 → 127.0.0.1:8848」</b>，探到哪个用哪个（仍支持 <code>?api=</code> 显式覆盖）——从此推荐直接用服务地址打开页面，天然无跨域。服务端监听地址改为可配（<code>HOST=0.0.0.0</code> 供内网访问），CORS 从通配 <code>*</code> 收紧为<b>来源白名单</b>（同源 / 本机 / 显式清单 / file://），其余来源预检即 403。' },
+    { v: 'P3', tag: 'g', t: '部署形态 · 数据备份 · 服务端自测', d: '补上「能不能真的跑起来」的运维面：<b>启动脚本</b>（<code>start-server.sh</code> / <code>start-server.bat</code> / <code>start-mock-demo.bat</code>，后者连 mock 模型一起拉起）、<b>零依赖的 package.json</b>（只有 scripts，<code>dependencies</code> 为空）、<b>一键备份</b>（<code>VACUUM INTO</code> 生成一致性快照，WAL 下也安全、无需停服，自动保留最近 20 份并写入审计）、<b>恢复出厂工具</b>（连 <code>-wal</code>/<code>-shm</code> 一起删，避免只删主库导致旧数据回放）、以及<b>端到端自测</b> <code>node server/tools/selftest.js</code>——49 项断言覆盖登录 / token 篡改 / 越权 403 / 提交人≠审核人 / 版本回滚 / 匿名练习 / 金标校准 / 备份 / CORS / enforce 模式。' },
+    { v: 'P3', tag: 'g', t: '金标集导入界面', d: '「服务端 / AI」板块新增金标集批量导入：粘贴 JSON 数组即可入库（同 id 覆盖更新），并给出新增 / 更新 / 总数反馈，解决「10 条样本只够证明链路、想扩到 PRD 要求的 100+ 却无从下手」的问题。附「填入示例格式」一键生成可改的模板。' },
+    { v: 'P4', tag: 'g', t: '任务下发真正落服务端（闭环）', d: '此前「下发任务」只 push 进内存 <code>T.tasks</code>，而学员端读的是静态 <code>data/app-data.js</code> —— <b>运营下发的任务学员永远收不到，多人协作是假的</b>。现在新增 <code>tasks</code> 业务列（开始时间 / 创建人 / 是否全员 / 达标线 / 通道）与 <code>task_assignees</code> 指派关系表，任务的新建 / 更新 / 结束 / 重新开启 / 收回 / 删除全部落库；管理端在下发后立即回拉真值，看板与任务进度按服务端成绩推进。<b>学员端只会看到指派给自己的任务</b>（带 <code>?learnerId=</code> 匿名可读本人的），开始训练时把 <code>taskId</code> 带进会话，结束后的成绩记录归因到该任务 —— 一条「下发 → 学员练 → 进度回填」的完整链路。' },
+    { v: 'P4', tag: 'g', t: '按角色数据范围隔离（谁该看谁）', d: '此前 <code>/records</code>、<code>/audit</code>、<code>/learners</code> 对任何 staff 都返回<b>全量</b>数据 —— 教练能看到全公司学员成绩。现在每个账号带一个 <code>data_scope</code>：<code>all</code> 全部 / <code>dept</code> 本部门 / <code>mentor</code> 本人带教（按学员 <code>coach</code> 匹配导师 <code>scope_ref</code>），所有 staff 查询接口<b>在服务端过滤</b>，未识别的范围取值 fail-closed（看不到人）而不是放开全量。同时补上「角色数据范围」在登录响应与账号矩阵里的展示。修复过程中还挖出一个老缺陷：播种脚本读 <code>l.coach</code> 而数据源里字段叫 <code>mentor</code>，导致 <code>coach</code> 列一直是空的 —— 已回填。</td>' },
+    { v: 'P4', tag: 'g', t: '管理端按服务端真值渲染 · 无浏览器也能验收', d: '管理后台的看板 / 任务进度 / 风险分层 / 学员报告此前读的是<b>页面加载时的静态数据</b>，登录身份一变就说不准话了。现在统一走「服务端回拉 → <b>原地水合</b> <code>app-data.js</code> → 复用同一套 <code>TRAIN.helpers</code> 口径重渲染」—— 三端数字天然一致，没有第二套算法。配套补上两套可复跑的自测：服务端 <b>87 项断言</b>（含任务闭环、数据范围隔离、enforce 拦截）与<b>无浏览器前端验证 54 项</b>（脚本可解析 / 水合语义 / 真接口往返 / 接线断言）。</td>' },
+    { v: 'P5', tag: 'g', t: '教练工作台接入服务端身份与数据范围', d: '三端里教练台是<b>最后一个</b>接上服务端的：此前它的身份写死在页面里（<code>var COACH = \'周敏\'</code>），读的是静态 <code>app-data.js</code>，「我带的学员 / 全部学员」只是前端过滤 —— P3/P4 建好的登录鉴权与数据范围对它完全没生效。现在教练台启动即探活 → <code>/auth/me</code> 拿身份 → <b>按服务端给的范围</b>筛学员，并新增 <code>users.staff_name</code>（干净姓名）用于匹配 <code>learners.coach</code>：<code>users.name</code> 是带前缀的展示名（「区域教练 · 周敏」），永远匹配不上。界面也<b>不再谎报权限</b>：<code>mentor</code> 范围下「全部学员」档直接隐藏，切换时再做一次拦截。' },
+    { v: 'P5', tag: 'g', t: '辅导记录与质检结论真正落库', d: '教练台这两个核心动作此前<b>只存在页面内存里</b>（页面注释写着「原型阶段不落库」），刷新即丢 —— 可 UI 文案却在说「交接给下一次带教」「转交培训运营更新剧本」。<b>界面在说谎，比缺功能更严重</b>。现在新增 <code>coach_notes</code> / <code>record_qc</code> 两张表与 <code>GET·POST·DELETE /coach-notes</code>、<code>GET /qc</code>、<code>POST·DELETE /records/:id/qc</code>：写入<b>服务端优先、离线兜底</b>，被拒绝时回滚本地改动并<b>如实提示</b>，杜绝「看着存上了其实没存」。质检状态同时回写到 <code>/records</code> 的每条成绩上（新增 <code>qc</code> 字段），质检表直接按「已通过 / 待统一话术」渲染。<br><b>权限模型刻意与场景编辑不同</b>：写辅导、做质检是带教主管的<b>本职</b>，而教练角色的 <code>can_edit</code> 本来就是 0 —— 这里只卡<b>可见范围</b>（只能读写自己带教的学员，越界 403），删除成绩才卡 <code>can_edit</code>。' },
+    { v: 'P5', tag: 'g', t: '老库升级补内容 · 自测自清理自愈', d: '把「已经能跑」推到「反复跑也不脏」。<b>①老库升级</b>：P5 的两张表由建表语句创建，而 <code>seedIfEmpty()</code> 对已有数据的库直接返回「已有数据」—— 于是老库 schema 升到 <code>p5-v1</code> 但教练台一片空白。现在把演示辅导内容抽成幂等函数，升级时补一次（两张表任一非空则整体跳过，不覆盖运维已维护的数据）。<b>②自测自清理</b>：新增 <code>DELETE /records/:id</code>（连带删掉质检结论，不留无主结论），让自测把自造的临时成绩也删干净。<b>③自测自愈</b>：清理段在结尾，<b>中途抛错就永远跑不到</b> —— 实测攒下过 SC09 + 1 条任务 + 9 条成绩 + 1 条辅导记录，所以开跑前先按自测专用特征<b>清扫上一次的残渣</b>。反复跑三遍，场景 / 任务 / 成绩 / 辅导 / 质检稳定在 3 / 5 / 28 / 2 / 3，只有审计日志按设计增长。' },
+    { v: 'P5', tag: 'g', t: '契约自测扩到 121 + 93 项', d: '服务端自测补 <b>8c-2 教练动作段</b>（写辅导、范围外 403、空内容 400、质检三种非法输入、无归属成绩 403、审计留痕、跑完自删），前端验证补 <b>3b 教练端真接口往返</b>与 <b>20 条教练台接线断言</b>，两套合计 <b>121 + 93 项断言</b>。过程中抓出三个真缺陷：<code>setQc</code> 对<b>无归属成绩</b>返回 <code>400 缺少学员 id</code>（服务端自己的数据状态被说成调用方参数错误），更隐蔽的是 <code>inScope(user, \'\')</code> 在 <code>scope=all</code> 时因 <code>ids===null</code> 返回 <code>true</code>，导致<b>管理员能给无主成绩打质检结论</b>；以及前端测试里把布尔值当成正则传进断言助手，直接崩在 <code>re.test is not a function</code>。三条都已堵住并有断言看住。' },
+    { v: 'P6', tag: 'g', t: '学员端场景池热更新（补上闭环的最后一跳）', d: '三端里学员端是<b>最后一个</b>还没跟服务端对齐的：它的场景库读的是<b>页面加载时</b>的 <code>window.SCENES</code>（静态种子），于是运营在剧本编辑器里新建、走完审批、被下发的场景，<b>学员刷新多少次都练不到</b> —— 「下发 → 学员练」对每一个新场景都是断的，而且<b>不报任何错</b>，只是「学员就是看不到」。现在新增<b>匿名</b>端点 <code>GET /scenes/published</code>（只回 publish 为 published 的场景，且只带学员端渲染与判分要用的字段 —— 它不需要身份，所以<b>不带 <code>audit</code> / <code>versions</code> / <code>owner</code> / <code>publish</code> / <code>status</code></b> 这些治理字段），学员端启动时与拉「我的任务」并列拉一次，交给 <code>TRAIN.helpers.mergeScenes()</code> 合并进场景库，有变化才重渲染会话列表与任务卡；离线或失败<b>一律静默</b>，保持本地种子场景，<code>file://</code> 双击照样能用。<br>合并语义刻意定为「<b>按 id 原地更新 + 未知 id 追加；不重排、不删除、不换数组与元素引用</b>」：不重排 —— 学员端 <code>cur</code> 是<b>数组下标</b>、<code>SCENES[cur]</code> 在几十处实时求值，重排会让「当前会话」指向别的场景；不删本地种子 —— 服务端库可能不全（刚换库或只播了部分场景），把本地种子一并清掉会让学员<b>直接没场景可练</b>。这两件事都<b>不会有任何报错信号</b>，只能靠断言拦住。场景下线的收口留在服务端（publish 非 published 即查不到），前端不做「删除本地场景」这个动作。' },
+    { v: 'P6', tag: 'g', t: '契约自测扩到 129 + 145 项（含学员端整页沙箱真跑）', d: '服务端自测补「场景池发布闸门」段 —— 匿名可读 / 刚审批的场景立刻出现 / 与「可下发集合」逐一一致 / <b>不泄漏 7 个治理字段</b> / 字段齐全可直接判分 / 退回草稿后立刻从池中消失 / enforce 模式下仍匿名可用（这条同时能抓到「<code>/scenes/published</code> 被 <code>/scenes/:id</code> 抢先匹配」的注册顺序错误）。前端验证补 ②b <b>场景池合并语义</b>（尤其是「数组与元素引用必须不变」这种<b>没有报错信号</b>的约束）、③c <b>场景池真接口往返 + 后端不可达时必须返回 null 而非抛错</b>、10 条接线断言，合计 <b>129 + 145 项</b>。<br>新增的<b>第 ⑤ 层</b>最有价值：把<b>学员端整页脚本放进 Node 沙箱真跑一遍</b>（页面只用到 <code>getElementById / createElement / classList / dataset / innerHTML</code>，给一组最小元素桩即可），走完「运营新建 → 提交 → 审核通过」后断言新场景<b>真的出现在会话列表的 HTML 里</b>，并断言原有种子场景没被清掉 —— 这是「发布 → 学员练」的终点。<b>并且验证过它会变红</b>：把 <code>loadScenes()</code> 调用删掉，这一层立刻 4 条失败，正是该缺陷原本的表现。<br>过程中还抓出两处「假绿」：一是不锚定的正则会<b>被 <code>tasks()</code> 里一模一样的 <code>catch</code> 块满足</b>（已改为用 <code>async function scenes()</code> 打头锚定，并复验注入破坏后会变红）；二是给匿名端点临时注入一个 <code>publish</code> 字段后，泄漏断言确实变红并列出泄漏项（验完已还原）。' },
+    { v: 'P7', tag: 'g', t: '逐轮对话：让「对话质检」真的看得到对话', d: '修掉一处<b>「看起来有、其实没有」</b>的缺口：<code>session_turns</code> 表一直在写（每次对话都落库），却<b>从来没有读的路径</b> —— 既没有接口，也没有任何页面渲染它。于是教练台的「逐轮复盘」整块是拿<b>场景剧本</b>拼出来的（客户说了什么 + 参考表达），<b>学员当时答了什么一个字都没有</b>，而它旁边就摆着「针对这一轮写辅导」的按钮；「对话质检」页更是只有分数和两个按钮 —— 名为对话质检，看不到对话。<br>现在补齐两端：<b>接口</b>新增 <code>GET /records/:id/turns</code>（按需读取，只卡<b>数据可见范围</b>、不卡编辑/审核权 —— 看自己名下学员的对话是带教本职；越范围与无归属成绩一律 403），同时把逐轮正文从 <code>/records</code> <b>列表</b>里撤掉（演示库 28 条 × 5~6 轮 ≈ 150 段文本，列表页一个字都不渲染），改回 <code>turnCount</code> 让页面知道「这条有没有对话可看」；<b>页面</b>上教练台逐轮复盘优先渲染真实明细（客户实际台词 / 学员实际作答 / 本轮得分 / 本轮五维小分），参考表达降为可折叠对比，质检页新增「看对话」抽屉，管理端学员报告每条成绩可展开逐轮对话。' },
+    { v: 'P7', tag: 'g', t: '同一份数据只允许一种形状（铁律 8 的第二次踩坑）', d: '这次挖出的不是页面问题，而是<b>契约问题</b>：<code>finish()</code> 返回的逐轮对象是 <code>{idx, learnerText, customerReply, emotion, score, dimScores, confidence, source}</code>，而落库到 <code>records.evidence</code> 的却是 <code>{turn, learner, customer, score}</code> —— <b>同一份逐轮对话，两种字段名</b>。按前者写的任何前端，拿到后者都会<b>静默读出 <code>undefined</code></b>（不抛错、不报错，只显示空白），正是铁律 8 描述的那种失败。现在抽出一个 <code>turnRow()</code> 作为<b>唯一形状来源</b>，三处（finish 返回 / evidence 落库 / 逐轮接口）全部走它，并在自测里用「三处字段集必须完全一致」的断言锁死；读旧库时再经 <code>evidenceTurn()</code> 归一化，<b>不让内部演进成本转嫁给用户</b>（旧记录没有逐轮维度分就如实返回空，而不是伪造一个分数）。<br>顺带修掉一处文案误导：无归属成绩的报错原本固定说「无法做质检」，现在由调用方给出具体动作（「无法查看逐轮对话」）。' },
+    { v: 'P7', tag: 'g', t: '演示数据的逐轮均分必须精确等于成绩单总分', d: '演示库的 28 条成绩全部来自播种，<b>没有一条带逐轮对话</b>（实测 0/28）。补数据本身不难，难的是<b>口径</b>：<code>finish()</code> 按「逐轮算术平均再取整」聚合，如果逐轮分随手给一组"看起来差不多"的数，教练台并排显示时就会出现<b>「逐轮均分 72 / 总分 58」</b>这种自相矛盾。所以播种用<b>余数分摊</b>（<code>spreadExact()</code>）把每一维都凑到 <code>sum === 目标分 × 轮数</code>，使 <code>round(mean(逐轮))</code> <b>恒等于</b>成绩单上的数，五个维度同样成立；轮次取成绩自己的 <code>payload.turns</code>（5 或 6）而<b>不是</b> <code>script.length</code>（剧本 6 轮、目标 5 条，两者本来就不等）。低分轮次配<b>一眼看得出问题的敷衍话术</b>（"好的好的，我知道了。"），教练打开就能指着说「这一轮你等于没接话」。实测 28 条 / 164 轮，逐轮均分与五维均分<b>零失配</b>。' },
+    { v: 'P7', tag: 'g', t: '契约自测扩到 147 + 185 项（含渲染器真源码沙箱）', d: '服务端自测补「逐轮对话」段（查得到 / 形状一致 / 列表不背正文 / 逐轮均分与五维均分精确一致 / 404 与越范围 403 / 无归属 403 / enforce 下匿名 401），前端验证补 <b>3d 同步层按需读取</b>（范围内容 200、越范围与不存在<b>静默返回 null</b>、逐轮字段集完整）与 <b>3e 渲染器真源码沙箱</b>：把 <code>esc / scriptTurns / turnDimLine / roundsHtml</code> 的源码原样抠进沙箱，配真实场景与真实逐轮数据跑一遍，断言<b>渲染结果里逐字出现学员的每一句作答</b> —— 正则只能证明「函数存在」，证明不了「它把学员的话渲染出来了」。<br><b>10 条新断言逐条做过可证伪验证</b>（破坏真实行为后必须变红），过程中又被三个陷阱各绊一次：① 页面文件是 <b>CRLF</b>，注入用的 needle 带 <code>\\n</code> 会匹配不上（静默变成"没注入"）；②「先还原 → 再注入 → 再跑」的顺序写反，等于什么都没注入（第一版就栽在这，5 条断言全被误判成"仍然为真"）；③ <b>改 <code>server/*.js</code> 必须重启服务</b>，否则跑的是旧进程里的旧代码 —— 后端 3 条注入一开始全部"无效"，根因就是这个 stale-process 陷阱。<br>还加固了一处会变假绿的断言：比对"学员原话是否出现在渲染结果里"时若某轮作答为空，<code>indexOf(\'\')</code> 恒为 0，会永远为真 —— 已先把空作答剔掉再比。' },
+    { v: 'P7', tag: 'g', t: '交付前的容量排查：一个 pragma 让写吞吐差了 78 倍', d: '回答「能不能交付」时做了一次真实压测，结果发现<b>服务端写路径只有 6 req/s</b>（读接口却是上千 req/s）。逐段计时后定位到：根因不在代码逻辑，而在一个 SQLite 参数 —— <code>journal_mode=WAL</code> 配上的是<b>出厂默认的 <code>synchronous=FULL</code></b>，于是<b>每一次 INSERT / UPDATE 提交都要 fsync 一次</b>：本机单条写入提交实测 <b>43.96ms</b>，而且 fsync 是同步的，<b>会阻塞单线程事件循环</b> —— 所以写入并发时连读接口都从 2ms 劣化到 1.5s（实测）。改成 WAL 官方推荐的 <code>synchronous=NORMAL</code>（可用 <code>DB_SYNC</code> 配回）：单条写入提交 <b>43.96ms → 0.06ms</b>，一轮练习落库 <b>155ms → 3ms</b>，写吞吐 <b>6 → 470 req/s</b>，混合读写墙钟 <b>4377ms → 222ms</b>。<br>这个缺陷最危险的地方在于<b>功能全对、所有断言全绿</b> —— 它只让「人一多就卡」，不报任何错，属于铁律里说的「不照做也不报错」的约束。所以补了两道防线：<code>/status</code> 新增 <code>dbSync</code> 字段并<b>读回真实生效值</b>（不是配置值），启动横幅也打印落盘级别；自测新增 5 条断言（WAL / synchronous 非 FULL / 与配置一致 / 外键开启），且<b>验证过它会变红</b> —— 故意用 <code>DB_SYNC=FULL</code> 起一个实例，断言如期失败并给出可操作提示。<br>压测同时给出容量结论：<b>真正的并发上限不在服务端，而在大模型</b>（单轮真实调用 0.5–3s，再叠加供应商 RPM / TPM 限流）—— 100 人同时练的峰值调用量约 50 次/秒，服务端远不是瓶颈，容量要按模型的配额算。' },
+  ];
+  $('#changes').innerHTML = CHANGES.map(function (c, i) {
+    return '<div class="chg"><div class="no">' + c.v + '</div><div class="bd">' +
+      '<div class="t">' + c.t + '<span class="tag ' + c.tag + '">' + (c.tag === 'g' ? '已完成' : c.tag === 'b' ? '已完成' : '规划中') + '</span></div>' +
+      '<div class="d">' + c.d + '</div></div></div>';
+  }).join('');
+
+  /* 平滑滚动 */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var el = document.querySelector(a.getAttribute('href'));
+    if (!el) return;
+    e.preventDefault();
+    window.scrollTo({ top: el.offsetTop - 78, behavior: 'smooth' });
+  });
+})();
+</script>
+</body>
+</html>

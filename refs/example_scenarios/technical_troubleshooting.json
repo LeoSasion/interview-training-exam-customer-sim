@@ -1,0 +1,92 @@
+{
+    "title": "Network Connectivity Troubleshooting",
+    "description": "Practice systematic troubleshooting of network connectivity issues",
+    "type": "technical_troubleshooting",
+    "objectives": [
+        "Follow systematic troubleshooting methodology",
+        "Ask relevant diagnostic questions",
+        "Interpret symptoms to identify root causes",
+        "Implement appropriate solutions",
+        "Verify resolution and prevent recurrence"
+    ],
+    "simulationSettings": {
+        "icon": "🔧",
+        "title": "Network Troubleshooting Lab",
+        "subtitle": "Diagnose and resolve connectivity issues",
+        "userRole": "Network Technician",
+        "aiRole": "System Administrator"
+    },
+    "phases": [
+        {
+            "id": "initial_assessment",
+            "title": "Phase 1: Problem Identification",
+            "objective": "Gather initial information about the issue",
+            "maxResponses": 4,
+            "aiPrompt": "You are a system administrator reporting a network issue. Users in the marketing department can't access the internet, but other departments seem fine. The issue started about an hour ago. You've tried basic restart procedures but nothing worked. Be helpful but not overly technical - you know the symptoms but need help with diagnosis.",
+            "successCriteria": [
+                "Asked about scope of the problem",
+                "Inquired about timing and recent changes",
+                "Gathered information about affected systems",
+                "Followed systematic questioning approach"
+            ],
+            "startingMessage": "Hi, we're having network issues in the marketing department. Users can't get to websites, but email seems to be working. Can you help me figure out what's wrong?"
+        },
+        {
+            "id": "data_gathering",
+            "title": "Phase 2: Diagnostic Information",
+            "objective": "Collect technical details and symptoms",
+            "maxResponses": 5,
+            "aiPrompt": "You can provide specific technical details when asked the right questions. The marketing department is on VLAN 20, subnet 192.168.20.0/24. Their default gateway is 192.168.20.1. Internal connectivity works (they can ping other internal servers). The issue seems to be with external internet access. No recent changes were made to their network configuration.",
+            "successCriteria": [
+                "Asked for network configuration details",
+                "Requested specific error messages or symptoms",
+                "Inquired about internal vs external connectivity",
+                "Gathered information about network topology"
+            ],
+            "startingMessage": "I can pull up the network details. What specific information do you need to help diagnose this?"
+        },
+        {
+            "id": "hypothesis_testing",
+            "title": "Phase 3: Testing & Diagnosis",
+            "objective": "Test theories and identify root cause",
+            "maxResponses": 5,
+            "aiPrompt": "You can run tests and provide results when asked. Ping tests to internal servers work. Ping to external IPs (like 8.8.8.8) fail. DNS resolution works for internal names but fails for external names. The firewall logs show blocked outbound traffic from VLAN 20 starting about an hour ago due to a new security policy that was automatically applied.",
+            "successCriteria": [
+                "Requested specific network tests",
+                "Tested connectivity at different network layers",
+                "Checked DNS resolution",
+                "Investigated recent changes or logs"
+            ],
+            "startingMessage": "I can run whatever tests you need. Just tell me what commands to run and I'll give you the results."
+        },
+        {
+            "id": "solution_implementation",
+            "title": "Phase 4: Resolution",
+            "objective": "Implement fix and verify solution",
+            "maxResponses": 4,
+            "aiPrompt": "You can implement the suggested solution. If they identify the firewall rule issue, you can modify the policy to allow outbound internet access for VLAN 20. After the change, users can access external websites again. You're grateful for the systematic approach and want to understand how to prevent this in the future.",
+            "successCriteria": [
+                "Identified correct root cause",
+                "Provided appropriate solution steps",
+                "Verified the fix resolved the issue",
+                "Discussed prevention measures"
+            ],
+            "startingMessage": "Okay, based on your analysis, what do you think we should do to fix this?"
+        }
+    ],
+    "nodes": {
+        "pre_assessment": {
+            "text": "<strong>Network Connectivity Troubleshooting</strong><br><br><strong>Pre-assessment</strong><br><br>You're preparing to troubleshoot a network connectivity issue. The system administrator has reported that users in the marketing department can't access the internet, but other departments seem fine. Choose your approach:<br><br><strong>Approach A: Systematic Diagnosis</strong> Start with broad questions about scope and timing, then narrow down to specific technical details.<br><br><strong>Approach B: Technical Deep Dive</strong> Jump straight into network configuration and technical diagnostics.<br><br><strong>Approach C: User-Centric</strong> Focus on user experience and business impact first, then move to technical details.",
+            "choices": [
+                { "text": "Choose Approach A: Systematic Diagnosis", "next": "ai_mode", "choiceId": "systematic_approach" },
+                { "text": "Choose Approach B: Technical Deep Dive", "next": "ai_mode", "choiceId": "technical_approach" },
+                { "text": "Choose Approach C: User-Centric", "next": "ai_mode", "choiceId": "user_centric_approach" }
+            ]
+        },
+        "ai_mode": {
+            "text": "Perfect! You've chosen your troubleshooting approach. Now let's start working with the system administrator to diagnose the network issue.",
+            "aiConversation": true,
+            "choices": []
+        }
+    }
+}

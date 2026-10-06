@@ -1,0 +1,290 @@
+[
+  {
+    "name": "Architecture.png",
+    "path": "docs/image/Architecture.png",
+    "sha": "bcb14ae92f4266208c31d2ce6dc5c58d63ee688e",
+    "size": 324139,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/Architecture.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/Architecture.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/bcb14ae92f4266208c31d2ce6dc5c58d63ee688e",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/Architecture.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/Architecture.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/bcb14ae92f4266208c31d2ce6dc5c58d63ee688e",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/Architecture.png"
+    }
+  },
+  {
+    "name": "Architecture_en.png",
+    "path": "docs/image/Architecture_en.png",
+    "sha": "1b7293edbe53b4c07cad9babe2af9e54c09ce02c",
+    "size": 186890,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/Architecture_en.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/Architecture_en.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/1b7293edbe53b4c07cad9babe2af9e54c09ce02c",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/Architecture_en.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/Architecture_en.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/1b7293edbe53b4c07cad9babe2af9e54c09ce02c",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/Architecture_en.png"
+    }
+  },
+  {
+    "name": "demo_image_1.png",
+    "path": "docs/image/demo_image_1.png",
+    "sha": "01981022822ca45905fca7e85cf2a79796276c79",
+    "size": 1120397,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_1.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_1.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/01981022822ca45905fca7e85cf2a79796276c79",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/demo_image_1.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_1.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/01981022822ca45905fca7e85cf2a79796276c79",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_1.png"
+    }
+  },
+  {
+    "name": "demo_image_1_en.png",
+    "path": "docs/image/demo_image_1_en.png",
+    "sha": "e6666930647c78c01d55f2648d14ca51e5ca2f77",
+    "size": 318864,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_1_en.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_1_en.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/e6666930647c78c01d55f2648d14ca51e5ca2f77",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/demo_image_1_en.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_1_en.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/e6666930647c78c01d55f2648d14ca51e5ca2f77",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_1_en.png"
+    }
+  },
+  {
+    "name": "demo_image_2.png",
+    "path": "docs/image/demo_image_2.png",
+    "sha": "6ba468b92eb5c952c4bc3f8f809654b7fa434f2f",
+    "size": 925440,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_2.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_2.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/6ba468b92eb5c952c4bc3f8f809654b7fa434f2f",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/demo_image_2.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_2.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/6ba468b92eb5c952c4bc3f8f809654b7fa434f2f",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_2.png"
+    }
+  },
+  {
+    "name": "demo_image_2_en.png",
+    "path": "docs/image/demo_image_2_en.png",
+    "sha": "fec26161c2f4da766101ffc8d1c77361c06f643e",
+    "size": 137299,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_2_en.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_2_en.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/fec26161c2f4da766101ffc8d1c77361c06f643e",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/demo_image_2_en.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_2_en.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/fec26161c2f4da766101ffc8d1c77361c06f643e",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_2_en.png"
+    }
+  },
+  {
+    "name": "demo_image_3.png",
+    "path": "docs/image/demo_image_3.png",
+    "sha": "c0d431373e90525a481d62dd1f28006caa40071c",
+    "size": 777201,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_3.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_3.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/c0d431373e90525a481d62dd1f28006caa40071c",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/demo_image_3.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_3.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/c0d431373e90525a481d62dd1f28006caa40071c",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_3.png"
+    }
+  },
+  {
+    "name": "demo_image_3_en.png",
+    "path": "docs/image/demo_image_3_en.png",
+    "sha": "ea0e2f7b8da5625b92384fd80cf33680af042b01",
+    "size": 217284,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_3_en.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_3_en.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/ea0e2f7b8da5625b92384fd80cf33680af042b01",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/demo_image_3_en.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_3_en.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/ea0e2f7b8da5625b92384fd80cf33680af042b01",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_3_en.png"
+    }
+  },
+  {
+    "name": "demo_image_4.png",
+    "path": "docs/image/demo_image_4.png",
+    "sha": "a127e67ae15b6707af274ed7a6216952e1ca9a88",
+    "size": 1114994,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_4.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_4.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/a127e67ae15b6707af274ed7a6216952e1ca9a88",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/demo_image_4.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_4.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/a127e67ae15b6707af274ed7a6216952e1ca9a88",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_4.png"
+    }
+  },
+  {
+    "name": "demo_image_4_en.png",
+    "path": "docs/image/demo_image_4_en.png",
+    "sha": "b0c2211348b96546deb69487c12799781e07a5ed",
+    "size": 292748,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_4_en.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_4_en.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/b0c2211348b96546deb69487c12799781e07a5ed",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/demo_image_4_en.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/demo_image_4_en.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/b0c2211348b96546deb69487c12799781e07a5ed",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/demo_image_4_en.png"
+    }
+  },
+  {
+    "name": "シナリオ作成_NPC設定.png",
+    "path": "docs/image/シナリオ作成_NPC設定.png",
+    "sha": "666ddf756be95b409b1475d8af81778045853278",
+    "size": 188213,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_NPC%E8%A8%AD%E5%AE%9A.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_NPC%E8%A8%AD%E5%AE%9A.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/666ddf756be95b409b1475d8af81778045853278",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/シナリオ作成_NPC設定.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_NPC%E8%A8%AD%E5%AE%9A.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/666ddf756be95b409b1475d8af81778045853278",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_NPC%E8%A8%AD%E5%AE%9A.png"
+    }
+  },
+  {
+    "name": "シナリオ作成_PDF資料.png",
+    "path": "docs/image/シナリオ作成_PDF資料.png",
+    "sha": "1ea469cb35f92bc5831f5170da441cc4604d4319",
+    "size": 70210,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_PDF%E8%B3%87%E6%96%99.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_PDF%E8%B3%87%E6%96%99.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/1ea469cb35f92bc5831f5170da441cc4604d4319",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/シナリオ作成_PDF資料.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_PDF%E8%B3%87%E6%96%99.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/1ea469cb35f92bc5831f5170da441cc4604d4319",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_PDF%E8%B3%87%E6%96%99.png"
+    }
+  },
+  {
+    "name": "シナリオ作成_ボタン.png",
+    "path": "docs/image/シナリオ作成_ボタン.png",
+    "sha": "edd22a94857cdf915aa97f4692527c467cab94cb",
+    "size": 130908,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E3%83%9C%E3%82%BF%E3%83%B3.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E3%83%9C%E3%82%BF%E3%83%B3.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/edd22a94857cdf915aa97f4692527c467cab94cb",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/シナリオ作成_ボタン.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E3%83%9C%E3%82%BF%E3%83%B3.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/edd22a94857cdf915aa97f4692527c467cab94cb",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E3%83%9C%E3%82%BF%E3%83%B3.png"
+    }
+  },
+  {
+    "name": "シナリオ作成_共有設定.png",
+    "path": "docs/image/シナリオ作成_共有設定.png",
+    "sha": "5696975b060fe37649d95d6df0ac3c5614fbdbf0",
+    "size": 87864,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E5%85%B1%E6%9C%89%E8%A8%AD%E5%AE%9A.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E5%85%B1%E6%9C%89%E8%A8%AD%E5%AE%9A.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/5696975b060fe37649d95d6df0ac3c5614fbdbf0",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/シナリオ作成_共有設定.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E5%85%B1%E6%9C%89%E8%A8%AD%E5%AE%9A.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/5696975b060fe37649d95d6df0ac3c5614fbdbf0",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E5%85%B1%E6%9C%89%E8%A8%AD%E5%AE%9A.png"
+    }
+  },
+  {
+    "name": "シナリオ作成_基本情報.png",
+    "path": "docs/image/シナリオ作成_基本情報.png",
+    "sha": "fb36f0d59d9f3bd24af77862a61564ced5985d74",
+    "size": 128186,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E5%9F%BA%E6%9C%AC%E6%83%85%E5%A0%B1.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E5%9F%BA%E6%9C%AC%E6%83%85%E5%A0%B1.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/fb36f0d59d9f3bd24af77862a61564ced5985d74",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/シナリオ作成_基本情報.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E5%9F%BA%E6%9C%AC%E6%83%85%E5%A0%B1.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/fb36f0d59d9f3bd24af77862a61564ced5985d74",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E5%9F%BA%E6%9C%AC%E6%83%85%E5%A0%B1.png"
+    }
+  },
+  {
+    "name": "シナリオ作成_目標設定.png",
+    "path": "docs/image/シナリオ作成_目標設定.png",
+    "sha": "129738d72c67df00ae2937aff4d474517ac4d404",
+    "size": 130291,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E7%9B%AE%E6%A8%99%E8%A8%AD%E5%AE%9A.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E7%9B%AE%E6%A8%99%E8%A8%AD%E5%AE%9A.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/129738d72c67df00ae2937aff4d474517ac4d404",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/シナリオ作成_目標設定.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E7%9B%AE%E6%A8%99%E8%A8%AD%E5%AE%9A.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/129738d72c67df00ae2937aff4d474517ac4d404",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E4%BD%9C%E6%88%90_%E7%9B%AE%E6%A8%99%E8%A8%AD%E5%AE%9A.png"
+    }
+  },
+  {
+    "name": "シナリオ更新_ボタン.png",
+    "path": "docs/image/シナリオ更新_ボタン.png",
+    "sha": "a6da2ffa4fb22412f6c5392166d553f82bf28149",
+    "size": 130139,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E6%9B%B4%E6%96%B0_%E3%83%9C%E3%82%BF%E3%83%B3.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E6%9B%B4%E6%96%B0_%E3%83%9C%E3%82%BF%E3%83%B3.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/a6da2ffa4fb22412f6c5392166d553f82bf28149",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/シナリオ更新_ボタン.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E6%9B%B4%E6%96%B0_%E3%83%9C%E3%82%BF%E3%83%B3.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/a6da2ffa4fb22412f6c5392166d553f82bf28149",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E6%9B%B4%E6%96%B0_%E3%83%9C%E3%82%BF%E3%83%B3.png"
+    }
+  },
+  {
+    "name": "シナリオ更新_一覧.png",
+    "path": "docs/image/シナリオ更新_一覧.png",
+    "sha": "e808917f64b6016de02b92f4d5495274b73cf88a",
+    "size": 139874,
+    "url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E6%9B%B4%E6%96%B0_%E4%B8%80%E8%A6%A7.png?ref=main",
+    "html_url": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E6%9B%B4%E6%96%B0_%E4%B8%80%E8%A6%A7.png",
+    "git_url": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/e808917f64b6016de02b92f4d5495274b73cf88a",
+    "download_url": "https://raw.githubusercontent.com/aws-samples/sample-ai-sales-roleplay/main/docs/image/シナリオ更新_一覧.png",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/contents/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E6%9B%B4%E6%96%B0_%E4%B8%80%E8%A6%A7.png?ref=main",
+      "git": "https://api.github.com/repos/aws-samples/sample-ai-sales-roleplay/git/blobs/e808917f64b6016de02b92f4d5495274b73cf88a",
+      "html": "https://github.com/aws-samples/sample-ai-sales-roleplay/blob/main/docs/image/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA%E6%9B%B4%E6%96%B0_%E4%B8%80%E8%A6%A7.png"
+    }
+  }
+]

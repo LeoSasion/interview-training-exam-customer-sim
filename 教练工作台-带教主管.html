@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>教练工作台 · 新员工仿真培训系统</title>
+<link rel="stylesheet" href="assets/shell.css">
+<style>
+/* ---------- 教练端专有样式（复用 shell.css 底座，仅补充本页特有组件） ---------- */
+.tl{position:relative;padding-left:22px}
+.tl::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:1px;background:var(--line2)}
+.tl .ev{position:relative;padding:0 0 18px}
+.tl .ev:last-child{padding-bottom:0}
+.tl .ev::before{content:"";position:absolute;left:-21px;top:5px;width:9px;height:9px;border-radius:50%;
+  background:var(--panel);border:2px solid var(--line2)}
+.tl .ev.g::before{border-color:var(--acc)}
+.tl .ev.r::before{border-color:var(--red)}
+.tl .ev.a::before{border-color:var(--amber)}
+.tl .ev .tm{font-size:11.5px;color:var(--txt3);margin-bottom:2px}
+.tl .ev .tx{font-size:13px}
+.tl .ev .tx b{font-weight:600}
+
+.prio{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);
+  border-radius:11px;background:var(--panel2);margin-bottom:9px}
+.prio .rk{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:11.5px;font-weight:600;flex:0 0 22px;background:var(--panel3);color:var(--txt2)}
+.prio.r .rk{background:var(--red-soft);color:var(--red)}
+.prio.a .rk{background:var(--amber-soft);color:var(--amber)}
+.prio .grow{flex:1;min-width:0}
+.prio .t1{font-size:13.5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.prio .t2{font-size:12px;color:var(--txt3);margin-top:2px}
+
+.qcard{border:1px solid var(--line);border-radius:12px;padding:14px 15px;background:var(--panel2);margin-bottom:12px}
+.qcard .qh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.qcard .qn{font-size:13.5px;font-weight:600}
+.qcard .qq{font-size:12.5px;color:var(--txt2);padding:8px 11px;border-radius:8px;background:var(--panel3);
+  border-left:2px solid var(--line2);margin-bottom:9px;line-height:1.7}
+.qcard .qa{font-size:12.5px;padding:8px 11px;border-radius:8px;line-height:1.7}
+.qcard .qa.good{background:var(--acc-soft);border-left:2px solid var(--acc);color:var(--txt)}
+.qcard .qa.bad{background:var(--red-soft);border-left:2px solid var(--red);color:var(--txt)}
+/* 中性：只有剧本参考、没有学员作答时用，避免"看起来像一次真实作答" */
+.qcard .qa.neutral{background:var(--panel3);border-left:2px solid var(--line2);color:var(--txt2)}
+.qcard .qa .lbl2{font-size:11.5px;color:var(--txt3);display:block;margin-top:5px}
+/* 参考表达折叠：默认收起，把版面让给"学员实际怎么答的" */
+.qcard details.refd{margin-top:8px}
+.qcard details.refd>summary{font-size:11.5px;color:var(--txt3);cursor:pointer;list-style:none;
+  padding:3px 0;user-select:none}
+.qcard details.refd>summary::-webkit-details-marker{display:none}
+.qcard details.refd>summary::before{content:'▸ ';color:var(--txt3)}
+.qcard details.refd[open]>summary::before{content:'▾ '}
+.qcard details.refd>summary:hover{color:var(--txt2)}
+.qcard .refb{font-size:12px;color:var(--txt2);line-height:1.7;padding:7px 10px;margin-top:4px;
+  border-radius:7px;background:var(--panel3)}
+/* 数据来源提示条：明确区分"真实作答"与"剧本参考"，教练据此决定是否点评 */
+.dnote{font-size:11.5px;line-height:1.6;color:var(--txt3);padding:7px 11px;border-radius:8px;
+  background:var(--panel3);border:1px dashed var(--line2);margin-bottom:11px}
+.dnote.warn{color:var(--amber);border-color:var(--amber-bd)}
+.turnscore{font-size:11px;font-weight:600;padding:1px 7px;border-radius:20px}
+.turnscore.g{background:var(--acc-soft);color:var(--acc-txt)}
+.turnscore.a{background:var(--amber-soft);color:var(--amber)}
+.turnscore.r{background:var(--red-soft);color:var(--red)}
+
+.gap{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.gap .nm{flex:0 0 88px;font-size:12.5px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gap .bw{flex:1;min-width:0}
+.gap .vl{flex:0 0 74px;text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums}
+.gap .dl{font-size:11.5px;padding:0 6px;border-radius:5px;flex:0 0 auto}
+.gap .dl.up{color:var(--acc-txt);background:var(--acc-soft)}
+.gap .dl.dn{color:var(--red);background:var(--red-soft)}
+.gap .dl.fl{color:var(--txt3);background:transparent}
+
+.note-item{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)}
+.note-item:last-child{border-bottom:0}
+.note-item .bd{flex:1;min-width:0}
+.note-item .bt{font-size:13px;line-height:1.7;white-space:pre-wrap}
+.note-item .bm{font-size:11.5px;color:var(--txt3);margin-top:5px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+
+.tipbox{font-size:12.5px;line-height:1.75;color:var(--txt2);background:var(--panel2);
+  border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.tipbox b{color:var(--txt);font-weight:600}
+
+.sec-title{font-size:12px;color:var(--txt3);letter-spacing:.04em;margin:18px 0 9px;font-weight:500}
+.sec-title:first-child{margin-top:0}
+
+[hidden]{display:none!important}
+
+/* 轻量提示（同步结果必须如实告诉用户，不能静默） */
+#toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,14px);background:var(--panel2);border:1px solid var(--line);
+  border-radius:10px;padding:10px 16px;font-size:12.5px;color:var(--txt);box-shadow:0 8px 24px rgba(0,0,0,.28);
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:80;max-width:70vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+/* 登录门 */
+#loginBox{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;display:flex;align-items:center;justify-content:center;padding:20px}
+#loginBox .lg-card{width:344px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:18px;box-shadow:0 18px 48px rgba(0,0,0,.4)}
+</style>
+</head>
+<body>
+<div class="wrap wrap-wide">
+
+  <!-- ================= 顶栏 ================= -->
+  <div class="topbar">
+    <div class="topbar-in">
+      <div class="brand">
+        <div class="logo">训</div>
+        <div>新员工仿真培训系统
+          <small id="orgName">XX食品 · 连锁渠道事业部</small>
+        </div>
+      </div>
+      <nav class="nav-tabs" id="navTabs">
+        <a href="#overview" class="on">总览</a>
+        <a href="#students">我的学员</a>
+        <a href="#coach">一对一辅导</a>
+        <a href="#quality">对话质检</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="btn-row">
+        <span class="tag" id="srvTag">检测中…</span>
+        <button class="btn sm ghost" id="btnLogin" hidden>登录</button>
+        <a class="btn sm ghost" href="管理后台-仿真培训.html" target="_blank">管理后台</a>
+        <a class="btn sm ghost" href="产品规划-新员工培训系统.html" target="_blank">产品规划</a>
+        <a class="btn sm ghost" href="仿真培训原型-微信风格.html" target="_blank">学员端</a>
+        <button class="btn sm ghost" id="btnTheme" title="切换深浅色">◐ 主题</button>
+      </div>
+      <div class="who"><div class="av" id="whoAv">—</div><span id="whoName">加载中…</span></div>
+    </div>
+  </div>
+
+  <!-- ================= 总览 ================= -->
+  <section id="sec-overview">
+    <div class="page-head">
+      <div class="row">
+        <div>
+          <h1>带教工作台</h1>
+          <p id="ovSub">—</p>
+        </div>
+        <div>
+          <div class="seg" id="scopeSeg">
+            <button class="on" data-scope="mine">我带的学员</button>
+            <button data-scope="all" id="scopeAllBtn">全部学员</button>
+          </div>
+          <p id="scopeNote" style="font-size:11.5px;color:var(--txt3);margin:7px 0 0;text-align:right">—</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g5" id="kpiRow"></div>
+
+    <div class="grid g2 mt20" style="align-items:start">
+      <div>
+        <div class="card">
+          <div class="card-h">
+            <h2>今日待办</h2>
+            <span class="sub" id="todoSub">按优先级排序</span>
+          </div>
+          <div id="todoList"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">
+            <h2>学员动态</h2>
+            <span class="sub">最近 6 条</span>
+          </div>
+          <div class="tl" id="feedList"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-h">
+            <h2>需重点辅导的学员</h2>
+            <span class="sub" id="focusSub">—</span>
+          </div>
+          <div id="focusList"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">
+            <h2>团队能力短板</h2>
+            <span class="sub" id="weakSub">—</span>
+          </div>
+          <div id="gapList"></div>
+          <div class="tipbox mt14" id="gapTip"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 我的学员 ================= -->
+  <section id="sec-students" hidden>
+    <div class="page-head">
+      <div class="row">
+        <div>
+          <h1>我的学员</h1>
+          <p>按导师归属查看学员练习表现、风险分层与达标情况。点击任意学员进入辅导工作台。</p>
+        </div>
+        <div class="btn-row">
+          <input class="inp" id="stuSearch" placeholder="搜索学员 / 部门 / 岗位" style="width:230px">
+          <select class="sel" id="stuRisk" style="width:150px">
+            <option value="all">全部风险</option>
+            <option value="red">高风险</option>
+            <option value="yellow">需关注</option>
+            <option value="green">正常</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card pad0">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:210px">学员</th>
+              <th>导师</th>
+              <th class="num">练习次数</th>
+              <th class="num">平均分</th>
+              <th class="num">最近得分</th>
+              <th class="num">最近趋势</th>
+              <th>风险分层</th>
+              <th style="width:190px">最近一次练习</th>
+              <th style="width:120px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="stuBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 一对一辅导 ================= -->
+  <section id="sec-coach" hidden>
+    <div class="page-head">
+      <div class="row">
+        <div>
+          <h1>一对一辅导</h1>
+          <p>先看整体表现，再逐句复盘学员当时的回答。可以针对具体回答写下辅导记录，交接给下一次带教。</p>
+        </div>
+        <div class="btn-row">
+          <select class="sel" id="coachPick" style="width:220px"></select>
+          <select class="sel" id="coachRec" style="width:200px"></select>
+        </div>
+      </div>
+    </div>
+    <div id="coachBody"></div>
+  </section>
+
+  <!-- ================= 对话质检 ================= -->
+  <section id="sec-quality" hidden>
+    <div class="page-head">
+      <div class="row">
+        <div>
+          <h1>对话质检</h1>
+          <p>系统按维度分给出排序，分数偏低或未达标优先抽检。质检结论可标记为「话术需要统一」并转交培训运营更新剧本。</p>
+        </div>
+        <div class="seg" id="qFilter">
+          <button class="on" data-q="all">全部</button>
+          <button data-q="high">高风险学员</button>
+          <button data-q="fail">未达标</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g4" id="qKpi"></div>
+
+    <div class="card pad0 mt20">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:64px">序号</th>
+              <th style="width:200px">学员 / 任务</th>
+              <th>场景</th>
+              <th class="num" style="width:74px">得分</th>
+              <th class="num" style="width:78px">达标线</th>
+              <th style="width:132px">最弱维度</th>
+              <th style="width:96px">质检状态</th>
+              <th style="width:110px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="qBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ================= 辅导抽屉 ================= -->
+<div class="mask" id="mask"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-h">
+    <h3 id="drTitle">学员辅导</h3>
+    <button class="x" id="drClose">✕</button>
+  </div>
+  <div class="drawer-b" id="drBody"></div>
+  <div class="drawer-f">
+    <button class="btn" id="drCloseF">关闭</button>
+    <button class="btn pri" id="drPlan">生成辅导计划</button>
+  </div>
+</aside>
+
+<!-- ================= 登录门（服务端在线且未登录时才出现） ================= -->
+<div id="loginBox" hidden>
+  <div class="lg-card">
+    <h2 style="margin:0 0 5px;font-size:15.5px">登录后按数据范围加载学员</h2>
+    <p class="muted" style="font-size:12.5px;margin:0 0 14px">
+      未登录时以演示身份加载；登录后只显示你有权查看的学员（本部门 / 本人带教）。
+    </p>
+    <input class="inp" id="lgAcc" placeholder="账号" style="width:100%" autocomplete="username">
+    <input class="inp mt8" id="lgPwd" type="password" placeholder="口令" style="width:100%" autocomplete="current-password">
+    <div id="lgErr" style="font-size:12px;color:var(--red);min-height:17px;margin-top:7px"></div>
+    <div class="btn-row mt8">
+      <button class="btn pri" id="lgGo">登录</button>
+      <button class="btn ghost" id="lgClose">稍后（用演示身份）</button>
+    </div>
+    <p class="muted" style="font-size:11.5px;margin:12px 0 0;line-height:1.7">
+      演示账号：<code>zhoumin</code> / <code>zhaolei</code>（本人带教）、<code>chenxi</code>（本部门）、<code>admin</code>（全部）<br>
+      口令：教练 <code>coach123</code> · 管理员 <code>admin123</code>
+    </p>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="data/app-data.js"></script>
+<script src="data/scoring-engine.js"></script>
+<script src="assets/admin-server-sync.js"></script>
+<script>
+/* ============================================================================
+ * 教练工作台（带教主管视角）
+ * ----------------------------------------------------------------------------
+ * 数据来自 data/app-data.js，统计一律走 TRAIN.helpers，评分解释走 SCORER。
+ *
+ * P5 起为「服务端优先、离线兜底」：
+ *   - 服务端在线：先按登录身份拉取 [学员 / 成绩 / 任务] 并按数据范围**原地水合**
+ *     进数据源，再复用同一套 helpers 重渲染 —— 三端数字天然一致；
+ *     辅导记录与质检结论也读写服务端（真正"留存"，刷新/换机器都在）。
+ *   - 服务端离线：完全走 app-data.js 静态数据，辅导记录与质检落 localStorage。
+ *   任何时候都不阻塞界面：失败静默降级，只有「写操作被服务端拒绝」才如实提示。
+ * ==========================================================================*/
+(function () {
+  'use strict';
+  var T = window.TRAIN, H = T.helpers, S = window.SCORER;
+  var SYNC = window.ADMIN_SYNC || null;   // 可选加载：服务未启动时为 null，全部逻辑自动走离线
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return [].slice.call(document.querySelectorAll(s)); };
+  var NOW = new Date('2026/10/05 20:00');
+
+  /* ---------------- 身份与数据范围 ----------------
+   * 离线时用演示教练（周敏）跑通全部界面；服务端在线时身份以 **token / 服务端返回** 为准，
+   * 学员集合也由服务端按 data_scope 过滤后再水合进来 —— 也就是说：
+   * 「全部学员」这一档最多只能看到服务端允许他看到的人，界面永远不会比权限大。
+   */
+  var COACH = '周敏';        // 当前带教人姓名（用于筛「我带的学员」）
+  var IDENT = null;          // 服务端身份（/auth/me 的 user）
+  var SCOPE_KIND = 'all';    // 服务端授予的数据范围：all | dept | mentor
+  var scope = 'mine';        // 当前视图：mine | all
+  var notes = [];            // 辅导记录（服务端为准，离线落 localStorage）
+  var qcState = {};          // 质检结论 recordId -> 'ok' | 'flag'
+  var NOTES_KEY = 'TRAIN_COACH_NOTES_V1';
+  var QC_KEY = 'TRAIN_COACH_QC_V1';
+  var toastTimer = null;
+
+  /* ------------------------- 工具 ------------------------- */
+  function toast(msg) {
+    var n = $('#toast');
+    if (!n) return;
+    n.textContent = msg;
+    n.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { n.classList.remove('on'); }, 2600);
+  }
+  function stamp() {
+    var d = new Date(), p = function (x) { return String(x).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  function srvOnline() { return !!(SYNC && SYNC.status === 'online'); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function riskTag(key) {
+    var r = T.riskRules[key];
+    var cls = key === 'red' ? 'r' : (key === 'yellow' ? 'a' : 'g');
+    return '<span class="tag ' + cls + '"><i class="dot ' + cls + '"></i>' + r.label + '</span>';
+  }
+  function daysLeft(dueStr) {
+    var d = new Date(String(dueStr).replace(/-/g, '/'));
+    var diff = Math.ceil((d - NOW) / 86400000);
+    if (diff < 0) return { text: '已逾期 ' + Math.abs(diff) + ' 天', cls: 'r', overdue: true };
+    if (diff === 0) return { text: '今日截止', cls: 'a', overdue: false };
+    return { text: '剩余 ' + diff + ' 天', cls: '', overdue: false };
+  }
+  function fmtDate(s) { return String(s).slice(0, 10); }
+  function myLearners() {
+    // T.learners 已被服务端按数据范围裁剪过，所以这里的 'all' 也不会越界
+    return scope === 'mine' ? T.learners.filter(function (l) { return l.mentor === COACH; }) : T.learners.slice();
+  }
+  function learnerIds() { return myLearners().map(function (l) { return l.id; }); }
+  function ava(l, cls) {
+    return '<div class="' + (cls || 'ava-rd') + '" style="background:' + l.color + '">' + l.avatarText + '</div>';
+  }
+
+  /* ================= 身份 · 数据范围 · 水合（P5） ================= */
+
+  function setWho(avChar, label) {
+    var av = $('#whoAv'), nm = $('#whoName');
+    if (av) av.textContent = String(avChar || '?').slice(0, 1);
+    if (nm) nm.textContent = label || '—';
+  }
+
+  /** 服务端学员 → 本地数据源形状 */
+  function normLearner(l) {
+    return {
+      id: l.id, name: l.name, avatarText: l.avatarText, color: l.color, dept: l.dept,
+      position: l.title || l.position || '',
+      mentor: l.mentor || l.coach || '',
+      joinDate: l.onboardAt || l.joinDate || ''
+    };
+  }
+  /** 服务端成绩 → 本地数据源形状（qc 也带过来，质检页直接用） */
+  function normRecord(r) {
+    var task = T.taskById(r.taskId), scene = T.sceneById(r.sceneId);
+    return {
+      id: r.id, taskId: r.taskId, learnerId: r.learnerId, sceneId: r.sceneId,
+      score: r.score, dimScores: r.dimScores || {},
+      passLine: (task && task.passLine) || (scene && scene.passLine) || 60,
+      passed: !!r.passed, finishedAt: r.at,
+      minutes: r.minutes || 0, turns: r.turns || 0,
+      channel: r.channel === 'voice' ? '微信语音' : '微信沟通',
+      source: r.source || '', confidence: r.confidence,
+      qc: r.qc || ''
+    };
+  }
+
+  /** 把服务端真值按需水合进数据源（原地替换，保证 helpers 口径不被打断） */
+  function hydrateFromServer() {
+    if (!srvOnline() || !H.replaceInPlace) return Promise.resolve(null);
+    return Promise.all([SYNC.learners(), SYNC.records(), SYNC.tasks()]).then(function (res) {
+      var ls = res[0], rs = res[1], ts = res[2];
+      if (ls === null && rs === null && ts === null) return null;
+      H.replaceInPlace({
+        learners: ls === null ? null : ls.map(normLearner),
+        records: rs === null ? null : rs.map(normRecord),
+        tasks: ts
+      });
+      return { learners: ls === null ? null : ls.length, records: rs === null ? null : rs.length };
+    }).catch(function () { return null; });
+  }
+
+  /** 顶栏状态 + 范围说明 + 切换器收敛（界面永远不比权限大） */
+  function applyScopeUI() {
+    var online = srvOnline();
+    $('#srvTag').textContent = !SYNC ? '未加载同步层' : (online ? (SYNC.loggedIn ? '服务端已连接 · 已登录' : '服务端已连接 · 演示身份') : '离线模式（本地数据）');
+    $('#srvTag').className = 'tag ' + (online ? (SYNC.loggedIn ? 'g' : 'b') : '');
+
+    var who = IDENT ? (IDENT.name || IDENT.staffName) : COACH;
+    var role = IDENT ? ({ admin: '系统管理员', operator: '培训运营', reviewer: '带教主管', coach: '区域教练' }[IDENT.role] || IDENT.role) : '区域教练';
+    setWho(IDENT ? (IDENT.staffName || IDENT.name) : COACH, who + ' · ' + role);
+
+    $('#btnLogin').hidden = !(online && !SYNC.loggedIn);
+
+    var allBtn = $('#scopeAllBtn');
+    if (SCOPE_KIND === 'mentor') {
+      allBtn.hidden = true;
+      scope = 'mine';
+      $$('#scopeSeg button').forEach(function (x) { x.classList.toggle('on', x.dataset.scope === 'mine'); });
+      $('#scopeNote').textContent = '当前身份的数据范围是「本人带教」，只显示你名下的学员。';
+    } else if (SCOPE_KIND === 'dept') {
+      allBtn.hidden = false;
+      allBtn.textContent = '本部门学员';
+      $('#scopeNote').textContent = '当前身份的数据范围是「本部门」，最多可见本部门学员。';
+    } else {
+      allBtn.hidden = false;
+      allBtn.textContent = '全部学员';
+      $('#scopeNote').textContent = IDENT
+        ? '当前身份可见全部数据（' + (IDENT.scopeLabel || '全部数据') + '）。'
+        : '未连接服务端，当前为本地演示数据。';
+    }
+  }
+
+  /* ---- 辅导记录 / 质检：本地缓存（离线兜底） ---- */
+  function loadLocal() {
+    try {
+      var n = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+      if (n && n.length) notes = n;
+    } catch (e) { /* ignore */ }
+    try {
+      var q = JSON.parse(localStorage.getItem(QC_KEY) || '{}');
+      if (q && typeof q === 'object') qcState = q;
+    } catch (e) { /* ignore */ }
+  }
+  function saveLocal() {
+    try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); } catch (e) { /* ignore */ }
+    try { localStorage.setItem(QC_KEY, JSON.stringify(qcState)); } catch (e) { /* ignore */ }
+  }
+
+  /** 从服务端拉辅导记录与质检结论（服务端为准，覆盖本地缓存） */
+  function loadCoachData() {
+    if (!srvOnline()) return Promise.resolve(null);
+    return Promise.all([SYNC.coachNotes(), SYNC.qcList()]).then(function (res) {
+      var ns = res[0], qs = res[1];
+      if (ns) notes = ns.map(function (n) {
+        return { id: n.id, learnerId: n.learnerId, recordId: n.recordId, type: n.type, text: n.text, by: n.by, byId: n.byId || '', at: n.at };
+      });
+      if (qs) {
+        qcState = {};
+        qs.forEach(function (q) { qcState[q.recordId] = q.state; });
+      }
+      if (ns || qs) saveLocal();
+      return { notes: notes.length, qc: Object.keys(qcState).length };
+    }).catch(function () { return null; });
+  }
+
+  /** 新增辅导记录：先本地可见，再尽量落服务端；被拒则回滚并如实提示 */
+  function addNote(lid, text) {
+    var note = {
+      id: 'N-' + Date.now(), learnerId: lid, recordId: '', type: '一对一辅导',
+      text: String(text || '').trim(), by: COACH, byId: IDENT ? IDENT.id : '', at: stamp()
+    };
+    if (!note.text) return Promise.resolve(false);
+    notes.push(note);
+    saveLocal();
+
+    if (!srvOnline()) { toast('已保存在本地（服务端未连接，暂未同步）'); return Promise.resolve(false); }
+    return SYNC.addCoachNote(note).then(function (r) {
+      if (r && r.ok) {
+        if (r.note && r.note.at) note.at = r.note.at;
+        saveLocal();
+        toast('辅导记录已保存到服务端');
+        return true;
+      }
+      // 服务端拒绝（403 越权 / 400 校验）→ 撤回本地那条，界面不许说谎
+      notes = notes.filter(function (x) { return x.id !== note.id; });
+      saveLocal();
+      toast('服务端拒绝：' + ((r && r.error) || '未知错误'));
+      return false;
+    });
+  }
+
+  /** 质检结论：同样服务端优先、离线兜底 */
+  function markQc(rid, state) {
+    var prev = qcState[rid];
+    if (prev === state) return Promise.resolve(true);   // 重复点击不重复写
+    qcState[rid] = state;
+    saveLocal();
+
+    if (!srvOnline()) { toast('已记在本地（服务端未连接，暂未同步）'); return Promise.resolve(false); }
+    return SYNC.setQc(rid, state).then(function (r) {
+      if (r && r.ok) { toast('质检结论已保存到服务端'); return true; }
+      if (prev) qcState[rid] = prev; else delete qcState[rid];
+      saveLocal();
+      toast('服务端拒绝：' + ((r && r.error) || '未知错误'));
+      return false;
+    });
+  }
+
+  /** 撤销质检结论 */
+  function clearQcMark(rid) {
+    var prev = qcState[rid];
+    delete qcState[rid];
+    saveLocal();
+    if (!srvOnline()) { toast('已在本机撤销（服务端未连接）'); return Promise.resolve(false); }
+    return SYNC.clearQc(rid).then(function (r) {
+      if (r && r.ok) { toast('质检结论已撤销'); return true; }
+      if (prev) qcState[rid] = prev;
+      saveLocal();
+      toast('服务端拒绝：' + ((r && r.error) || '未知错误'));
+      return false;
+    });
+  }
+
+  /** 删除辅导记录：服务端优先，被拒则把本地那条放回来（界面不说谎） */
+  function delNote(id) {
+    var prev = notes.slice();
+    var target = notes.filter(function (n) { return n.id === id; })[0];
+    if (!target) return Promise.resolve(false);
+    notes = notes.filter(function (n) { return n.id !== id; });
+    saveLocal();
+
+    if (!srvOnline()) { toast('已在本机删除（服务端未连接）'); return Promise.resolve(false); }
+    return SYNC.removeCoachNote(id).then(function (r) {
+      if (r && r.ok) { toast('辅导记录已删除'); return true; }
+      notes = prev;
+      saveLocal();
+      toast('服务端拒绝：' + ((r && r.error) || '未知错误'));
+      return false;
+    });
+  }
+
+  /* ---- 登录门 ---- */
+  function showLogin() { $('#loginBox').hidden = false; setTimeout(function () { $('#lgAcc').focus(); }, 30); }
+  function hideLogin() { $('#loginBox').hidden = true; $('#lgErr').textContent = ''; }
+  function doLogin() {
+    var acc = ($('#lgAcc').value || '').trim(), pwd = $('#lgPwd').value || '';
+    if (!acc || !pwd) { $('#lgErr').textContent = '请填写账号与口令'; return; }
+    $('#lgGo').disabled = true;
+    SYNC.login(acc, pwd).then(function (r) {
+      $('#lgGo').disabled = false;
+      if (!r.ok) { $('#lgErr').textContent = r.error || '登录失败'; return; }
+      hideLogin();
+      $('#lgPwd').value = '';
+      boot();          // 身份变了 → 重新拉真值并重渲染
+    }).catch(function (e) { $('#lgGo').disabled = false; $('#lgErr').textContent = e.message || '登录失败'; });
+  }
+
+  /* ---- 一次性装载 ---- */
+  function boot() {
+    loadLocal();
+    renderAll();
+    if (!SYNC) { applyScopeUI(); return; }
+    SYNC.probe(true).then(function (ok) {
+      if (!ok) { applyScopeUI(); return null; }
+      return SYNC.me().then(function (wrap) {
+        if (wrap && wrap.user) {
+          IDENT = wrap.user;
+          COACH = IDENT.staffName || COACH;
+          SCOPE_KIND = IDENT.scope || 'all';
+        }
+        return hydrateFromServer();
+      }).then(function () {
+        applyScopeUI();
+        refreshPicker();
+        renderAll();
+        return loadCoachData();
+      }).then(function () {
+        applyScopeUI();
+        refreshPicker();
+        renderAll();
+        // 在线但未登录：主动给出登录入口（不阻塞，可「稍后」）
+        if (srvOnline() && !SYNC.loggedIn && !sessionStorage.getItem('train-coach-later')) showLogin();
+      });
+    }).catch(function () { applyScopeUI(); });
+  }
+
+  /* ------------------------- 总览 ------------------------- */
+  function renderOverview() {
+    var ids = learnerIds();
+    var recs = T.records.filter(function (r) { return ids.indexOf(r.learnerId) !== -1; });
+    var running = T.tasks.filter(function (t) { return t.status === 'running'; });
+    var scores = recs.map(function (r) { return r.score; });
+    var avg = H.avg(scores);
+    var passRate = recs.length ? Math.round(recs.filter(function (r) { return r.passed; }).length / recs.length * 100) : 0;
+
+    var risk = { red: 0, yellow: 0, green: 0 };
+    myLearners().forEach(function (l) { risk[H.riskOf(l.id)]++; });
+
+    // 团队未完成人次（进行中任务的未提交数）
+    var pending = 0, overdue = 0;
+    running.forEach(function (t) {
+      var p = H.taskProgress(t.id);
+      ids.forEach(function (lid) {
+        if (t.assignees.indexOf(lid) === -1) return;
+        var done = p.records[t.assignees.indexOf(lid)];
+        if (!done) { pending++; if (daysLeft(t.dueAt).overdue) overdue++; }
+      });
+    });
+
+    $('#orgName').textContent = T.meta.org;
+    $('#ovSub').textContent = '今天是 ' + fmtDate(T.meta.updatedAt) + ' · 你带教 ' + myLearners().length +
+      ' 名学员 · 进行中任务 ' + running.length + ' 个';
+
+    $('#kpiRow').innerHTML = [
+      kpi('我的学员', myLearners().length, '人', '其中高风险 <b class="down">' + risk.red + '</b> 人'),
+      kpi('累计练习', recs.length, '场', '人均 ' + (myLearners().length ? (recs.length / myLearners().length).toFixed(1) : 0) + ' 场'),
+      kpi('平均分', avg, '分', '全体均分 ' + H.overview().avgScore + ' 分'),
+      kpi('达标率', passRate, '%', passRate >= 70 ? '高于整体水平' : '低于整体水平'),
+      kpi('待完成人次', pending, '人次', overdue ? '其中 <b class="down">' + overdue + '</b> 人次已逾期' : '暂无逾期')
+    ].join('');
+
+    renderTodo(ids, running);
+    renderFeed(recs);
+    renderFocus();
+    renderGap(recs);
+  }
+
+  function kpi(lab, val, unit, foot) {
+    return '<div class="kpi"><div class="lab">' + lab + '</div>' +
+      '<div class="val">' + val + '<small>' + (unit || '') + '</small></div>' +
+      '<div class="foot">' + foot + '</div></div>';
+  }
+
+  /* ------------------------- 今日待办 ------------------------- */
+  function renderTodo(ids, running) {
+    var items = [];
+
+    // ① 逾期未完成
+    running.forEach(function (t) {
+      var p = H.taskProgress(t.id);
+      var dl = daysLeft(t.dueAt);
+      if (!dl.overdue) return;
+      var miss = [];
+      t.assignees.forEach(function (lid, i) {
+        if (ids.indexOf(lid) === -1) return;
+        if (!p.records[i]) miss.push(T.learnerById(lid).name);
+      });
+      if (miss.length) items.push({
+        pr: 'r', rank: '急',
+        t1: '逾期未完成：' + t.title,
+        t2: miss.join('、') + ' 共 ' + miss.length + ' 人未提交 · 截止 ' + t.dueAt,
+        tag: '<span class="tag r">已逾期</span>',
+        act: '提醒补练', go: function () { openTaskDrawer(t.id, ids); }
+      });
+    });
+
+    // ② 高风险学员待辅导
+    myLearners().forEach(function (l) {
+      if (H.riskOf(l.id) !== 'red') return;
+      var st = H.statsOf(l.id);
+      items.push({
+        pr: 'r', rank: '高',
+        t1: '高风险学员待辅导：' + l.name,
+        t2: '均分 ' + st.avg + ' 分 · 最近 ' + (st.last ? st.last.score : '-') + ' 分未达标 · 需 24 小时内一对一带教',
+        tag: '<span class="tag r">高风险</span>',
+        act: '去辅导', go: function () { location.hash = '#coach'; pickCoach(l.id); }
+      });
+    });
+
+    // ③ 今日截止任务
+    running.forEach(function (t) {
+      var dl = daysLeft(t.dueAt);
+      if (dl.overdue || dl.text !== '今日截止') return;
+      var p = H.taskProgress(t.id);
+      items.push({
+        pr: 'a', rank: '中',
+        t1: '今日截止：' + t.title,
+        t2: '已完成 ' + p.finishedCount + '/' + p.total + ' · 达标率 ' + p.passRate + '%',
+        tag: '<span class="tag a">今日截止</span>',
+        act: '查看进度', go: function () { openTaskDrawer(t.id, ids); }
+      });
+    });
+
+    // ④ 需关注学员（最近未达标）
+    myLearners().forEach(function (l) {
+      if (H.riskOf(l.id) !== 'yellow') return;
+      var st = H.statsOf(l.id);
+      if (!st.last || st.last.passed) return;
+      items.push({
+        pr: 'a', rank: '中',
+        t1: '最近一次未达标：' + l.name,
+        t2: '最近 ' + st.last.score + ' 分 · 达标线 ' + st.last.passLine + ' 分 · 建议安排复训',
+        tag: '<span class="tag a">需关注</span>',
+        act: '安排复训', go: function () { location.hash = '#coach'; pickCoach(l.id); }
+      });
+    });
+
+    // ⑤ 有辅导记录的学员复查
+    notes.slice(-2).reverse().forEach(function (n) {
+      var l = T.learnerById(n.learnerId);
+      items.push({
+        pr: '', rank: '低',
+        t1: '复查辅导效果：' + l.name,
+        t2: '你于 ' + n.at + ' 记录了一条辅导：' + n.text.slice(0, 22) + (n.text.length > 22 ? '…' : ''),
+        tag: '<span class="tag">已记录</span>',
+        act: '查看学员', go: function () { location.hash = '#coach'; pickCoach(l.id); }
+      });
+    });
+
+    if (!items.length) {
+      $('#todoList').innerHTML = '<div class="empty"><div class="ic">✓</div>暂无待办，所有任务都在正常推进</div>';
+      $('#todoSub').textContent = '暂无待办';
+      return;
+    }
+    $('#todoSub').textContent = '共 ' + items.length + ' 项，按优先级排序';
+
+    $('#todoList').innerHTML = items.map(function (it, i) {
+      return '<div class="prio ' + it.pr + '" data-todo="' + i + '">' +
+        '<div class="rk">' + it.rank + '</div>' +
+        '<div class="grow"><div class="t1">' + esc(it.t1) + it.tag + '</div>' +
+        '<div class="t2">' + esc(it.t2) + '</div></div>' +
+        '<button class="btn sm" data-todo-go="' + i + '">' + it.act + '</button>' +
+        '</div>';
+    }).join('');
+    window.__todos = items;
+  }
+
+  /* ------------------------- 学员动态 ------------------------- */
+  function renderFeed(recs) {
+    var ids = learnerIds();
+    var list = recs.slice().sort(function (a, b) { return a.finishedAt < b.finishedAt ? 1 : -1; }).slice(0, 6);
+    if (!list.length) { $('#feedList').innerHTML = '<div class="empty">暂无练习记录</div>'; return; }
+    $('#feedList').innerHTML = list.map(function (r) {
+      var l = T.learnerById(r.learnerId), sc = T.sceneById(r.sceneId), tk = T.taskById(r.taskId);
+      var cls = r.score >= 75 ? 'g' : (r.passed ? 'a' : 'r');
+      var word = r.score >= 85 ? '表现出色' : (r.passed ? '顺利达标' : '未达标');
+      return '<div class="ev ' + cls + '">' +
+        '<div class="tm">' + esc(r.finishedAt) + '</div>' +
+        '<div class="tx"><b>' + esc(l.name) + '</b> 完成「' + esc(tk ? tk.title : sc.taskName) + '」，得分 <b>' +
+        r.score + '</b> 分（' + word + '）</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  /* ------------------------- 重点辅导 ------------------------- */
+  function renderFocus() {
+    var list = myLearners().map(function (l) {
+      var st = H.statsOf(l.id);
+      return { l: l, st: st, risk: H.riskOf(l.id) };
+    }).filter(function (x) { return x.risk !== 'green'; })
+      .sort(function (a, b) {
+        var w = { red: 0, yellow: 1, green: 2 };
+        if (w[a.risk] !== w[b.risk]) return w[a.risk] - w[b.risk];
+        return a.st.avg - b.st.avg;
+      });
+
+    $('#focusSub').textContent = list.length ? '高风险优先，共 ' + list.length + ' 人' : '全部正常';
+    if (!list.length) {
+      $('#focusList').innerHTML = '<div class="empty"><div class="ic">🎉</div>你带的学员全部处于正常状态</div>';
+      return;
+    }
+    $('#focusList').innerHTML = list.map(function (x, i) {
+      var last = x.st.last;
+      var why = x.risk === 'red'
+        ? '最近一次未达标，且历史均分 ' + x.st.avg + ' 分低于 65'
+        : (last && !last.passed ? '最近一次 ' + last.score + ' 分未达标' : '历史均分 ' + x.st.avg + ' 分偏低');
+      return '<div class="item" data-go-coach="' + x.l.id + '">' +
+        ava(x.l) +
+        '<div class="mid"><div class="t1">' + esc(x.l.name) + riskTag(x.risk) + '</div>' +
+        '<div class="t2">' + esc(why) + '</div></div>' +
+        '<div class="rt"><div style="font-size:15px;font-weight:600">' + x.st.avg + '<small style="font-size:11px;color:var(--txt3)"> 均分</small></div>' +
+        '<div style="font-size:11.5px;color:var(--txt3)">练 ' + x.st.count + ' 次</div></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  /* ------------------------- 团队短板 ------------------------- */
+  function renderGap(recs) {
+    if (!recs.length) { $('#gapList').innerHTML = '<div class="empty">暂无数据</div>'; return; }
+    var ids = learnerIds();
+    var gaps = T.dims.map(function (d) {
+      var vals = recs.map(function (r) { return r.dimScores[d.id]; });
+      var mine = H.avg(vals);
+      var overall = H.overview().dimAvg.filter(function (x) { return x.id === d.id; })[0].avg;
+      return { id: d.id, name: d.name, mine: mine, overall: overall, diff: mine - overall, weight: d.weight };
+    }).sort(function (a, b) { return a.mine - b.mine; });
+
+    var worst = gaps[0];
+    $('#weakSub').textContent = '最弱：' + worst.name + ' ' + worst.mine + ' 分';
+    $('#gapList').innerHTML = gaps.map(function (g) {
+      var cls = g.mine >= 75 ? '' : (g.mine >= 60 ? 'a' : 'r');
+      var dl = g.diff > 1 ? '<span class="dl up">高于整体 ' + g.diff + '</span>'
+        : (g.diff < -1 ? '<span class="dl dn">低于整体 ' + Math.abs(g.diff) + '</span>'
+        : '<span class="dl fl">与整体持平</span>');
+      return '<div class="gap">' +
+        '<div class="nm">' + esc(g.name) + '</div>' +
+        '<div class="bw"><div class="bar"><i class="' + cls + '" style="width:' + g.mine + '%"></i></div></div>' +
+        '<div class="vl">' + g.mine + ' <span class="muted" style="font-size:11px">/100</span></div>' +
+        dl + '</div>';
+    }).join('');
+
+    var runTask = T.tasks.filter(function (t) { return t.status === 'running'; })[0];
+    $('#gapTip').innerHTML = '<b>建议：</b>本组 <b>' + esc(worst.name) + '</b> 均分 ' + worst.mine +
+      ' 分，低于全体 ' + worst.overall + ' 分。该维度占评分的 <b>' + worst.weight + '%</b>，' +
+      '建议下一次周会安排 15 分钟专项话术拆解' +
+      (runTask ? '，并让学员重练「' + esc(runTask.title) + '」。' : '，并尽快下发一次针对该维度的练习任务。');
+  }
+
+  /* ------------------------- 我的学员 ------------------------- */
+  function renderStudents() {
+    var kw = ($('#stuSearch').value || '').trim().toLowerCase();
+    var rf = $('#stuRisk').value;
+    var list = myLearners().filter(function (l) {
+      if (rf !== 'all' && H.riskOf(l.id) !== rf) return false;
+      if (!kw) return true;
+      return (l.name + l.dept + l.position + l.mentor).toLowerCase().indexOf(kw) !== -1;
+    });
+
+    if (!list.length) {
+      $('#stuBody').innerHTML = '<tr><td colspan="9"><div class="empty"><div class="ic">🔍</div>没有符合条件的学员</div></td></tr>';
+      return;
+    }
+    $('#stuBody').innerHTML = list.map(function (l) {
+      var st = H.statsOf(l.id), risk = H.riskOf(l.id);
+      var prev = st.count >= 2 ? st.count - 1 : -1;
+      var rs = H.recordsOf(l.id);
+      var trend = '首次';
+      if (prev >= 0 && rs.length >= 2) {
+        var d = rs[rs.length - 1].score - rs[rs.length - 2].score;
+        trend = d > 2 ? '↑ ' + d : (d < -2 ? '↓ ' + Math.abs(d) : '持平');
+      }
+      var trendCls = trend.charAt(0) === '↑' ? 'color:var(--acc-txt)' : (trend.charAt(0) === '↓' ? 'color:var(--red)' : 'color:var(--txt3)');
+      var last = st.last;
+      return '<tr data-go-coach="' + l.id + '" style="cursor:pointer">' +
+        '<td><div class="flex">' + ava(l) + '<div><div style="font-weight:500">' + esc(l.name) + '</div>' +
+        '<div style="font-size:11.5px;color:var(--txt3)">' + esc(l.dept) + ' · ' + esc(l.position) + '</div></div></div></td>' +
+        '<td>' + esc(l.mentor) + '</td>' +
+        '<td class="num">' + st.count + '</td>' +
+        '<td class="num">' + st.avg + '</td>' +
+        '<td class="num">' + (last ? last.score : '-') + '</td>' +
+        '<td class="num" style="' + trendCls + '">' + trend + '</td>' +
+        '<td>' + riskTag(risk) + '</td>' +
+        '<td><div style="font-size:12.5px">' + (last ? esc(fmtDate(last.finishedAt)) : '-') + '</div>' +
+        '<div style="font-size:11.5px;color:var(--txt3)">' + (last ? esc(T.sceneById(last.sceneId).name) + '场景' : '未练习') + '</div></td>' +
+        '<td><button class="btn sm" data-go-coach="' + l.id + '">去辅导</button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  /* ------------------------- 学员辅导抽屉 ------------------------- */
+  function openDrawer(title, html) {
+    $('#drTitle').textContent = title;
+    $('#drBody').innerHTML = html;
+    $('#mask').classList.add('on');
+    $('#drawer').classList.add('on');
+    $('#drBody').scrollTop = 0;
+  }
+  function closeDrawer() {
+    $('#mask').classList.remove('on');
+    $('#drawer').classList.remove('on');
+  }
+
+  function openLearnerDrawer(lid) {
+    var l = T.learnerById(lid), st = H.statsOf(lid), risk = H.riskOf(lid);
+    var rs = H.recordsOf(lid);
+    var last = st.last;
+
+    /* --- 成绩趋势 SVG 折线 --- */
+    var W = 496, Hh = 172, pl = 34, pr = 14, pt = 16, pb = 30;
+    var points = rs.slice(-8);
+    var minV = 40, maxV = 100;
+    var stepX = points.length > 1 ? (W - pl - pr) / (points.length - 1) : 0;
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" width="100%" style="display:block">';
+    [40, 60, 80, 100].forEach(function (v) {
+      var y = pt + (maxV - v) / (maxV - minV) * (Hh - pt - pb);
+      svg += '<line x1="' + pl + '" y1="' + y + '" x2="' + (W - pr) + '" y2="' + y + '" stroke="var(--line)" stroke-width="1"/>' +
+        '<text x="' + (pl - 6) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="9.5" fill="var(--txt3)">' + v + '</text>';
+    });
+    if (last) {
+      var passY = pt + (maxV - last.passLine) / (maxV - minV) * (Hh - pt - pb);
+      svg += '<line x1="' + pl + '" y1="' + passY + '" x2="' + (W - pr) + '" y2="' + passY +
+        '" stroke="var(--amber)" stroke-width="1.2" stroke-dasharray="5 4"/>' +
+        '<text x="' + (W - pr) + '" y="' + (passY - 5) + '" text-anchor="end" font-size="9.5" fill="var(--amber)">达标线 ' + last.passLine + '</text>';
+    }
+    var pts = points.map(function (r, i) {
+      return { x: pl + stepX * i, y: pt + (maxV - r.score) / (maxV - minV) * (Hh - pt - pb), r: r };
+    });
+    if (pts.length > 1) {
+      svg += '<polyline fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round" points="' +
+        pts.map(function (p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ') + '"/>';
+    }
+    pts.forEach(function (p) {
+      svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (points.length > 1 ? 4 : 5) +
+        '" fill="' + (p.r.passed ? 'var(--acc)' : 'var(--red)') + '" stroke="var(--panel)" stroke-width="2"/>' +
+        '<text x="' + p.x.toFixed(1) + '" y="' + (p.y - 10).toFixed(1) + '" text-anchor="middle" font-size="10" fill="var(--txt2)">' + p.r.score + '</text>';
+    });
+    svg += '</svg>';
+
+    /* --- 五维得分（取最近一次）--- */
+    var dimRows = '';
+    if (last) {
+      var weakestIdx = 0, weakestVal = 101;
+      T.dims.forEach(function (d, i) {
+        if (last.dimScores[d.id] < weakestVal) { weakestVal = last.dimScores[d.id]; weakestIdx = i; }
+      });
+      dimRows = T.dims.map(function (d, i) {
+        var v = last.dimScores[d.id];
+        var cls = v >= 75 ? '' : (v >= 60 ? 'a' : 'r');
+        return '<div class="gap"><div class="nm" title="' + esc(d.name) + '">' + esc(d.name) + '</div>' +
+          '<div class="bw"><div class="bar"><i class="' + cls + '" style="width:' + v + '%"></i></div></div>' +
+          '<div class="vl">' + v + '</div>' +
+          (i === weakestIdx ? '<span class="dl dn">最弱</span>' : '<span class="dl fl" style="visibility:hidden">占位</span>') +
+          '</div>';
+      }).join('');
+    }
+
+    /* --- 逐句复盘 --- */
+    var qc = '';
+    if (last) {
+      var sc = T.sceneById(last.sceneId);
+      qc = sc.script.map(function (s, i) {
+        // 用引擎解释该轮：若学员当时的回答命中场景目标维度，则判为方向正确
+        var obj = sc.objectives[i] || sc.objectives[sc.objectives.length - 1];
+        return { q: s.t, obj: obj, round: i + 1 };
+      }).slice(0, 6).map(function (x) {
+        return '<div class="qcard">' +
+          '<div class="qh"><div class="qn">第 ' + x.round + ' 轮</div>' +
+          '<span class="tag b">考察：' + esc(x.obj.text.slice(0, 10)) + '…</span></div>' +
+          '<div class="qq">客户：' + esc(x.q) + '</div>' +
+          '<div class="qa bad">该轮为参考话术，学员端可点「语音条 / 建议话术」查看标准表达，建议对照练习。<span class="lbl2">对应能力维度：' +
+          esc(T.dims[H.dimIndex(x.obj.dim)].name) + '</span></div>' +
+          '</div>';
+      }).join('');
+    }
+
+    /* --- 辅导记录 --- */
+    var myNotes = notes.filter(function (n) { return n.learnerId === lid; });
+    var myId = IDENT ? IDENT.id : '';
+    var noteHtml = myNotes.length
+      ? myNotes.slice().reverse().map(function (n) {
+        // 只有本人写的（或管理员）才给删除按钮
+        var canDel = !n.byId || n.byId === myId || (IDENT && IDENT.role === 'admin');
+        return '<div class="note-item"><div class="bd"><div class="bt">' + esc(n.text) + '</div>' +
+          '<div class="bm"><span>' + esc(n.by) + ' · ' + esc(n.at) + '</span><span class="tag">' + esc(n.type) + '</span>' +
+          (canDel ? '<button class="btn sm ghost" data-del-note="' + esc(n.id) + '">删除</button>' : '') +
+          '</div></div></div>';
+      }).join('')
+      : '<div class="muted" style="font-size:12.5px">暂无辅导记录</div>';
+
+    var dl = last ? daysLeft(T.taskById(last.taskId) ? T.taskById(last.taskId).dueAt : '2026-10-08 18:00') : null;
+
+    openDrawer(l.name + ' · 辅导工作台',
+      '<div class="flex" style="gap:13px;margin-bottom:4px">' + ava(l, 'ava-sq') +
+      '<div class="grow"><div style="font-size:16.5px;font-weight:600;display:flex;align-items:center;gap:8px">' + esc(l.name) + riskTag(risk) + '</div>' +
+      '<div style="font-size:12.5px;color:var(--txt3)">' + esc(l.dept) + ' · ' + esc(l.position) + ' · 导师 ' + esc(l.mentor) + ' · 入职 ' + esc(l.joinDate) + '</div></div></div>' +
+
+      '<div class="grid g3 mt14">' +
+      '<div class="kpi" style="padding:12px 13px"><div class="lab">练习次数</div><div class="val" style="font-size:22px">' + st.count + '</div></div>' +
+      '<div class="kpi" style="padding:12px 13px"><div class="lab">平均分</div><div class="val" style="font-size:22px">' + st.avg + '</div></div>' +
+      '<div class="kpi" style="padding:12px 13px"><div class="lab">达标次数</div><div class="val" style="font-size:22px">' + st.passCount +
+      '<small>/' + st.count + '</small></div></div>' +
+      '</div>' +
+
+      '<div class="sec-title">成绩趋势</div>' +
+      '<div class="card" style="padding:12px">' + svg + '</div>' +
+
+      '<div class="sec-title">最近一次五维得分' + (last ? '（' + esc(fmtDate(last.finishedAt)) + '）' : '') + '</div>' +
+      (last ? dimRows : '<div class="muted" style="font-size:12.5px">尚无练习记录</div>') +
+
+      '<div class="sec-title">逐轮复盘</div>' + (qc || '<div class="muted" style="font-size:12.5px">尚无练习记录</div>') +
+
+      '<div class="sec-title">辅导记录</div>' + noteHtml +
+      '<div class="field mt14"><label>新增辅导记录</label>' +
+      '<textarea class="txa" id="noteText" placeholder="例如：价格异议这一轮，学员直接降价没有先问用量。下次重点练「先问后答」。"></textarea>' +
+      '<div class="hint">' + (srvOnline() ? '保存后写入服务端，自己和其他带教打开都能看到。' : '服务端未连接，当前先存在本机浏览器，恢复连接后需重新保存。') + '</div></div>' +
+      '<button class="btn pri" id="noteSave">保存辅导记录</button>' +
+
+      '<div class="sec-title">AI 带教建议</div>' +
+      '<div class="tipbox">' + suggestHtml(l, st, last) + '</div>'
+    );
+
+    $('#noteSave').onclick = function () {
+      var v = $('#noteText').value.trim();
+      if (!v) { $('#noteText').focus(); return; }
+      var btn = this;
+      btn.disabled = true;
+      addNote(lid, v).then(function () {
+        btn.disabled = false;
+        openLearnerDrawer(lid);
+        renderTodo(learnerIds(), T.tasks.filter(function (t) { return t.status === 'running'; }));
+      });
+    };
+  }
+
+  function suggestHtml(l, st, last) {
+    if (!last) return '该学员还没有练习记录，建议先下发一次「价格异议应对专项」。';
+    var ranked = T.dims.map(function (d) { return { d: d, v: last.dimScores[d.id] }; })
+      .sort(function (a, b) { return a.v - b.v; });
+    var w1 = ranked[0], w2 = ranked[1];
+    var tip1 = S ? S.SUGGESTIONS[w1.d.id] : '';
+    var tip2 = S ? S.SUGGESTIONS[w2.d.id] : '';
+    var hist = H.recordsOf(l.id).map(function (r) { return r.score; });
+    var cmp = S ? S.compareWithHistory({ score: last.score }, hist.slice(0, -1)) : null;
+    var cmpLine = cmp ? '<b>' + esc(cmp.note) + '</b>（历史均分 ' + cmp.avg + ' 分）' : '';
+
+    return '<b>整体判断：</b>' + cmpLine + ' 最近一次 ' + last.score + ' 分，达标线 ' + last.passLine + ' 分，' +
+      (last.passed ? '已达标。' : '仍未达标，建议安排复训。') + '<br><br>' +
+      '<b>重点补强 ①「' + esc(w1.d.name) + '」' + w1.v + ' 分：</b>' + esc(tip1) + '<br><br>' +
+      '<b>重点补强 ②「' + esc(w2.d.name) + '」' + w2.v + ' 分：</b>' + esc(tip2) + '<br><br>' +
+      '<b>建议动作：</b>本场景重练 1 次；若第二轮仍低于达标线，改由你本人陪练一遍并同步更新剧本。';
+  }
+
+  /* ------------------------- 任务进度抽屉 ------------------------- */
+  function openTaskDrawer(tid, ids) {
+    var t = T.taskById(tid), p = H.taskProgress(tid), dl = daysLeft(t.dueAt);
+    var rows = t.assignees.map(function (lid, i) {
+      var l = T.learnerById(lid), r = p.records[i];
+      var mine = ids.indexOf(lid) !== -1;
+      var state = r
+        ? '<span class="tag ' + (r.passed ? 'g' : 'r') + '">' + (r.passed ? '已达标' : '未达标') + '</span>'
+        : (dl.overdue ? '<span class="tag r">已逾期</span>' : '<span class="tag">未开始</span>');
+      return '<div class="item">' + ava(l) +
+        '<div class="mid"><div class="t1">' + esc(l.name) +
+        (mine ? '<span class="tag b">我带的</span>' : '') + '</div>' +
+        '<div class="t2">' + esc(l.dept) + ' · ' + esc(l.position) +
+        (r ? ' · ' + esc(r.finishedAt) : '') + '</div></div>' +
+        '<div class="rt"><div style="font-weight:600">' + (r ? r.score + ' 分' : '—') + '</div>' +
+        '<div style="margin-top:3px">' + state + '</div></div></div>';
+    }).join('');
+
+    openDrawer('任务进度 · ' + t.title,
+      '<div class="kvline"><span class="k">任务编码</span><span class="v mono">' + esc(t.code) + '</span></div>' +
+      '<div class="kvline"><span class="k">场景</span><span class="v">' + esc(T.sceneById(t.sceneId).name) + ' · ' + esc(T.sceneById(t.sceneId).subtitle) + '</span></div>' +
+      '<div class="kvline"><span class="k">达标线</span><span class="v">' + t.passLine + ' 分</span></div>' +
+      '<div class="kvline"><span class="k">截止时间</span><span class="v">' + esc(t.dueAt) + ' <span class="tag ' + dl.cls + '">' + dl.text + '</span></span></div>' +
+      '<div class="kvline"><span class="k">下发人</span><span class="v">' + esc(t.createdBy) + '</span></div>' +
+      '<div class="kvline"><span class="k">完成进度</span><span class="v">' + p.finishedCount + '/' + p.total + ' · 达标率 ' + p.passRate + '%</span></div>' +
+      '<div class="bar mt14" style="height:8px"><i style="width:' + p.rate + '%"></i></div>' +
+      '<div class="sec-title">参与学员</div>' + rows
+    );
+  }
+
+  /* ------------------------- 一对一辅导页 ------------------------- */
+  function initCoach() {
+    $('#coachPick').onchange = function () { renderCoach(this.value); };
+    refreshPicker();
+    if (!$('#coachPick').value) {
+      // 范围内一个学员都没有（如本部门里没有自己名下的学员）
+      $('#coachBody').innerHTML = '<div class="card"><div class="empty"><div class="ic">👥</div>' +
+        '当前可见范围内没有学员。若你的数据范围是「本部门」，请到「我的学员」切到「本部门学员」查看。</div></div>';
+    }
+  }
+  /** 按当前可见学员重建下拉（范围/身份变化后调用），尽量保留已选中的学员 */
+  function refreshPicker() {
+    var pick = $('#coachPick');
+    if (!pick) return;
+    var list = myLearners(), cur = pick.value;
+    pick.innerHTML = list.map(function (l) {
+      return '<option value="' + l.id + '">' + esc(l.name) + '（' + esc(l.position) + '）</option>';
+    }).join('');
+    if (cur && list.some(function (l) { return l.id === cur; })) pick.value = cur;
+    if (location.hash === '#coach' && pick.value) renderCoach(pick.value);
+  }
+  function pickCoach(lid) {
+    $('#coachPick').value = lid;
+    renderCoach(lid);
+  }
+  /* ------------------------- 逐轮复盘（P7） -------------------------
+   * 这一块以前是**假的**：只把场景剧本渲染出来（客户说什么 + 参考表达），
+   * 页面上一个字都不是学员说的，却摆着「针对这一轮写辅导」的按钮。
+   * 结果教练点开"逐轮复盘"，看到的其实是"剧本长什么样"。
+   * 现在改成：服务端逐轮明细优先、剧本骨架兜底，并把两者**明确标注**。
+   * -------------------------------------------------------------- */
+
+  /** 场景剧本 → 与逐轮明细同形状的骨架（_ref 标记：这不是学员的作答） */
+  function scriptTurns(sc) {
+    return (sc.script || []).map(function (s, i) {
+      return {
+        idx: i + 1, customerReply: s.t || '', learnerText: '',
+        emotion: '', score: null, dimScores: {}, at: '', _ref: true
+      };
+    });
+  }
+
+  /** 本轮各维度小分（只有真实逐轮数据才有） */
+  function turnDimLine(t) {
+    var ds = t.dimScores || {};
+    var ids = Object.keys(ds);
+    if (!ids.length) return '';
+    return ids.map(function (id) {
+      var d = T.dims[H.dimIndex(id)];
+      return (d ? d.name : id) + ' ' + ds[id];
+    }).join('　·　');
+  }
+
+  /** 逐轮卡片。turns 可以来自服务端，也可以是 scriptTurns() 的骨架 */
+  function roundsHtml(turns, sc) {
+    if (!turns || !turns.length) return '';
+    return turns.map(function (t, i) {
+      var obj = (sc.objectives || [])[i] || null;
+      var dimName = obj ? T.dims[H.dimIndex(obj.dim)].name : '—';
+      var pool = (sc.voicePool || [])[Math.min(i, (sc.voicePool || []).length - 1)] || [];
+      var refLine = pool[0] || '';
+      var isRef = !!t._ref || t.score === null || t.score === undefined;
+      // 60 是产品里通用的"够用线"：低于它才值得逐轮标红
+      var cls = isRef ? 'neutral' : (t.score >= 60 ? 'good' : 'bad');
+      var tagCls = isRef ? 'a' : (t.score >= 75 ? 'g' : (t.score >= 60 ? 'a' : 'r'));
+      var dimLine = turnDimLine(t);
+      var idx = t.idx || (i + 1);
+      var head = '<div class="qh"><div class="qn">第 ' + idx + ' 轮 · 客户</div>' +
+        (obj ? '<span class="tag b">目标：' + esc(obj.text) + '</span>' : '') +
+        (isRef ? '' : '<span class="turnscore ' + tagCls + '">本轮 ' + t.score + ' 分</span>') +
+        '</div>';
+      var scr = (sc.script || [])[i];
+      var cust = '<div class="qq">' + esc(t.customerReply || '—') +
+        (t.emotion ? ' <span class="muted" style="font-size:11px">（客户情绪：' + esc(t.emotion) + '）</span>' : '') +
+        (t._ref && scr && scr.v ? ' <span class="muted" style="font-size:11px">（语音 ' + scr.v + ' 秒）</span>' : '') +
+        '</div>';
+      var answer = isRef
+        ? '<div class="qa neutral">学员作答：<span class="muted">（服务端未提供逐轮明细）</span>' +
+          '<span class="lbl2">考察维度：' + esc(dimName) + '　·　下方为该轮参考表达</span></div>'
+        : '<div class="qa ' + cls + '">学员作答：' + esc(t.learnerText || '（本轮无作答）') +
+          '<span class="lbl2">考察维度：' + esc(dimName) +
+          (dimLine ? '　·　本轮维度分：' + esc(dimLine) : '') + '</span></div>';
+      var ref = refLine
+        ? '<details class="refd"' + (isRef ? ' open' : '') + '><summary>参考表达</summary>' +
+          '<div class="refb">' + esc(refLine) + '</div></details>'
+        : '';
+      return '<div class="qcard">' + head + cust + answer + ref +
+        '<div class="btn-row mt8"><button class="btn sm" data-note-round="' + idx +
+        '">针对这一轮写辅导</button></div></div>';
+    }).join('');
+  }
+
+  /**
+   * 拉真实逐轮明细并原地替换骨架。三种结果都必须有明确说法，**绝不静默**：
+   *   null   → 离线 / 未登录 / 越范围：保留剧本骨架并讲清"这只是参考"
+   *   []     → 服务端明确答复"这条成绩没有逐轮记录"：说清楚，别像加载失败
+   *   有数据 → 渲染真实对话
+   */
+  function loadRounds(rec, sc, hostId) {
+    var sel = '#' + (hostId || 'coachRounds');
+    var host = $(sel);
+    if (!host || !rec) return;
+    if (!SYNC || !SYNC.turns || !srvOnline()) {
+      host.insertAdjacentHTML('afterbegin',
+        '<div class="dnote">未连接服务端，下方为<b>场景剧本参考</b>，不是学员的真实作答。</div>');
+      return;
+    }
+    SYNC.turns(rec.id).then(function (list) {
+      var h = $(sel);
+      if (!h) return;                                  // 期间已切走学员/记录/关了抽屉
+      if (list === null) {
+        h.insertAdjacentHTML('afterbegin',
+          '<div class="dnote warn">未取到逐轮明细（未登录、超出数据范围或服务不可用）。下方为<b>场景剧本参考</b>，不可当作学员作答来点评。</div>');
+        return;
+      }
+      if (!list.length) {
+        h.innerHTML = '<div class="dnote warn">这条成绩没有保存逐轮对话（P7 之前的练习未留存逐轮明细）。' +
+          '可对该学员重新下发一次练习，即可获得可复盘的对话。</div>' + roundsHtml(scriptTurns(sc), sc);
+        return;
+      }
+      h.innerHTML = '<div class="dnote">以下为学员在本次练习中的<b>真实作答</b>，逐轮得分由 5 维评分给出。</div>' +
+        roundsHtml(list, sc);
+    });
+  }
+
+  function renderCoach(lid) {
+    var l = T.learnerById(lid), st = H.statsOf(lid), risk = H.riskOf(lid);
+    var rs = H.recordsOf(lid);
+    $('#coachRec').innerHTML = rs.length
+      ? rs.slice().reverse().map(function (r) {
+        var tk = T.taskById(r.taskId);
+        return '<option value="' + r.id + '">' + esc(fmtDate(r.finishedAt)) + ' · ' + esc(tk ? tk.title : '练习') + ' · ' + r.score + ' 分</option>';
+      }).join('')
+      : '<option value="">暂无练习记录</option>';
+    $('#coachRec').onchange = function () { renderCoach(lid); };
+
+    var recId = $('#coachRec').value;
+    var rec = rs.filter(function (r) { return r.id === recId; })[0] || rs[rs.length - 1];
+
+    if (!rec) {
+      $('#coachBody').innerHTML = '<div class="card"><div class="empty"><div class="ic">📝</div>' +
+        esc(l.name) + ' 还没有练习记录，建议先下发一次任务</div></div>';
+      return;
+    }
+
+    var sc = T.sceneById(rec.sceneId);
+    var hist = rs.map(function (r) { return r.score; }).slice(0, rs.indexOf(rec));
+    var cmp = S ? S.compareWithHistory({ score: rec.score }, hist) : { note: '', avg: 0, trend: 'first' };
+    var weakest = T.dims.map(function (d) { return { d: d, v: rec.dimScores[d.id] }; })
+      .sort(function (a, b) { return a.v - b.v; })[0];
+
+    var dimRows = T.dims.map(function (d) {
+      var v = rec.dimScores[d.id];
+      var cls = v >= 75 ? '' : (v >= 60 ? 'a' : 'r');
+      var isWeak = d.id === weakest.d.id;
+      return '<div class="gap"><div class="nm" title="' + esc(d.name) + '">' + esc(d.name) + '</div>' +
+        '<div class="bw"><div class="bar"><i class="' + cls + '" style="width:' + v + '%"></i></div></div>' +
+        '<div class="vl">' + v + '</div>' +
+        (isWeak ? '<span class="dl dn">最弱</span>' : '<span class="dl fl" style="visibility:hidden">占位</span>') +
+        '</div>';
+    }).join('');
+
+    /* 逐轮复盘（P7）：先把场景剧本当骨架渲染出来（离线也有内容），
+       再按需拉真实逐轮对话覆盖。骨架与真实数据**必须在视觉上可区分**——
+       否则教练会拿"参考话术"当成"学员的作答"来点评，那是比空白更坏的结果。 */
+    var rounds = '<div id="coachRounds">' + roundsHtml(scriptTurns(sc), sc) + '</div>';
+
+    $('#coachBody').innerHTML =
+      '<div class="grid g2" style="align-items:start">' +
+        '<div>' +
+          '<div class="card"><div class="card-h"><h2>学员概览</h2>' +
+          '<span class="sub">' + esc(l.dept) + ' · ' + esc(l.position) + '</span></div>' +
+          '<div class="flex" style="gap:13px;margin-bottom:14px">' + ava(l, 'ava-sq') +
+          '<div class="grow"><div style="font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px">' + esc(l.name) + riskTag(risk) + '</div>' +
+          '<div style="font-size:12.5px;color:var(--txt3)">导师 ' + esc(l.mentor) + ' · 入职 ' + esc(l.joinDate) + '</div></div></div>' +
+          '<div class="kvline"><span class="k">练习次数</span><span class="v">' + st.count + ' 次</span></div>' +
+          '<div class="kvline"><span class="k">平均分</span><span class="v">' + st.avg + ' 分</span></div>' +
+          '<div class="kvline"><span class="k">本次成绩</span><span class="v">' + rec.score + ' 分（达标线 ' + rec.passLine + '）</span></div>' +
+          '<div class="kvline"><span class="k">相比上次</span><span class="v">' + esc(cmp.note) + '</span></div>' +
+          '<div class="kvline"><span class="k">本次用时 / 轮次</span><span class="v">' + rec.minutes + ' 分钟 / ' + rec.turns + ' 轮</span></div>' +
+          '</div>' +
+          '<div class="card"><div class="card-h"><h2>本次五维得分</h2>' +
+          '<span class="sub">最弱 ' + esc(weakest.d.name) + '</span></div>' + dimRows + '</div>' +
+          '<div class="card"><div class="card-h"><h2>辅导结论</h2></div>' +
+          '<div class="tipbox">' + suggestHtml(l, st, rec) + '</div>' +
+          '<div class="field mt14"><label>本次辅导记录</label>' +
+          '<textarea class="txa" id="coachNote" placeholder="写下本次一对一辅导的结论与下一步安排"></textarea></div>' +
+          '<button class="btn pri" id="coachSave">保存并生成跟进项</button></div>' +
+        '</div>' +
+        '<div class="card"><div class="card-h"><h2>逐轮复盘</h2>' +
+        '<span class="sub">' + esc(sc.name) + ' · 剧本 ' + sc.script.length + ' 轮</span></div>' +
+        rounds + '</div>' +
+      '</div>';
+
+    // 拉真实逐轮对话覆盖骨架（失败/离线时保留剧本骨架并标注）
+    loadRounds(rec, sc);
+
+    // ⚠️ [data-note-round] 的点击**必须走 document 委托**，不能在这里 forEach 绑定：
+    //    loadRounds() 是异步的，它稍后会整体替换 #coachRounds 的 innerHTML，
+    //    此刻绑上去的 onclick 会随着旧节点一起被丢弃 → 按钮点了没反应。
+    //    （事件委托在文件末尾的 document click 里统一处理）
+    $('#coachSave').onclick = function () {
+      var v = $('#coachNote').value.trim();
+      if (!v) { $('#coachNote').focus(); return; }
+      var btn = this;
+      btn.disabled = true;
+      addNote(lid, v).then(function (ok) {
+        btn.disabled = false;
+        btn.textContent = ok ? '已保存 ✓' : '已存本地 ⚠';
+        btn.classList.add('off');
+        renderTodo(learnerIds(), T.tasks.filter(function (t) { return t.status === 'running'; }));
+      });
+    };
+  }
+
+  /* ------------------------- 对话质检 ------------------------- */
+  function renderQuality() {
+    var filt = ($('#qFilter .on') || {}).dataset ? $('#qFilter .on').dataset.q : 'all';
+    var ids = myLearners().map(function (l) { return l.id; });
+    var list = T.records.slice().sort(function (a, b) { return a.score - b.score; });
+    if (filt === 'high') list = list.filter(function (r) { return H.riskOf(r.learnerId) === 'red'; });
+    if (filt === 'fail') list = list.filter(function (r) { return !r.passed; });
+
+    var failCount = T.records.filter(function (r) { return !r.passed; }).length;
+    var redRecs = T.records.filter(function (r) { return H.riskOf(r.learnerId) === 'red'; }).length;
+    var avg = H.overview().avgScore;
+    var failPct = T.records.length ? Math.round(failCount / T.records.length * 100) : 0;
+    $('#qKpi').innerHTML = [
+      kpi('待抽检记录', list.length, '条', '按分数从低到高排序'),
+      kpi('未达标记录', failCount, '条', '占比 ' + failPct + '%'),
+      kpi('高风险学员记录', redRecs, '条', '需优先复核'),
+      kpi('记录均分', avg, '分', '全量 ' + T.records.length + ' 条')
+    ].join('');
+
+    if (!list.length) {
+      $('#qBody').innerHTML = '<tr><td colspan="8"><div class="empty"><div class="ic">✓</div>没有符合条件的记录</div></td></tr>';
+      return;
+    }
+
+    $('#qBody').innerHTML = list.map(function (r, i) {
+      var l = T.learnerById(r.learnerId), tk = T.taskById(r.taskId), sc = T.sceneById(r.sceneId);
+      var weakest = T.dims.map(function (d) { return { d: d, v: r.dimScores[d.id] }; })
+        .sort(function (a, b) { return a.v - b.v; })[0];
+      // qcState 里存的是按钮的 data-qc 值：'ok' / 'flag'，与下面判断保持同名
+      // （服务端记录本身也带 qc 字段，两边取其一即可）
+      var st = qcState[r.id] || r.qc || '';
+      var status = st === 'flag' ? '<span class="tag a">待统一话术</span>'
+        : st === 'ok' ? '<span class="tag g">已通过</span>'
+        : (r.passed ? '<span class="tag">未抽检</span>' : '<span class="tag r">建议抽检</span>');
+      return '<tr>' +
+        '<td class="num muted">' + (i + 1) + '</td>' +
+        '<td><div style="font-weight:500">' + esc(l.name) + (ids.indexOf(l.id) !== -1 ? ' <span class="tag b" style="font-size:10px">我带的</span>' : '') + '</div>' +
+        '<div style="font-size:11.5px;color:var(--txt3)">' + esc(tk ? tk.title : '练习') + ' · ' + esc(fmtDate(r.finishedAt)) + '</div></td>' +
+        '<td>' + esc(sc.name) + ' <span class="muted" style="font-size:11.5px">' + esc(sc.category) + '</span></td>' +
+        '<td class="num"><b style="color:' + (r.passed ? 'var(--acc-txt)' : 'var(--red)') + '">' + r.score + '</b></td>' +
+        '<td class="num muted">' + r.passLine + '</td>' +
+        '<td><span class="tag ' + (weakest.v >= 60 ? 'a' : 'r') + '">' + esc(weakest.d.name) + ' ' + weakest.v + '</span></td>' +
+        '<td>' + status + '</td>' +
+        '<td><div class="btn-row">' +
+        '<button class="btn sm" data-open-turns="' + r.id + '">看对话</button>' +
+        '<button class="btn sm ghost" data-qc="ok" data-rid="' + r.id + '">通过</button>' +
+        '<button class="btn sm ghost" data-qc="flag" data-rid="' + r.id + '">标记</button>' +
+        (st ? '<button class="btn sm ghost" data-qc-clear="' + r.id + '">撤销</button>' : '') +
+        '</div></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  /**
+   * 对话质检抽屉（P7）：把逐轮对话摊开给质检人看。
+   *
+   * 这页叫「对话质检」，此前却**看不到对话**——只有分数、最弱维度和两个按钮，
+   * 质检人只能凭分数判断"这条要不要标记"。现在按需拉出真实逐轮明细，
+   * 结论按钮就在摘要下方，看完即可判定。
+   */
+  function openQcDrawer(rid) {
+    var r = T.records.filter(function (x) { return x.id === rid; })[0];
+    if (!r) return;
+    var l = T.learnerById(r.learnerId), sc = T.sceneById(r.sceneId), tk = T.taskById(r.taskId);
+    var st = qcState[r.id] || r.qc || '';
+    var status = st === 'flag' ? '<span class="tag a">待统一话术</span>'
+      : st === 'ok' ? '<span class="tag g">已通过</span>'
+      : '<span class="tag">未抽检</span>';
+    var summary =
+      '<div class="kvline"><span class="k">学员</span><span class="v">' + esc(l.name) + '</span></div>' +
+      '<div class="kvline"><span class="k">场景 / 任务</span><span class="v">' + esc(sc.name) + ' · ' +
+        esc(tk ? tk.title : '练习') + '</span></div>' +
+      '<div class="kvline"><span class="k">成绩</span><span class="v">' + r.score + ' 分（达标线 ' + r.passLine +
+        '）· ' + (r.passed ? '达标' : '未达标') + '</span></div>' +
+      '<div class="kvline"><span class="k">用时 / 轮次</span><span class="v">' + r.minutes + ' 分钟 / ' +
+        r.turns + ' 轮</span></div>' +
+      '<div class="kvline"><span class="k">质检状态</span><span class="v">' + status + '</span></div>';
+    var actions = '<div class="btn-row mt14">' +
+      '<button class="btn pri" data-qc="ok" data-rid="' + r.id + '">通过</button>' +
+      '<button class="btn" data-qc="flag" data-rid="' + r.id + '">标记待统一话术</button>' +
+      (st ? '<button class="btn ghost" data-qc-clear="' + r.id + '">撤销结论</button>' : '') +
+      '</div>';
+    openDrawer('对话质检 · ' + l.name,
+      summary + actions +
+      '<div class="card-h mt20"><h2>逐轮对话</h2><span class="sub">按需加载</span></div>' +
+      '<div id="qcRounds">' + roundsHtml(scriptTurns(sc), sc) + '</div>');
+    loadRounds(r, sc, 'qcRounds');
+  }
+
+  /* ------------------------- 路由 ------------------------- */
+  var ROUTES = ['overview', 'students', 'coach', 'quality'];
+  function route() {
+    var h = (location.hash || '#overview').slice(1);
+    if (ROUTES.indexOf(h) === -1) h = 'overview';
+    ROUTES.forEach(function (r) { $('#sec-' + r).hidden = (r !== h); });
+    $$('#navTabs a').forEach(function (a) {
+      a.classList.toggle('on', a.getAttribute('href') === '#' + h);
+    });
+    if (h === 'students') renderStudents();
+    if (h === 'quality') renderQuality();
+    if (h === 'coach' && !$('#coachPick').options.length) initCoach();
+    window.scrollTo(0, 0);
+  }
+
+  /** 统一重渲染（水合 / 切范围 / 登录后都走这里，保证各屏口径一致） */
+  function renderAll() {
+    try { renderOverview(); } catch (e) { /* 单屏失败不影响其它屏 */ }
+    try { renderStudents(); } catch (e) { /* ignore */ }
+    try { renderQuality(); } catch (e) { /* ignore */ }
+  }
+
+  /* ------------------------- 初始化 ------------------------- */
+  $('#scopeSeg').onclick = function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    // 服务端没授予全量范围时，不允许切到「全部」——界面不能比权限大
+    if (b.hidden) return;
+    $$('#scopeSeg button').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    scope = b.dataset.scope;
+    refreshPicker();
+    renderOverview(); renderStudents();
+  };
+  $('#stuSearch').oninput = renderStudents;
+  $('#stuRisk').onchange = renderStudents;
+  $('#qFilter').onclick = function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    $$('#qFilter button').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    renderQuality();
+  };
+  $('#btnLogin').onclick = showLogin;
+  $('#lgGo').onclick = doLogin;
+  $('#lgClose').onclick = function () {
+    try { sessionStorage.setItem('train-coach-later', '1'); } catch (e) {}
+    hideLogin();
+  };
+  $('#lgPwd').onkeydown = function (e) { if (e.key === 'Enter') doLogin(); };
+  $('#drClose').onclick = closeDrawer;
+  $('#drCloseF').onclick = closeDrawer;
+  $('#mask').onclick = closeDrawer;
+  $('#drPlan').onclick = function () { closeDrawer(); if (location.hash !== '#coach') location.hash = '#coach'; };
+  $('#btnTheme').onclick = function () {
+    var cur = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = cur === 'light' ? 'dark' : 'light';
+    try { localStorage.setItem('train-theme', document.documentElement.dataset.theme); } catch (e) {}
+  };
+  try {
+    var saved = localStorage.getItem('train-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+
+  document.addEventListener('click', function (e) {
+    // 注意顺序：先处理更具体的操作按钮，再处理整行/整卡的兜底点击。
+    // 早期版本把 [data-go-coach] 放在最前面，导致学员报告表里的「通过/标记」
+    // 按钮因为祖先 <tr> 带有 data-go-coach 而被提前 return 吞掉。
+    // 顺序：先具体按钮，后整行/整卡兜底（改错顺序会让行内按钮被吞掉）
+    var dn = e.target.closest('[data-del-note]');
+    if (dn) {
+      var nid = dn.getAttribute('data-del-note');
+      var owner = notes.filter(function (n) { return n.id === nid; })[0];
+      delNote(nid).then(function () { if (owner) openLearnerDrawer(owner.learnerId); });
+      e.stopPropagation();
+      return;
+    }
+    // P7：逐轮复盘里的「针对这一轮写辅导」。
+    // 必须走委托——loadRounds() 是异步的，它稍后整体替换 #coachRounds 的 innerHTML，
+    // 渲染时绑上去的 onclick 会随旧节点一起丢弃（按钮点了没反应）。
+    // 也要排在行级兜底之前，否则会被 [data-go-coach] 之类的祖先吃掉。
+    var nr = e.target.closest('[data-note-round]');
+    if (nr) {
+      var round = nr.getAttribute('data-note-round');
+      var ta = $('#coachNote');
+      if (ta) {
+        ta.value = (ta.value ? ta.value + '\n' : '') + '第 ' + round + ' 轮：';
+        ta.focus();
+      }
+      e.stopPropagation();
+      return;
+    }
+    // P7：对话质检「看对话」→ 摊开逐轮明细
+    var ot = e.target.closest('[data-open-turns]');
+    if (ot) {
+      openQcDrawer(ot.getAttribute('data-open-turns'));
+      e.stopPropagation();
+      return;
+    }
+    var qcx = e.target.closest('[data-qc-clear]');
+    if (qcx) {
+      // 质检结论可能来自抽屉里，处理完把抽屉一起收掉并刷新列表
+      clearQcMark(qcx.getAttribute('data-qc-clear')).then(function () { closeDrawer(); renderQuality(); });
+      e.stopPropagation();
+      return;
+    }
+    var qc = e.target.closest('[data-qc]');
+    if (qc) {
+      var rid = qc.getAttribute('data-rid');
+      markQc(rid, qc.getAttribute('data-qc')).then(function () { closeDrawer(); renderQuality(); });
+      e.stopPropagation();
+      return;
+    }
+    var tg = e.target.closest('[data-todo-go]');
+    if (tg) {
+      var it = window.__todos[+tg.getAttribute('data-todo-go')];
+      if (it && it.go) it.go();
+      return;
+    }
+    var go = e.target.closest('[data-go-coach]');
+    if (go) {
+      // 行内按钮自行处理点击，不要让整行兜底逻辑重复触发
+      if (go.tagName === 'TR' && e.target.closest('button[data-go-coach]')) {
+        openLearnerDrawer(e.target.closest('button[data-go-coach]').getAttribute('data-go-coach'));
+        return;
+      }
+      if (go.tagName === 'TR' && e.target.closest('button')) return;
+      openLearnerDrawer(go.getAttribute('data-go-coach'));
+      return;
+    }
+  });
+
+  window.addEventListener('hashchange', route);
+  route();
+  boot();   // 装载：本地缓存先渲染 → 探活 → 身份 → 水合 → 拉辅导/质检 → 重渲染
+
+  window.__probe = function () {
+    var ov = H.overview();
+    var ids = learnerIds();
+    return [
+      'scope=' + scope,
+      'mine=' + ids.length,
+      'kpis=' + $$('#kpiRow .kpi').length,
+      'todos=' + $$('#todoList .prio').length,
+      'feed=' + $$('#feedList .ev').length,
+      'focus=' + $$('#focusList .item').length,
+      'gaps=' + $$('#gapList .gap').length,
+      'riskSum=' + (ov.risk.red + ov.risk.yellow + ov.risk.green),
+      'avg=' + ov.avgScore,
+      'engine=' + (S ? 'on' : 'off'),
+      // P5：身份与数据范围
+      'srvOnline=' + srvOnline(),
+      'loggedIn=' + !!(SYNC && SYNC.loggedIn),
+      'authUser=' + (IDENT ? IDENT.id : ''),
+      'staff=' + COACH,
+      'authScope=' + SCOPE_KIND,
+      'authScopeLabel=' + (IDENT ? (IDENT.scopeLabel || '') : ''),
+      'learnerCount=' + T.learners.length,
+      'recordCount=' + T.records.length,
+      'noteCount=' + notes.length,
+      'qcCount=' + Object.keys(qcState).length,
+      'loginBoxOpen=' + !$('#loginBox').hidden
+    ].join('|');
+  };
+})();
+</script>
+</body>
+</html>

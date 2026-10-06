@@ -1,0 +1,22 @@
+{
+  "name": "newhire-sim-training",
+  "version": "7.0.0",
+  "private": true,
+  "description": "新员工仿真培训系统 —— 纯前端离线原型 + 零依赖 Node 服务层（真实大模型双角色评分 / SQLite 落库 / 任务闭环 / 权限与数据范围 / 带教辅导与对话质检 / 场景发布池热更新 / 逐轮对话回读 / 金标集校准）",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "mock": "node server/mock-llm.js 8999",
+    "backup": "node server/tools/backup.js",
+    "reset": "node server/tools/reset.js --yes",
+    "test": "node data/__selftest.js",
+    "test:server": "node server/tools/selftest.js",
+    "test:frontend": "node server/tools/frontend-test.js",
+    "test:all": "node data/__selftest.js && node server/tools/selftest.js && node server/tools/frontend-test.js"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "comment": "刻意保持零 npm 依赖：服务层只用 Node 22 内置模块（node:sqlite / node:http / 原生 fetch）。npm start 只是给个传统入口，不装任何包也能直接 `node server/index.js`。test:server 与 test:frontend 需要服务已启动。"
+}

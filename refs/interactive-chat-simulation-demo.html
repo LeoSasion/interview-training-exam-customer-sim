@@ -1,0 +1,2724 @@
+<!DOCTYPE html>
+<!-- 
+AI-Enhanced Interactive Chat Simulation Template
+Version: 1.0.0 - Generic Backend API Integration
+Last Updated: 2025-01-12
+Changes: 
+- Generic backend API integration for AI responses
+- Simple configuration for API endpoints
+- Clean separation of frontend and backend concerns
+- Easy to integrate with any AI service provider
+- No vendor-specific dependencies
+-->
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Dialogues</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Note: For production, install Tailwind CSS locally instead of using CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎭</text></svg>">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ai-response { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .typing-indicator {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Application Header -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">🎭 Dynamic Dialogues</h2>
+                    <p class="text-gray-600 mt-1">AI-powered interactive learning scenarios</p>
+                    <p class="text-xs text-gray-400 mt-1">v1.0.0-generic</p>
+                </div>
+                <div id="status-indicator" class="text-green-500 text-sm font-medium">
+                    ✅ Ready
+                </div>
+            </div>
+            
+            <!-- API Configuration (shown when backend is not configured) -->
+            <div id="api-config" class="hidden mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-start gap-3">
+                    <div class="text-blue-500 text-xl">⚙️</div>
+                    <div class="flex-1">
+                        <h3 class="font-medium text-blue-800 mb-2">API Configuration Required</h3>
+                        <p class="text-sm text-blue-700 mb-3">Configure your backend API endpoint to enable AI features:</p>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-blue-800 mb-1">API Endpoint URL</label>
+                                <input type="url" id="api-endpoint" placeholder="https://your-backend.com/api" 
+                                       class="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-blue-800 mb-1">API Key (optional)</label>
+                                <input type="password" id="api-key" placeholder="Your API key..." 
+                                       class="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                            </div>
+                            <button id="save-api-config" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">
+                                Save Configuration
+                            </button>
+                        </div>
+                        <p class="text-xs text-blue-600 mt-2">Configuration is stored locally in your browser.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scenario Selection Screen -->
+        <div id="selection-screen" class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 -m-6 mb-6 rounded-t-xl">
+                <h1 class="text-2xl font-bold">🎭 AI-Enhanced Learning Scenarios</h1>
+                <p class="text-blue-100 mt-2">Practice conversation skills with AI-powered coaching and dynamic responses</p>
+                <p class="text-blue-200 text-sm mt-1">v1.0.0-generic</p>
+            </div>
+            
+            <!-- Instructions Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 mb-6">
+                <h3 class="text-lg font-bold text-blue-800 mb-3">📚 How to Use This Tool</h3>
+                <div class="text-blue-700 text-sm space-y-2">
+                    <p><strong>1. Choose a Scenario:</strong> Select from available conversation scenarios to practice specific skills.</p>
+                    <p><strong>2. Pre-Assessment:</strong> Make strategic choices that will influence how the AI character responds to you.</p>
+                    <p><strong>3. Live Conversation:</strong> Practice your conversation skills through structured phases with AI feedback.</p>
+                    <p><strong>4. Get Help:</strong> Use the "Get Help" button for real-time coaching tips during conversations.</p>
+                    <p><strong>5. See Examples:</strong> Use the "Example" button to see AI-generated response suggestions.</p>
+                    <p><strong>6. Phase Analysis:</strong> After each phase, get detailed feedback on your performance and areas for improvement.</p>
+                </div>
+            </div>
+            
+            
+            <div id="scenario-list" class="space-y-4 hidden">
+                <!-- Scenarios will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Main Scenario Screen (Initially Hidden) -->
+        <div id="scenario-screen" class="bg-white rounded-xl shadow-lg overflow-hidden hidden">
+            <!-- Scenario Header -->
+            <div class="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
+                <h2 id="scenario-title" class="text-2xl font-bold"></h2>
+                <p id="scenario-use-case" class="text-green-100 text-sm font-medium mt-1"></p>
+                <p class="text-green-200 text-xs mt-1">v1.0.0-beta</p>
+            </div>
+            
+            <img id="scenario-image" src="" alt="Scenario Image" class="w-full h-48 object-cover hidden" onerror="this.style.display='none'">
+            
+            <div class="p-6">
+                <!-- Current Node Content -->
+                <div class="bg-gray-50 rounded-lg p-5 mb-6">
+                    <div id="scenario-text" class="text-gray-700 leading-relaxed min-h-[120px]"></div>
+                </div>
+                
+                <!-- Choice Buttons -->
+                <div id="choices-container" class="space-y-3 mb-6"></div>
+                
+                <!-- AI Coaching Area (Hidden by default) -->
+                <div id="ai-coaching-section" class="hidden">
+                    <div class="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-5 mb-4">
+                        <div class="flex items-start">
+                            <div class="text-blue-500 text-2xl mr-3">🤖</div>
+                            <div class="flex-1">
+                            <h4 class="text-lg font-bold text-blue-800 mb-3">AIcoach Analysis</h4>
+                            <div id="ai-coaching-content" class="text-blue-700 space-y-3">
+                                <div class="animate-pulse">Analyzing your response...</div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button id="continue-after-coaching" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium">
+                            Continue with Different Approach
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI Conversation Mode (Hidden by default) -->
+                <div id="ai-conversation-section" class="hidden">
+                <!-- Case Context Summary -->
+                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-t-lg mb-4">
+                    <!-- Header with toggle button -->
+                    <div class="flex justify-between items-center p-6 cursor-pointer hover:bg-purple-700 transition-colors rounded-t-lg" id="case-summary-toggle-area">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-xl font-bold">📋 Scenario Context</h3>
+                            <span class="text-purple-200 text-sm">(Click to expand/collapse)</span>
+                        </div>
+                            <button id="case-summary-toggle" class="text-purple-100 hover:text-white transition-colors">
+                                <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Collapsible content -->
+                        <div id="case-summary-content" class="px-6 pb-6 hidden transition-all duration-300 ease-in-out">
+                            <div class="text-purple-100 space-y-2 text-sm mb-4" id="scenario-context-details">
+                                <!-- Scenario context will be populated dynamically -->
+                            </div>
+                            <div class="border-t border-purple-400 pt-4">
+                                <h4 class="font-bold mb-2">🎯 Your Strategic Approach</h4>
+                                <div id="strategy-summary" class="text-purple-100 text-sm">
+                                    <!-- Strategy summary will be populated based on pre-assessment choice -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Phase Header -->
+                    <div class="bg-gradient-to-r from-green-600 to-blue-600 text-white p-4 rounded-lg mb-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 id="phase-title" class="text-lg font-bold">Phase 1: Conversation Starter & Rapport Building</h4>
+                                <p id="phase-objective" class="text-green-100 text-sm">Initiate a professional and engaging conversation to build trust and credibility</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm opacity-75">Phase Responses</div>
+                                <div id="phase-progress" class="text-lg font-bold">0/3</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 bg-white bg-opacity-20 rounded-full h-2">
+                            <div id="progress-bar" class="bg-white h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                <div class="bg-green-50 border-l-4 border-green-400 rounded-r-lg p-5 mb-4">
+                    <div class="flex items-start mb-4">
+                        <div class="text-green-500 text-2xl mr-3">💬</div>
+                        <div class="flex-1">
+                            <h4 class="text-lg font-bold text-green-800">Live AI Conversation Simulation</h4>
+                            <p class="text-green-600 text-sm">Practice your conversation skills through structured phases</p>
+                        </div>
+                    </div>
+                    
+                    <div id="ai-messages" class="space-y-3 max-h-96 overflow-y-auto mb-4 bg-white rounded-lg p-4" style="word-wrap: break-word;">
+                        <!-- AI conversation messages here -->
+                    </div>
+                    
+                    <!-- TTS and Export controls - subtle and out of the way -->
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-3">
+                            <button id="tts-toggle" class="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 text-xs transition-colors border border-gray-200" title="Toggle text-to-speech for AI character responses">
+                                🔇 TTS: OFF
+                            </button>
+                            
+                            <!-- Voice Selection Dropdown -->
+                            <div class="flex items-center gap-1">
+                                <label for="voice-select" class="text-xs text-gray-500">Voice:</label>
+                                <select id="voice-select" class="text-xs border border-gray-300 rounded px-2 py-1 bg-white" disabled>
+                                    <option value="">Loading voices...</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Playback Speed Control -->
+                            <div class="flex items-center gap-1">
+                                <label for="speed-select" class="text-xs text-gray-500">Speed:</label>
+                                <select id="speed-select" class="text-xs border border-gray-300 rounded px-2 py-1 bg-white" disabled>
+                                    <option value="0.5">0.5x</option>
+                                    <option value="0.75">0.75x</option>
+                                    <option value="1.0" selected>1.0x</option>
+                                    <option value="1.25">1.25x</option>
+                                    <option value="1.5">1.5x</option>
+                                    <option value="2.0">2.0x</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <button id="download-conversation" class="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 text-xs transition-colors border border-gray-200" title="Download conversation transcript and performance analysis">
+                                📥 Export Progress
+                            </button>
+                            <div class="text-xs text-gray-400 mt-1">Records current conversation</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3" id="conversation-input-area">
+                        <div class="flex-1 relative">
+                            <textarea id="ai-user-input" placeholder="Type your response to continue the conversation..." 
+                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none overflow-y-auto min-h-[42px] max-h-32 w-full"
+                                   rows="1" title="Type your response here. Press Enter to send, Shift+Enter for new line."></textarea>
+                            <!-- Loading indicator for canned responses -->
+                            <div id="canned-response-loading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg hidden">
+                                <div class="flex items-center gap-2 text-purple-600">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
+                                    <span class="text-sm font-medium">Generating response...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="send-ai-message" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium" title="Send your response to the AI character">
+                            Send
+                        </button>
+                        <button id="get-ai-coaching" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm" title="Get real-time coaching tips for this conversation phase">
+                            💡 Get Help
+                        </button>
+                        <button id="get-canned-response" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm" title="See an AI-generated example response for this situation">
+                            🥫 Example
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Phase Analysis Section (Hidden by default) -->
+                <div id="phase-analysis-section" class="hidden">
+                    <div class="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-5 mb-4">
+                        <div class="flex items-start mb-4">
+                            <div class="text-blue-500 text-2xl mr-3">📊</div>
+                            <div class="flex-1">
+                            <h4 class="text-lg font-bold text-blue-800">Phase Analysis & Feedback</h4>
+                            <p class="text-blue-600 text-sm">AI evaluation of your conversation performance in this phase</p>
+                            </div>
+                        </div>
+                        
+                        <div id="phase-analysis-content" class="space-y-4 overflow-y-auto p-2 text-sm" style="min-height: 400px; max-height: none; overflow-y: scroll;">
+                            <!-- Analysis content will be inserted here -->
+                        </div>
+                        
+                        <div class="flex gap-3 mt-4">
+                            <button id="continue-to-next-phase" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium" title="Move to the next conversation phase">
+                                Continue to Next Phase
+                            </button>
+                            <button id="retry-current-phase" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm" title="Practice this phase again to improve your skills">
+                                Retry This Phase
+                            </button>
+                            <button id="skip-to-final-phase" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm" title="Skip remaining phases and go to final analysis (for demo purposes)">
+                                ⚡ Skip to Final Phase (Demo)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Scenario Analysis (Hidden by default) -->
+                <div id="final-analysis-section" class="hidden">
+                    <div class="bg-purple-50 border-l-4 border-purple-400 rounded-r-lg p-5 mb-4">
+                        <div class="flex items-start mb-4">
+                            <div class="text-purple-500 text-2xl mr-3">🏆</div>
+                            <div class="flex-1">
+                            <h4 class="text-lg font-bold text-purple-800">Complete Scenario Analysis</h4>
+                            <p class="text-purple-600 text-sm">Overall conversation performance and recommendations</p>
+                            </div>
+                        </div>
+                        
+                        <div id="final-analysis-content" class="space-y-4 overflow-y-auto p-2 text-sm" style="min-height: 400px; max-height: none; overflow-y: scroll;">
+                            <!-- Final analysis content will be inserted here -->
+                        </div>
+                        
+                        <div class="flex gap-3 mt-4">
+                            <button id="restart-full-scenario" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium" title="Start this scenario over from the beginning">
+                                Try Scenario Again
+                            </button>
+                            <button id="back-to-scenario-select" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm" title="Return to scenario selection screen">
+                                Choose New Scenario
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer Navigation -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <div class="flex justify-between items-center">
+                    <button id="back-to-scenarios" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700" title="Return to scenario selection screen">
+                        ← Back to Scenarios
+                    </button>
+                    <div class="text-xs text-gray-400">v1.0.0-generic</div>
+                    <button id="restart-scenario" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" title="Restart the current scenario from the beginning">
+                        🔄 Restart Scenario
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application Version
+        const APP_VERSION = "v1.0.0-generic";
+        
+        // Basic test to ensure JavaScript is running
+        console.log('🎯 JavaScript is running! Version:', APP_VERSION);
+        
+        // API Configuration
+        const API_CONFIG = {
+            endpoint: localStorage.getItem('apiEndpoint') || '',
+            apiKey: localStorage.getItem('apiKey') || '',
+            enabled: false
+        };
+        
+        // Session Management
+        let sessionId = generateSessionId();
+        let sessionStartTime = new Date();
+        let knowledgeBase = [];
+        
+        // TTS Configuration
+        const TTS_CONFIG = {
+            enabled: false, // Default OFF
+            voice: null, // Will be set based on available voices
+            rate: 1.0, // Normal speech rate
+            pitch: 1.0,
+            volume: 0.8,
+            voicePreference: 'australian' // Prefer Australian accent for IT Director
+        };
+        
+        // AI Configuration
+        let aiEnabled = false;
+        let conversationHistory = [];
+        let currentScenario = null;
+        let currentNodeId = null;
+        let currentPhase = null;
+        let currentPhaseIndex = 0;
+        let phaseResponseCount = 0;
+        let preAssessmentChoice = null; // Track which pre-assessment choice was made
+        
+        // Confidence tracking system
+        let phaseConfidenceScores = []; // Array to store confidence scores for each phase
+        let currentPhaseScore = 0; // Current phase's running score
+        
+        // Generate unique session ID
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // ✅ Generic API Call Function
+        async function callAPI(endpoint, data) {
+            if (!API_CONFIG.endpoint) {
+                throw new Error('API endpoint not configured');
+            }
+            
+            const url = `${API_CONFIG.endpoint}${endpoint}`;
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (API_CONFIG.apiKey) {
+                headers['Authorization'] = `Bearer ${API_CONFIG.apiKey}`;
+            }
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status} ${response.statusText}`);
+            }
+            
+            return await response.json();
+        }
+
+        // Analytics Functions
+        async function logInteraction(action, details, phaseIndex = null, nodeId = null) {
+            try {
+                if (API_CONFIG.enabled) {
+                    return await callAPI('/analytics/interaction', {
+                        sessionId: sessionId,
+                        timestamp: new Date().toISOString(),
+                        action: action,
+                        details: details,
+                        phaseIndex: phaseIndex,
+                        nodeId: nodeId
+                    });
+                }
+                console.log('📊 [Analytics]', action, details);
+                return { status: 'success', data: 'Logged locally' };
+            } catch (error) {
+                console.log('📊 [Analytics Failed]', action, error.message);
+                return { status: 'error', data: error.message };
+            }
+        }
+        
+        async function logMetric(metricType, value, phaseIndex = null, scenarioId = null) {
+            try {
+                if (API_CONFIG.enabled) {
+                    return await callAPI('/analytics/metric', {
+                        sessionId: sessionId,
+                        timestamp: new Date().toISOString(),
+                        metricType: metricType,
+                        value: value,
+                        phaseIndex: phaseIndex,
+                        scenarioId: scenarioId
+                    });
+                }
+                console.log('📊 [Metric]', metricType, value);
+                return { status: 'success', data: 'Logged locally' };
+            } catch (error) {
+                console.log('📊 [Metrics Failed]', metricType, error.message);
+                return { status: 'error', data: error.message };
+            }
+        }
+        
+        async function logSessionSummary(scenarioId, completedPhases, totalScore, summary) {
+            const duration = Math.round((new Date() - sessionStartTime) / 1000); // seconds
+            try {
+                if (API_CONFIG.enabled) {
+                    return await callAPI('/analytics/session-summary', {
+                        sessionId: sessionId,
+                        scenarioId: scenarioId,
+                        completedPhases: completedPhases,
+                        totalScore: totalScore,
+                        duration: duration,
+                        summary: summary
+                    });
+                }
+                console.log('📊 [Session Summary]', scenarioId, completedPhases, totalScore);
+                return { status: 'success', data: 'Logged locally' };
+            } catch (error) {
+                console.log('📊 [Session Summary Failed]', error.message);
+                return { status: 'error', data: error.message };
+            }
+        }
+        
+        // Initialize application
+        async function initializeApp() {
+            console.log('🚀 Initializing application...');
+            
+            // Load scenarios first
+            await loadScenarios();
+            
+            // Check if API is configured
+            if (API_CONFIG.endpoint) {
+                try {
+                    console.log('✅ Testing API connection...');
+                    const result = await callAPI('/health', {});
+                    if (result.status === 'success') {
+                        console.log('✅ API connection successful - enabling AI mode');
+                        API_CONFIG.enabled = true;
+                        aiEnabled = true;
+                        showScenarios();
+                        return;
+                    }
+                } catch (error) {
+                    console.log('⚠️ API connection failed:', error.message);
+                }
+            }
+            
+            // Show API configuration if not configured or connection failed
+            console.log('⚠️ API not configured or connection failed - showing configuration');
+            showAPIConfiguration();
+        }
+        
+        // Show API configuration when not configured
+        function showAPIConfiguration() {
+            console.log('📋 Showing API configuration UI');
+            document.getElementById('api-config').classList.remove('hidden');
+            document.getElementById('status-indicator').innerHTML = '⚠️ Configuration Required';
+            document.getElementById('status-indicator').className = 'text-orange-600 text-sm font-medium';
+        }
+        
+        // Save API configuration
+        function saveAPIConfiguration() {
+            const endpoint = document.getElementById('api-endpoint').value.trim();
+            const apiKey = document.getElementById('api-key').value.trim();
+            
+            if (!endpoint) {
+                alert('Please enter an API endpoint URL');
+                return;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('apiEndpoint', endpoint);
+            localStorage.setItem('apiKey', apiKey);
+            
+            // Update global config
+            API_CONFIG.endpoint = endpoint;
+            API_CONFIG.apiKey = apiKey;
+            API_CONFIG.enabled = true;
+            aiEnabled = true;
+            
+            // Hide the config UI and update status
+            document.getElementById('api-config').classList.add('hidden');
+            document.getElementById('status-indicator').innerHTML = '✅ API Configured';
+            document.getElementById('status-indicator').className = 'text-green-500 text-sm font-medium';
+            
+            // Show scenarios
+            showScenarios();
+        }
+
+        function showScenarios() {
+            // Always show scenarios when this function is called
+            // AI is auto-enabled when deployed via Apps Script
+            document.getElementById('scenario-list').classList.remove('hidden');
+            
+            const scenarioList = document.getElementById('scenario-list');
+            scenarioList.innerHTML = scenarios.map(scenario => `
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer" 
+                     onclick="startScenario('${scenario.id}')">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">${scenario.title}</h3>
+                            <p class="text-gray-600 mb-3">${scenario.description.replace(/<[^>]*>/g, '')}</p>
+                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${scenario.use_case}</span>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full">${scenario.conversationPhases.length} Phases</span>
+                            </div>
+                        </div>
+                        <div class="text-3xl ml-4">🎭</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function startScenario(scenarioId) {
+            currentScenario = scenarios.find(s => s.id === scenarioId);
+            currentNodeId = currentScenario.startNode;
+            
+            // Reset confidence tracking for new scenario
+            phaseConfidenceScores = [];
+            currentPhaseScore = 0;
+            
+            // Log scenario start
+            logInteraction('scenario_start', `Started scenario: ${currentScenario.title}`, null, scenarioId);
+            
+            document.getElementById('selection-screen').classList.add('hidden');
+            document.getElementById('scenario-screen').classList.remove('hidden');
+            
+            showNode(currentScenario.startNode);
+        }
+
+        function updateScenarioContext() {
+            const contextDetails = document.getElementById('scenario-context-details');
+            if (!contextDetails || !currentScenario) return;
+            
+            // Extract key information from scenario description
+            const description = currentScenario.description || '';
+            const aiPersonality = currentScenario.aiPersonality || 'AI Character';
+            
+            // Create generic context display
+            let contextHTML = '';
+            
+            // Try to extract structured information from description
+            if (description.includes('<strong>')) {
+                // Parse HTML description for structured info
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = description;
+                const strongElements = tempDiv.querySelectorAll('strong');
+                
+                strongElements.forEach((strong, index) => {
+                    const nextSibling = strong.nextSibling;
+                    if (nextSibling && nextSibling.textContent) {
+                        const label = strong.textContent.replace(':', '');
+                        const value = nextSibling.textContent.trim();
+                        contextHTML += `<p><strong>${label}:</strong> ${value}</p>`;
+                    }
+                });
+            } else {
+                // Fallback: show basic scenario info
+                contextHTML = `
+                    <p><strong>Scenario:</strong> ${currentScenario.title}</p>
+                    <p><strong>Type:</strong> ${currentScenario.use_case}</p>
+                    <p><strong>AI Character:</strong> ${aiPersonality}</p>
+                `;
+            }
+            
+            contextDetails.innerHTML = contextHTML;
+        }
+
+        function showNode(nodeId) {
+            const node = currentScenario.nodes[nodeId];
+            if (!node) return;
+            
+            currentNodeId = nodeId;
+            
+            // Update scenario info
+            document.getElementById('scenario-title').textContent = currentScenario.title;
+            document.getElementById('scenario-use-case').textContent = currentScenario.use_case;
+            
+            // Update scenario context details
+            updateScenarioContext();
+            
+            // Show node content
+            document.getElementById('scenario-text').innerHTML = node.text;
+            
+            // Handle different node types
+            if (node.aiConversation) {
+                handleAIConversation(node);
+            } else if (node.aiCoaching) {
+                handleAICoaching(node);
+            } else {
+                // Regular CYOA node
+                document.getElementById('ai-coaching-section').classList.add('hidden');
+                document.getElementById('ai-conversation-section').classList.add('hidden');
+                createChoiceButtons(node.choices);
+            }
+        }
+
+        function createChoiceButtons(choices) {
+            const container = document.getElementById('choices-container');
+            container.innerHTML = choices.map(choice => `
+                <button onclick="handleChoice('${choice.next}', '${choice.choiceId || ''}')" 
+                        class="w-full text-left p-4 bg-white border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">
+                    ${choice.text}
+                </button>
+            `).join('');
+        }
+
+        async function handleChoice(nextNodeId, choiceId) {
+            console.log('handleChoice called with:', nextNodeId, choiceId);
+            
+            // Set the pre-assessment choice if provided
+            if (choiceId) {
+                preAssessmentChoice = choiceId;
+                console.log('Set preAssessmentChoice to:', preAssessmentChoice);
+            }
+            
+            if (nextNodeId === 'ai_mode') {
+                console.log('Starting AI conversation mode');
+                // Start AI conversation mode directly
+                currentPhaseIndex = 0;
+                phaseResponseCount = 0;
+                conversationHistory = [];
+                
+                // Hide the entire pre-assessment section and show AI conversation
+                document.getElementById('scenario-text').classList.add('hidden');
+                document.getElementById('choices-container').classList.add('hidden');
+                document.getElementById('ai-conversation-section').classList.remove('hidden');
+                
+                // Start the first conversation phase
+                await startConversationPhase(0);
+            } else {
+                showNode(nextNodeId);
+            }
+        }
+
+        async function handleAICoaching(node) {
+            document.getElementById('ai-coaching-section').classList.remove('hidden');
+            document.getElementById('ai-conversation-section').classList.add('hidden');
+            
+            const coachingContent = document.getElementById('ai-coaching-content');
+            coachingContent.innerHTML = '<div class="animate-pulse">Analyzing your response...</div>';
+            
+            try {
+            const coachingPrompt = `
+                You are a supportive AIcoach providing constructive feedback. The learner made a choice that didn't work well.
+                
+                Context: ${currentScenario.description.replace(/<[^>]*>/g, '')}
+                Current Situation: ${node.text.replace(/<[^>]*>/g, '')}
+                
+                Provide encouraging feedback that:
+                1. Acknowledges their effort
+                2. Explains why this approach didn't work in this context
+                3. Suggests a better strategy for next time
+                4. Maintains their confidence and motivation
+                
+                Format as HTML. Be encouraging and constructive.
+            `;
+                
+                const coaching = await getAICoaching(coachingPrompt);
+                coachingContent.innerHTML = coaching;
+                
+            } catch (error) {
+                coachingContent.innerHTML = `
+                    <div class="text-blue-700">
+                        <p><strong>💡 Learning Opportunity:</strong> This approach didn't quite work in this context.</p>
+                        <p class="mt-2"><strong>🎯 Better Strategy:</strong> Consider focusing on understanding the customer's perspective first before presenting solutions.</p>
+                        <p class="mt-2"><strong>🌟 Keep Going:</strong> Every choice is a chance to learn and improve your sales approach!</p>
+                    </div>
+                `;
+            }
+        }
+
+        function handleAIConversation(node) {
+            document.getElementById('ai-coaching-section').classList.add('hidden');
+            document.getElementById('ai-conversation-section').classList.remove('hidden');
+            
+            // Start the first conversation phase
+            currentPhaseIndex = 0;
+            phaseResponseCount = 0;
+            conversationHistory = [];
+            startConversationPhase(0);
+        }
+
+        async function startConversationPhase(phaseIndex) {
+            console.log('startConversationPhase called with phaseIndex:', phaseIndex);
+            console.log('preAssessmentChoice:', preAssessmentChoice);
+            
+            if (phaseIndex >= currentScenario.conversationPhases.length) {
+                // All phases complete - show final IT Director response before analysis
+                await showFinalITDirectorResponse();
+                // Show phase analysis for the last completed phase before final analysis
+                await showPhaseAnalysis();
+                return;
+            }
+            
+            currentPhase = currentScenario.conversationPhases[phaseIndex];
+            currentPhaseIndex = phaseIndex;
+            phaseResponseCount = 0;
+            
+            // Log phase start
+            logInteraction('phase_start', `Started phase: ${currentPhase.title}`, phaseIndex, currentScenario.id);
+            
+            // Update phase display
+            document.getElementById('phase-title').textContent = currentPhase.title;
+            document.getElementById('phase-objective').textContent = currentPhase.objective;
+            document.getElementById('phase-progress').textContent = `0/${currentPhase.maxResponses}`;
+            document.getElementById('progress-bar').style.width = `0%`;
+            
+            // Update strategy summary based on pre-assessment choice
+            if (preAssessmentChoice) {
+                const strategySummary = document.getElementById('strategy-summary');
+                let strategyText = '';
+                
+                switch(preAssessmentChoice) {
+                    case 'technical_focus':
+                        strategyText = 'You chose to focus on the <strong>Technical Post-Mortem</strong>, analyzing the specific error that caused the outage. This approach requires careful handling to avoid making the customer defensive about their team\'s mistake.';
+                        break;
+                    case 'business_impact_focus':
+                        strategyText = 'You chose to focus on the <strong>Surgeon\'s Email</strong>, emphasizing the impact on patient safety and hospital operations. This positions you as a strategic partner who understands healthcare priorities.';
+                        break;
+                    case 'future_state_focus':
+                        strategyText = 'You chose to focus on the <strong>Hardware Refresh Plan</strong>, looking at future opportunities to prevent similar issues. This approach focuses on long-term solutions and strategic planning.';
+                        break;
+                }
+                
+                strategySummary.innerHTML = strategyText;
+                console.log('Strategy summary updated:', strategyText);
+            }
+            
+            // Determine the starting message for this phase
+            let startingMessage;
+            if (phaseIndex === 0) {
+                // First phase - use the original starting message
+                startingMessage = currentPhase.startingMessage;
+                console.log('Using original starting message for phase 0:', startingMessage);
+            } else {
+                // Subsequent phases - generate a response that references the user's last message
+                console.log('Generating transition message for phase', phaseIndex);
+                startingMessage = await generatePhaseTransitionMessage();
+                console.log('Generated transition message:', startingMessage);
+            }
+            
+            // Start with the phase's starting message
+            addAIMessage(startingMessage, 'customer');
+            
+            // Show conversation input
+            document.getElementById('conversation-input-area').classList.remove('hidden');
+            
+            // Update progress to show first response
+            updatePhaseProgress();
+            
+            console.log('Conversation phase started successfully');
+        }
+
+        function updatePhaseProgress() {
+            const progressText = document.getElementById('phase-progress');
+            const progressBar = document.getElementById('progress-bar');
+            
+            // Update progress text
+            progressText.textContent = `${phaseResponseCount}/${currentPhase.maxResponses}`;
+            
+            // Update progress bar
+            const progressPercentage = (phaseResponseCount / currentPhase.maxResponses) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+        
+        async function generatePhaseTransitionMessage() {
+            // Get the user's last message from the previous phase
+            const lastUserMessage = conversationHistory
+                .slice()
+                .reverse()
+                .find(msg => msg.role === 'user');
+            
+            console.log('Last user message found:', lastUserMessage);
+            console.log('Current phase info:', {
+                title: currentPhase.title,
+                objective: currentPhase.objective,
+                phaseIndex: currentPhaseIndex
+            });
+            
+            if (!lastUserMessage) {
+                // Fallback to original starting message if no user message found
+                console.log('No user message found, using fallback');
+                return currentPhase.startingMessage;
+            }
+            
+            // Get the previous phase context for better transitions
+            const previousPhase = currentScenario.conversationPhases[currentPhaseIndex - 1];
+            
+            const transitionPrompt = `
+                You are the AIpersona continuing a conversation. You need to naturally transition from the previous topic to the next phase without explicitly stating phase goals.
+                
+                CONVERSATION CONTEXT:
+                - Previous Phase: ${previousPhase?.title || 'Previous phase'} (${previousPhase?.objective || 'Previous objective'})
+                - Current Phase: ${currentPhase.title} (${currentPhase.objective})
+                
+                USER'S LAST MESSAGE:
+                "${lastUserMessage.content}"
+                
+                CRITICAL INSTRUCTIONS:
+                - You are the AIpersona - you are NOT the user
+                - You are responding as the character, not coaching or analyzing the conversation
+                - Keep responses conversational and realistic
+                - Stay consistent with the phase-specific instructions above
+                - Reference the scenario context when relevant
+                - NEVER refer to yourself in third person or say things like "the AIpersona thinks..."
+                - NEVER mention word limits, constraints, or system rules
+                - NEVER break character or mention being an AI
+                - NEVER mention response length, sentence limits, or any technical constraints
+                - NEVER explicitly state phase objectives or goals - let the conversation flow naturally
+                - Respond naturally as if you are the AIpersona speaking directly to the user
+                - Focus on the conversation topic, not the phase structure
+                
+                PHASE TRANSITION GUIDELINES:
+                - **Phase 1 → 2**: From rapport building to discovery - acknowledge their specific approach/solution, then ask about their current challenges
+                - **Phase 2 → 3**: From discovery to solution exploration - acknowledge their understanding of challenges, then show interest in how solutions work
+                - **Phase 3 → 4**: From solution exploration to objection handling - acknowledge the solution sounds good, then raise specific concerns
+                - **Phase 4 → 5**: From objection handling to next steps - acknowledge concerns addressed, then discuss moving forward
+                
+                TASK: Create a natural response that:
+                1. **Acknowledges** the user's last message specifically
+                2. **Naturally flows** into the current phase topic without stating phase goals
+                3. **Maintains conversation momentum** - don't break the flow
+                4. **Sounds authentic** - like a real character continuing a conversation
+                5. **Sets up the phase** implicitly through natural conversation
+                
+                EXAMPLES:
+                - Phase 1→2: "A tailored solution roadmap sounds interesting, but I need to understand our specific situation better first. What challenges are you seeing most often in healthcare IT environments like ours?"
+                - Phase 2→3: "That's exactly the kind of insight we need. How do you typically help organizations address these kinds of manual configuration risks?"
+                - Phase 3→4: "This sounds promising, but I have to be honest - my team are network engineers, not developers. How quickly can we actually see value?"
+                - Phase 4→5: "You've addressed my main concerns. What's the most efficient way to evaluate this and get the information my CIO needs?"
+                
+                GUIDELINES:
+                - 2-3 sentences maximum
+                - Reference specific points from their last message
+                - Don't mention "phase objectives" or "next steps" explicitly
+                - Sound like natural conversation flow
+                - Be specific to the healthcare IT context
+                
+                Return ONLY the response text, no explanations or formatting.
+            `;
+            
+            try {
+                const transitionResponse = await getAIResponse({
+                    messages: [
+                        { role: 'system', content: transitionPrompt }
+                    ],
+                    temperature: 0.7,
+                    maxTokens: 150
+                });
+                return transitionResponse.replace(/^["']|["']$/g, '').trim();
+            } catch (error) {
+                console.error('Error generating phase transition message:', error);
+                // Fallback to original starting message
+                return currentPhase.startingMessage;
+            }
+        }
+        
+        async function showFinalITDirectorResponse() {
+            // Get the user's last message
+            const lastUserMessage = conversationHistory
+                .slice()
+                .reverse()
+                .find(msg => msg.role === 'user');
+            
+            if (!lastUserMessage) {
+                return;
+            }
+            
+            const finalResponsePrompt = `
+                You are the AIpersona concluding a conversation.
+                
+                CONTEXT:
+                - This is the final phase of our conversation
+                - The user has been discussing their topic with you
+                - We've covered the main conversation topics
+                
+                USER'S LAST MESSAGE:
+                "${lastUserMessage.content}"
+                
+                TASK: Create a concluding response that:
+                1. Acknowledges the user's last message
+                2. Shows appreciation for the conversation
+                3. Indicates interest in moving forward (if appropriate)
+                4. Maintains a professional but warm tone
+                5. Provides a natural conclusion to the conversation
+                
+                GUIDELINES:
+                - Sound like a real character wrapping up a conversation
+                - Be appreciative and professional
+                - Show genuine interest if the conversation went well
+                - Keep it concise (2-3 sentences)
+                - Don't be overly pushy or aggressive
+                
+                Return ONLY the response text, no explanations or formatting.
+            `;
+            
+            try {
+                const finalResponse = await getAICoaching(finalResponsePrompt);
+                const cleanResponse = finalResponse.replace(/^["']|["']$/g, '').trim();
+                
+                // Add the final IT Director response
+                addAIMessage(cleanResponse, 'customer');
+                
+                // Log the final response
+                logInteraction('final_it_director_response', cleanResponse, currentPhaseIndex, currentScenario.id);
+                
+            } catch (error) {
+                console.error('Error generating final IT Director response:', error);
+                // Fallback response
+                addAIMessage("Thank you for taking the time to discuss this with me. I appreciate the insights you've shared about the automation solution. Let me think about what we've covered and I'll be in touch about next steps.", 'customer');
+            }
+        }
+
+        // Generate fallback response when API is not available
+        function generateFallbackResponse(userMessage) {
+            const fallbackResponses = [
+                "That's an interesting point. Can you tell me more about that?",
+                "I see what you're saying. How do you think we should approach this?",
+                "That makes sense. What would you recommend as the next step?",
+                "I understand your concern. Let me think about this for a moment.",
+                "That's a good question. What's your experience been with similar situations?",
+                "I appreciate you sharing that perspective. How do you see this fitting into your overall strategy?",
+                "That's helpful context. What would success look like for you in this situation?",
+                "I can see why that would be important to you. What other factors should we consider?"
+            ];
+            
+            return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+        }
+
+        // Generate fallback coaching when API is not available
+        function generateFallbackCoaching() {
+            const fallbackCoaching = [
+                "Great job! You're asking thoughtful questions and showing genuine interest in understanding their needs.",
+                "Consider asking more specific follow-up questions to dive deeper into their challenges.",
+                "You're building good rapport. Try to connect their concerns to potential solutions.",
+                "Good listening skills! Now try to identify their key priorities and pain points.",
+                "You're on the right track. Consider asking about their decision-making process.",
+                "Nice approach! Try to understand the business impact of their current situation.",
+                "You're doing well with discovery. Consider asking about their timeline and budget.",
+                "Good conversation flow! Try to identify who else might be involved in this decision."
+            ];
+            
+            return fallbackCoaching[Math.floor(Math.random() * fallbackCoaching.length)];
+        }
+
+        // ✅ AI Response - Use Generic API
+        async function getAIResponse(userMessage, customSystemPrompt = null) {
+            if (!API_CONFIG.enabled) {
+                // Fallback to demo mode when API not configured
+                return generateFallbackResponse(userMessage);
+            }
+            
+            try {
+                const result = await callAPI('/ai/response', {
+                    systemPrompt: customSystemPrompt || constructSystemPrompt(),
+                    userMessage: userMessage,
+                    conversationHistory: conversationHistory
+                });
+                
+                if (result.status === 'success') {
+                    return result.data.message;
+                } else {
+                    throw new Error(result.data);
+                }
+            } catch (error) {
+                console.log('⚠️ AI Response failed:', error.message);
+                // Fallback to demo mode when API fails
+                return generateFallbackResponse(userMessage);
+            }
+        }
+        
+        // ✅ AI Coaching - Use Generic API
+        async function getAICoaching(coachingPrompt) {
+            if (!API_CONFIG.enabled) {
+                // Fallback to demo mode when API not configured
+                return generateFallbackCoaching();
+            }
+            
+            try {
+                const result = await callAPI('/ai/coaching', {
+                    prompt: coachingPrompt
+                });
+                
+                if (result.status === 'success') {
+                    return result.data.message;
+                } else {
+                    throw new Error(result.data);
+                }
+            } catch (error) {
+                console.log('⚠️ AI Coaching failed:', error.message);
+                // Fallback to demo mode when API fails
+                return generateFallbackCoaching();
+            }
+        }
+        
+
+        // Helper function to construct system prompt (extracted from getAIResponse)
+        function constructSystemPrompt() {
+            // Get choice-specific modifier for this phase
+            const choiceModifier = getChoiceSpecificPromptModifier(preAssessmentChoice, currentPhase.id);
+            
+            // Use the current phase's specific AI prompt with choice-specific customization
+            let systemPrompt = `${currentPhase.aiPrompt}
+
+Additional Context: ${currentScenario.description.replace(/<[^>]*>/g, '')}`;
+            
+            // Add choice-specific behavior modifier if available
+            if (choiceModifier) {
+                systemPrompt += `
+
+IMPORTANT - Choice-Specific Behavior: ${choiceModifier}`;
+            }
+            
+            systemPrompt += `
+
+CRITICAL INSTRUCTIONS:
+- You are the AIpersona - you are NOT the user
+- You are responding as the character, not coaching or analyzing the conversation
+- Keep responses conversational and realistic
+- Stay consistent with the phase-specific instructions above
+- Reference the scenario context when relevant
+- This is exchange ${phaseResponseCount} of ${currentPhase.maxResponses} in this phase (${currentScenario.conversationPhases.length} total)
+- NEVER refer to yourself in third person or say things like "the AIpersona thinks..."
+- NEVER mention word limits, constraints, or system rules
+- NEVER break character or mention being an AI
+- NEVER mention response length, sentence limits, or any technical constraints
+- NEVER explicitly state phase objectives or goals - let the conversation flow naturally
+- Respond naturally as if you are the AIpersona speaking directly to the user
+- Focus on the conversation topic, not the phase structure`;
+
+            return systemPrompt;
+        }
+
+        function getChoiceSpecificPromptModifier(preAssessmentChoice, phaseId) {
+            if (!preAssessmentChoice) return null;
+            
+            const modifiers = {
+                technical_focus: {
+                    discovery: "You're slightly more receptive to technical questions since the rep focused on technical details in their approach.",
+                    technical_deep_dive: "You're more willing to discuss technical specifics since the rep showed technical understanding.",
+                    solution_exploration: "You're more interested in technical implementation details and want to see proof of technical capabilities.",
+                    objection_handling: "You're more focused on technical risks and implementation complexity.",
+                    next_steps: "You want technical validation and proof-of-concept before proceeding."
+                },
+                business_impact_focus: {
+                    discovery: "You're more open to discussing business impact and patient safety since the rep focused on these areas.",
+                    technical_deep_dive: "You're willing to discuss technical details but always connect them back to business impact.",
+                    solution_exploration: "You're more interested in how the solution prevents business disruption and improves patient care.",
+                    objection_handling: "You're more concerned about business continuity and risk mitigation than technical complexity.",
+                    next_steps: "You want to see how this fits into your broader business continuity strategy."
+                },
+                future_state_focus: {
+                    discovery: "You're more interested in future planning and strategic thinking since the rep focused on future opportunities.",
+                    technical_deep_dive: "You're willing to discuss current technical state but are more excited about future possibilities.",
+                    solution_exploration: "You're more interested in how this solution enables future growth and transformation.",
+                    objection_handling: "You're more concerned about long-term value and strategic fit than immediate implementation.",
+                    next_steps: "You want to understand the roadmap and how this fits into your long-term technology strategy."
+                }
+            };
+            
+            return modifiers[preAssessmentChoice]?.[phaseId] || null;
+        }
+
+        // Conversation and Assessment Functions
+        async function assessResponseConfidence(userMessage) {
+            // For individual responses, we'll just track them for the phase analysis
+            // The actual AI evaluation happens at the end of each phase
+            const assessment = {
+                successCriteria: [],
+                failureCriteria: [],
+                scoreChange: 0
+            };
+            
+            // Increment response count for phase tracking
+            currentPhaseScore += 1;
+            
+            console.log('Response tracked for phase analysis. Current responses:', currentPhaseScore);
+            
+            return assessment;
+        }
+        
+        // Fallback keyword matching function
+        function fallbackKeywordAssessment(userMessage) {
+            let scoreChange = 0;
+            
+            // Check against success criteria with semantic matching
+            currentPhase.successCriteria.forEach(criteria => {
+                const criteriaWords = criteria.toLowerCase().replace(/[^\w\s]/g, '').split(' ').filter(word => word.length > 3);
+                const userWords = userMessage.toLowerCase().replace(/[^\w\s]/g, '').split(' ').filter(word => word.length > 3);
+                
+                // Check if at least 2 key words from criteria are present in user response
+                const matchingWords = criteriaWords.filter(word => userWords.some(userWord => userWord.includes(word) || word.includes(userWord)));
+                
+                if (matchingWords.length >= 2) {
+                    scoreChange += 1;
+                }
+            });
+            
+            // Check against failure criteria
+            if (currentPhase.failureCriteria) {
+                currentPhase.failureCriteria.forEach(criteria => {
+                    const criteriaWords = criteria.toLowerCase().replace(/[^\w\s]/g, '').split(' ').filter(word => word.length > 3);
+                    const userWords = userMessage.toLowerCase().replace(/[^\w\s]/g, '').split(' ').filter(word => word.length > 3);
+                    
+                    const matchingWords = criteriaWords.filter(word => userWords.some(userWord => userWord.includes(word) || word.includes(userWord)));
+                    
+                    if (matchingWords.length >= 2) {
+                        scoreChange -= 1;
+                    }
+                });
+            }
+            
+            return scoreChange;
+        }
+
+        function getConfidenceLevel(score) {
+            if (score >= 7) return { level: 'High', color: 'text-green-600', bgColor: 'bg-green-100', borderColor: 'border-green-400' };
+            if (score >= 4) return { level: 'Medium', color: 'text-yellow-600', bgColor: 'bg-yellow-100', borderColor: 'border-yellow-400' };
+            return { level: 'Low', color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-400' };
+        }
+
+        function addAIMessage(content, sender) {
+            const aiMessages = document.getElementById('ai-messages');
+            const messageDiv = document.createElement('div');
+            
+            // Determine sender display info
+            let senderDisplay, senderClass, messageClass, alignment;
+            
+            switch(sender) {
+                case 'user':
+                    senderDisplay = 'You';
+                    senderClass = 'text-right text-blue-600';
+                    messageClass = 'bg-blue-600 text-white';
+                    alignment = 'justify-end';
+                    break;
+                case 'coach':
+                    senderDisplay = 'AIcoach';
+                    senderClass = 'text-left text-yellow-600';
+                    messageClass = 'bg-yellow-100 text-yellow-800 border border-yellow-300';
+                    alignment = 'justify-start';
+                    break;
+                case 'customer':
+                    senderDisplay = 'AIpersona';
+                    senderClass = 'text-left text-gray-600';
+                    messageClass = 'bg-gray-200 text-gray-800';
+                    alignment = 'justify-start';
+                    break;
+                default:
+                    senderDisplay = 'AIpersona';
+                    senderClass = 'text-left text-gray-600';
+                    messageClass = 'bg-gray-200 text-gray-800';
+                    alignment = 'justify-start';
+            }
+            
+            messageDiv.className = `flex ${alignment} mb-3`;
+            
+            // Create sender label
+            const senderLabel = document.createElement('div');
+            senderLabel.className = `text-xs font-medium mb-1 ${senderClass}`;
+            senderLabel.textContent = senderDisplay;
+            
+            // Create message content
+            const messageContent = document.createElement('div');
+            messageContent.className = `max-w-sm lg:max-w-lg px-4 py-2 rounded-lg break-words ${messageClass}`;
+            messageContent.innerHTML = content;
+            
+            // Add label and content to message div
+            messageDiv.appendChild(senderLabel);
+            messageDiv.appendChild(messageContent);
+            aiMessages.appendChild(messageDiv);
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+            
+            // Add to conversation history
+            conversationHistory.push({
+                role: sender === 'user' ? 'user' : 'assistant',
+                content: content
+            });
+            
+            // Speak AI character responses if TTS is enabled
+            if (sender === 'customer' && TTS_CONFIG.enabled) {
+                // Small delay to allow message to render
+                setTimeout(() => speakText(content), 100);
+            }
+        }
+
+        async function sendAIMessage() {
+            const userInput = document.getElementById('ai-user-input');
+            const userMessage = userInput.value.trim();
+            
+            if (!userMessage) return;
+            
+            // Log user message
+            logInteraction('user_message', userMessage, currentPhaseIndex, currentScenario.id);
+            
+            // Add user message
+            addAIMessage(userMessage, 'user');
+            userInput.value = '';
+            
+            // Increment response count
+            phaseResponseCount++;
+            
+            // Update progress display
+            updatePhaseProgress();
+            
+            // Check if we've reached the phase limit - if so, end phase without AI response
+            if (phaseResponseCount >= currentPhase.maxResponses) {
+                endCurrentPhase();
+                return;
+            }
+            
+            // Show typing indicator for AI response
+            showTypingIndicator();
+            
+            // Assess response confidence (now async) - no visual feedback in chat
+            const confidenceAssessment = await assessResponseConfidence(userMessage);
+            
+            // Log confidence assessment
+            logMetric('confidence_score', confidenceAssessment.scoreChange, currentPhaseIndex, currentScenario.id);
+            
+            try {
+                // Get AI response using API or fallback
+                const systemPrompt = constructSystemPrompt();
+                const aiResponse = await getAIResponse(userMessage, systemPrompt);
+                removeTypingIndicator();
+                
+                // Log AI response
+                logInteraction('ai_response', aiResponse.substring(0, 100) + '...', currentPhaseIndex, currentScenario.id);
+                
+                // Add AI response
+                addAIMessage(aiResponse, 'customer');
+                
+            } catch (error) {
+                removeTypingIndicator();
+                console.log('⚠️ AI Response failed, using fallback:', error.message);
+                
+                // Use fallback response instead of generic error
+                const fallbackResponse = generateFallbackResponse(userMessage);
+                addAIMessage(fallbackResponse, 'customer');
+                
+                // Log fallback usage
+                logInteraction('ai_fallback', 'Used fallback response', currentPhaseIndex, currentScenario.id);
+            }
+        }
+
+        function showTypingIndicator() {
+            const aiMessages = document.getElementById('ai-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex justify-start mb-3';
+            typingDiv.innerHTML = `
+                <div class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-500">AI is typing</span>
+                        <div class="flex space-x-1">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            aiMessages.appendChild(typingDiv);
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+            
+            // Force animation to start immediately
+            requestAnimationFrame(() => {
+                const dots = typingDiv.querySelectorAll('.animate-bounce');
+                dots.forEach(dot => dot.style.animationPlayState = 'running');
+            });
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // AI-Powered Phase Evaluation
+        async function evaluatePhaseWithAI() {
+            try {
+                // Get all user messages from this phase
+                const phaseMessages = conversationHistory.slice(-(phaseResponseCount * 2)).filter(msg => msg.role === 'user');
+                const userResponses = phaseMessages.map(msg => msg.content).join('\n\n');
+                
+                const evaluationPrompt = `
+                    You are an expert AIcoach evaluating a complete conversation phase. Analyze the user's performance holistically and assign a confidence level.
+                    
+                    PHASE: ${currentPhase.title}
+                    OBJECTIVE: ${currentPhase.objective}
+                    
+                    SUCCESS CRITERIA:
+                    ${currentPhase.successCriteria.map((criteria, index) => `${index + 1}. ${criteria}`).join('\n')}
+                    
+                    ${currentPhase.failureCriteria ? `FAILURE CRITERIA:
+                    ${currentPhase.failureCriteria.map((criteria, index) => `${index + 1}. ${criteria}`).join('\n')}` : ''}
+                    
+                    USER'S RESPONSES IN THIS PHASE:
+                    ${userResponses}
+                    
+                    EVALUATION TASK:
+                    Analyze the user's overall performance in this phase and provide:
+                    1. A confidence level (High/Medium/Low) based on how well they demonstrated the success criteria
+                    2. Specific strengths they showed
+                    3. Areas for improvement
+                    
+                    CONFIDENCE LEVEL GUIDELINES:
+                    - HIGH: Demonstrated 3-4 success criteria consistently, showed strong understanding of phase objective
+                    - MEDIUM: Demonstrated 2-3 success criteria, showed some understanding with room for improvement
+                    - LOW: Demonstrated 1-2 success criteria, missed key aspects of the phase objective
+                    
+                    Respond with a JSON object in this exact format:
+                    {
+                        "confidenceLevel": "High|Medium|Low",
+                        "strengths": ["strength 1", "strength 2", "strength 3"],
+                        "areasForImprovement": ["area 1", "area 2"],
+                        "reasoning": "Brief explanation of your evaluation"
+                    }
+                    
+                    Be fair but thorough in your analysis. Consider the overall conversation flow and how well they achieved the phase objective.
+                `;
+                
+                const aiEvaluation = await getAICoaching(evaluationPrompt);
+                
+                // Parse the AI response
+                try {
+                    const jsonMatch = aiEvaluation.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        const parsedEvaluation = JSON.parse(jsonMatch[0]);
+                        
+                        // Map confidence level to our system
+                        const confidenceLevel = getConfidenceLevelFromString(parsedEvaluation.confidenceLevel);
+                        
+                        return {
+                            confidenceLevel: confidenceLevel,
+                            strengths: parsedEvaluation.strengths || [],
+                            areasForImprovement: parsedEvaluation.areasForImprovement || [],
+                            reasoning: parsedEvaluation.reasoning || 'AI evaluation completed'
+                        };
+                        
+                    } else {
+                        throw new Error('No JSON found in AI response');
+                    }
+                    
+                } catch (parseError) {
+                    console.error('Failed to parse AI evaluation:', parseError);
+                    console.log('Raw AI response:', aiEvaluation);
+                    
+                    // Fallback to Medium confidence
+                    return {
+                        confidenceLevel: { level: 'Medium', color: 'text-yellow-600', bgColor: 'bg-yellow-100', borderColor: 'border-yellow-400' },
+                        strengths: ['Participated actively in the conversation'],
+                        areasForImprovement: ['Continue developing phase-specific skills'],
+                        reasoning: 'Fallback evaluation used due to AI parsing error'
+                    };
+                }
+                
+            } catch (error) {
+                console.error('AI phase evaluation failed:', error);
+                
+                // Fallback to Medium confidence
+                return {
+                    confidenceLevel: { level: 'Medium', color: 'text-yellow-600', bgColor: 'bg-yellow-100', borderColor: 'border-yellow-400' },
+                    strengths: ['Participated actively in the conversation'],
+                    areasForImprovement: ['Continue developing phase-specific skills'],
+                    reasoning: 'Fallback evaluation used due to AI evaluation error'
+                };
+            }
+        }
+        
+        function getConfidenceLevelFromString(levelString) {
+            const level = levelString.toLowerCase();
+            if (level === 'high') {
+                return { level: 'High', color: 'text-green-600', bgColor: 'bg-green-100', borderColor: 'border-green-400' };
+            } else if (level === 'low') {
+                return { level: 'Low', color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-400' };
+            } else {
+                return { level: 'Medium', color: 'text-yellow-600', bgColor: 'bg-yellow-100', borderColor: 'border-yellow-400' };
+            }
+        }
+
+        // Phase Management Functions
+        async function endCurrentPhase() {
+            // Get AI evaluation of the entire phase conversation
+            const aiEvaluation = await evaluatePhaseWithAI();
+            
+            // Store the phase confidence score with AI evaluation
+            phaseConfidenceScores.push({
+                phaseIndex: currentPhaseIndex,
+                phaseTitle: currentPhase.title,
+                score: currentPhaseScore, // Keep track of response count
+                maxResponses: currentPhase.maxResponses,
+                actualResponses: phaseResponseCount,
+                confidenceLevel: aiEvaluation.confidenceLevel,
+                strengths: aiEvaluation.strengths,
+                areasForImprovement: aiEvaluation.areasForImprovement
+            });
+            
+            // Log phase completion
+            logInteraction('phase_complete', `Completed phase: ${currentPhase.title}`, currentPhaseIndex, currentScenario.id);
+            logMetric('phase_score', currentPhaseScore, currentPhaseIndex, currentScenario.id);
+            
+            console.log(`Phase ${currentPhaseIndex + 1} completed with AI evaluation: ${aiEvaluation.confidenceLevel.level} confidence`);
+            
+            // Hide conversation input
+            document.getElementById('conversation-input-area').classList.add('hidden');
+            
+            // Show phase analysis
+            showPhaseAnalysis();
+        }
+
+        async function showPhaseAnalysis() {
+            const analysisSection = document.getElementById('phase-analysis-section');
+            const analysisContent = document.getElementById('phase-analysis-content');
+            
+            // Show the analysis section
+            analysisSection.classList.remove('hidden');
+            
+            // Update button text based on current phase
+            updateContinueButtonText();
+            
+            // Scroll to analysis
+            analysisSection.scrollIntoView({ behavior: 'smooth' });
+            
+            // Show loading state
+            analysisContent.innerHTML = '<div class="text-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div><p class="mt-2 text-gray-600">Analyzing your performance...</p></div>';
+            
+            try {
+                // Generate AI analysis
+                await generatePhaseAnalysis();
+                
+            } catch (error) {
+                console.error('Error generating phase analysis:', error);
+                analysisContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="text-red-500 text-6xl mb-4">⚠️</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Analysis Unavailable</h3>
+                        <p class="text-gray-600">Unable to generate analysis at this time. Please continue to the next phase.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function generatePhaseAnalysis() {
+            const analysisContent = document.getElementById('phase-analysis-content');
+            analysisContent.innerHTML = '<div class="animate-pulse text-blue-600">🤖 Analyzing your performance...</div>';
+            
+            try {
+                // Extract user messages from this phase
+                const phaseMessages = conversationHistory.slice(-(phaseResponseCount * 2)).filter(msg => msg.role === 'user');
+                const userResponses = phaseMessages.map(msg => msg.content).join('\n');
+                
+                // Get current phase confidence info
+                const currentPhaseConfidence = phaseConfidenceScores[phaseConfidenceScores.length - 1];
+                const confidenceDisplay = `
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border-l-4 ${currentPhaseConfidence.confidenceLevel.borderColor} mb-4">
+                        <h4 class="font-bold text-lg ${currentPhaseConfidence.confidenceLevel.color} mb-2">🎯 Phase Summary</h4>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-700"><strong>Confidence Level:</strong> <span class="${currentPhaseConfidence.confidenceLevel.color} font-bold">${currentPhaseConfidence.confidenceLevel.level}</span></p>
+                                <p class="text-gray-700"><strong>Responses:</strong> ${currentPhaseConfidence.actualResponses}/${currentPhaseConfidence.maxResponses}</p>
+                                <p class="text-sm text-gray-600 mt-1">AI analyzed your conversation against success criteria</p>
+                            </div>
+                            <div class="text-3xl">
+                                ${currentPhaseConfidence.confidenceLevel.level === 'High' ? '🚀' : currentPhaseConfidence.confidenceLevel.level === 'Medium' ? '👍' : '💪'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const analysisPrompt = `
+                    You are an encouraging AIcoach providing constructive feedback on a conversation phase. Your goal is to help the learner improve while maintaining their confidence and motivation.
+                    
+                    CRITICAL: Be concise but thorough. Use bullet points and clear structure.
+                    
+                    Phase: ${currentPhase.title}
+                    Objective: ${currentPhase.objective}
+                    AI Confidence Level: ${currentPhaseConfidence.confidenceLevel.level}
+                    
+                    AI-Identified Strengths: ${currentPhaseConfidence.strengths.join(', ')}
+                    AI-Identified Areas for Improvement: ${currentPhaseConfidence.areasForImprovement.join(', ')}
+                    
+                    User's responses in this phase:
+                    ${userResponses}
+                    
+                    Provide encouraging, growth-focused feedback that builds on the AI analysis:
+                    1. **Strengths Demonstrated** - Highlight the AI-identified strengths (1 sentence max)
+                    2. **Growth Opportunities** - Focus on the AI-identified improvement areas (1 sentence max)
+                    3. **Actionable Next Steps** - 2 bullet points for improvement based on AI analysis
+                    4. **Encouraging Close** - One motivating sentence
+                    
+                    FORMATTING REQUIREMENTS:
+                    - Use HTML tags: <h3> for headers, <ul><li> for bullet points
+                    - Keep each section concise but informative
+                    - Be constructive and encouraging
+                    - Focus on the phase objective
+                    - Create scannable, digestible content
+                    - Use bullet points wherever possible instead of long paragraphs
+                    - Build on the AI analysis provided above
+                    - EXAMPLE FORMAT:
+                      <h3>1. Strengths Demonstrated</h3>
+                      <p>One sentence about what they did well.</p>
+                      <h3>2. Growth Opportunities</h3>
+                      <p>One sentence about improvement area.</p>
+                      <h3>3. Actionable Next Steps</h3>
+                      <ul><li>First bullet point</li><li>Second bullet point</li></ul>
+                      <h3>4. Encouraging Close</h3>
+                      <p>One motivating sentence.</p>
+                    
+                    MANDATORY: You MUST use the exact HTML format above. Do not deviate from this structure.
+                `;
+                
+                const analysis = await getAICoaching(analysisPrompt);
+                
+                // Force proper formatting if AI doesn't follow instructions
+                let formattedAnalysis = analysis;
+                if (!analysis.includes('<h3>') || !analysis.includes('<ul>')) {
+                    // AI didn't follow HTML formatting - force it
+                    formattedAnalysis = `
+                        <h3>1. Strengths Demonstrated</h3>
+                        <p>${analysis.split('1.')[1]?.split('2.')[0]?.trim() || 'Analysis of your strengths in this phase.'}</p>
+                        
+                        <h3>2. Growth Opportunities</h3>
+                        <p>${analysis.split('2.')[1]?.split('3.')[0]?.trim() || 'Areas for improvement and growth.'}</p>
+                        
+                        <h3>3. Actionable Next Steps</h3>
+                        <ul>
+                            <li>${analysis.split('3.')[1]?.split('4.')[0]?.trim() || 'Focus on specific improvements'}</li>
+                            <li>Practice the skills identified above</li>
+                        </ul>
+                        
+                        <h3>4. Encouraging Close</h3>
+                        <p>${analysis.split('4.')[1]?.trim() || 'Keep practicing and improving your skills!'}</p>
+                    `;
+                }
+                
+                analysisContent.innerHTML = confidenceDisplay + formattedAnalysis + `
+                                            <div class="mt-4 text-right">
+                            <button onclick="downloadPhaseConversation()" class="px-3 py-1 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-xs transition-colors border border-blue-200">
+                                📥 Export Phase ${currentPhaseIndex + 1}
+                            </button>
+                        </div>
+                `;
+                
+                // Debug: Check content height and ensure it's visible
+                console.log('Analysis content height:', analysisContent.scrollHeight);
+                console.log('Analysis content scrollHeight:', analysisContent.scrollHeight);
+                console.log('Analysis content clientHeight:', analysisContent.clientHeight);
+                
+                // Force scroll to bottom to show all content
+                analysisContent.scrollTop = analysisContent.scrollHeight;
+                
+            } catch (error) {
+                const currentPhaseConfidence = phaseConfidenceScores[phaseConfidenceScores.length - 1];
+                const confidenceDisplay = `
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border-l-4 ${currentPhaseConfidence.confidenceLevel.borderColor} mb-4">
+                        <h4 class="font-bold text-lg ${currentPhaseConfidence.confidenceLevel.color} mb-2">🎯 Phase Summary</h4>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-700"><strong>Confidence Level:</strong> <span class="${currentPhaseConfidence.confidenceLevel.color} font-bold">${currentPhaseConfidence.confidenceLevel.level}</span></p>
+                                <p class="text-gray-700"><strong>Responses:</strong> ${currentPhaseConfidence.actualResponses}/${currentPhaseConfidence.maxResponses}</p>
+                                <p class="text-sm text-gray-600 mt-1">AI analyzed your conversation against success criteria</p>
+                            </div>
+                            <div class="text-3xl">
+                                ${currentPhaseConfidence.confidenceLevel.level === 'High' ? '🚀' : currentPhaseConfidence.confidenceLevel.level === 'Medium' ? '👍' : '💪'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                analysisContent.innerHTML = confidenceDisplay + `
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">💡</span>
+                            <span class="font-bold text-lg">Phase ${currentPhaseIndex + 1} Learning Review</span>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p><strong>🎯 Phase Objective:</strong> ${currentPhase.objective}</p>
+                            <p class="mt-3 text-gray-700">Focus on achieving this objective in your conversation. Every interaction is a chance to practice and improve your skills.</p>
+                        </div>
+                        <div class="bg-green-50 p-3 rounded border-l-4 border-green-400">
+                            <p class="text-green-800"><strong>🌟 Keep Learning!</strong> Focus on the phase objective above. Every conversation is a chance to grow your skills.</p>
+                        </div>
+                        <p class="text-sm text-gray-600">(AI coaching unavailable - but you can still focus on the phase objective!)</p>
+                        
+                        <div class="mt-4 text-right">
+                            <button onclick="downloadPhaseConversation()" class="px-3 py-1 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-xs transition-colors border border-blue-200">
+                                📥 Export Phase ${currentPhaseIndex + 1}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Scenario Data - Will be loaded dynamically from JSON files
+        let scenarios = [];
+        
+        // Load scenarios from JSON files
+        async function loadScenarios() {
+            try {
+                // Try to load from example_scenarios directory
+                const scenarioFiles = [
+                    'example_scenarios/sales_training.json',
+                    'example_scenarios/customer_service.json', 
+                    'example_scenarios/technical_troubleshooting.json'
+                ];
+                
+                const loadedScenarios = [];
+                
+                for (const file of scenarioFiles) {
+                    try {
+                        const response = await fetch(file);
+                        if (response.ok) {
+                            const scenario = await response.json();
+                            // Normalize the scenario structure
+                            const normalizedScenario = normalizeScenario(scenario);
+                            loadedScenarios.push(normalizedScenario);
+                        }
+                    } catch (error) {
+                        console.log(`Could not load ${file}:`, error.message);
+                    }
+                }
+                
+                if (loadedScenarios.length === 0) {
+                    // Fallback: create a default scenario
+                    loadedScenarios.push(createDefaultScenario());
+                }
+                
+                scenarios = loadedScenarios;
+                console.log('✅ Loaded scenarios:', scenarios.length);
+                return scenarios;
+                
+            } catch (error) {
+                console.error('Error loading scenarios:', error);
+                // Fallback: create a default scenario
+                scenarios = [createDefaultScenario()];
+                return scenarios;
+            }
+        }
+        
+        // Normalize different scenario formats to a common structure
+        function normalizeScenario(scenario) {
+            // Handle different JSON structures
+            if (scenario.phases) {
+                // Customer service format
+                return {
+                    id: scenario.id || scenario.title.toLowerCase().replace(/\s+/g, '_'),
+                    title: scenario.title,
+                    use_case: scenario.type || scenario.simulationSettings?.title || 'General',
+                    description: scenario.description,
+                    startNode: 'pre_assessment',
+                    aiPersonality: scenario.simulationSettings?.aiRole || 'AI Character',
+                    conversationPhases: scenario.phases.map(phase => ({
+                        id: phase.id,
+                        title: phase.title,
+                        objective: phase.objective,
+                        maxResponses: phase.maxResponses,
+                        aiPrompt: phase.aiPrompt,
+                        successCriteria: phase.successCriteria,
+                        failureCriteria: phase.failureCriteria || [],
+                        startingMessage: phase.startingMessage
+                    })),
+                    nodes: {
+                        pre_assessment: {
+                            text: `<strong>${scenario.title}</strong><br><br><strong>Pre-assessment</strong><br><br>${scenario.description}<br><br>Choose your approach:`,
+                            choices: [
+                                { text: "Start Conversation", "next": "ai_mode", "choiceId": "start_conversation" }
+                            ]
+                        },
+                        ai_mode: {
+                            text: "Perfect! Let's start the conversation.",
+                            aiConversation: true,
+                            choices: []
+                        }
+                    }
+                };
+            } else if (scenario.conversationPhases) {
+                // Sales training format - already normalized
+                return scenario;
+            } else {
+                // Unknown format - create basic structure
+                return {
+                    id: scenario.id || 'default',
+                    title: scenario.title || 'Default Scenario',
+                    use_case: scenario.use_case || 'General',
+                    description: scenario.description || 'A conversation practice scenario',
+                    startNode: 'pre_assessment',
+                    aiPersonality: scenario.aiPersonality || 'AI Character',
+                    conversationPhases: [],
+                    nodes: {
+                        pre_assessment: {
+                            text: `<strong>${scenario.title || 'Default Scenario'}</strong><br><br>${scenario.description || 'A conversation practice scenario'}`,
+                            choices: [
+                                { text: "Start Conversation", "next": "ai_mode", "choiceId": "start_conversation" }
+                            ]
+                        },
+                        ai_mode: {
+                            text: "Let's start the conversation.",
+                            aiConversation: true,
+                            choices: []
+                        }
+                    }
+                };
+            }
+        }
+        
+        // Create a default scenario if none can be loaded
+        function createDefaultScenario() {
+            return {
+                id: 'default_scenario',
+                title: 'Default Conversation Practice',
+                use_case: 'General',
+                description: 'A basic conversation practice scenario. Load your own scenario JSON files to customize this experience.',
+                startNode: 'pre_assessment',
+                aiPersonality: 'AI Character - helpful and engaging',
+                conversationPhases: [
+                    {
+                        id: 'general_conversation',
+                        title: 'General Conversation',
+                        objective: 'Practice your conversation skills',
+                        maxResponses: 5,
+                        aiPrompt: 'You are a helpful AI character. Engage in a natural conversation with the user. Be friendly, professional, and respond appropriately to their messages.',
+                        successCriteria: ['Maintained engaging conversation', 'Responded appropriately', 'Showed interest in the topic'],
+                        failureCriteria: ['Gave short or unhelpful responses', 'Did not engage with the conversation'],
+                        startingMessage: 'Hello! I\'m here to practice conversation with you. What would you like to talk about?'
+                    }
+                ],
+                nodes: {
+                    pre_assessment: {
+                        text: '<strong>Default Conversation Practice</strong><br><br>This is a basic conversation practice scenario. To use custom scenarios, load your own JSON files.',
+                        choices: [
+                            { text: "Start Conversation", "next": "ai_mode", "choiceId": "start_conversation" }
+                        ]
+                    },
+                    ai_mode: {
+                        text: "Let's start the conversation!",
+                        aiConversation: true,
+                        choices: []
+                    }
+                }
+            };
+        }
+
+        // Missing UI Functions
+        function downloadPhaseConversation() {
+            const currentPhase = currentScenario.conversationPhases[currentPhaseIndex];
+            
+            // Create the markdown content
+            let markdown = `# Phase ${currentPhaseIndex + 1}: ${currentPhase.title}\n\n`;
+            markdown += `**Date:** ${new Date().toLocaleDateString()}\n`;
+            markdown += `**Time:** ${new Date().toLocaleTimeString()}\n`;
+            markdown += `**Scenario:** ${currentScenario.title}\n`;
+            markdown += `**Use Case:** ${currentScenario.use_case}\n\n`;
+            
+            // Add phase objective
+            markdown += `## Phase Objective\n\n`;
+            markdown += `${currentPhase.objective}\n\n`;
+            
+            // Add phase performance
+            const currentPhaseConfidence = phaseConfidenceScores[phaseConfidenceScores.length - 1];
+            markdown += `## Performance Summary\n\n`;
+            markdown += `**Confidence Level:** ${currentPhaseConfidence.confidenceLevel.level}\n`;
+            markdown += `**Responses:** ${currentPhaseConfidence.actualResponses}/${currentPhaseConfidence.maxResponses}\n\n`;
+            
+            // Add AI-identified strengths and areas for improvement
+            if (currentPhaseConfidence.strengths && currentPhaseConfidence.strengths.length > 0) {
+                markdown += `## AI-Identified Strengths\n\n`;
+                currentPhaseConfidence.strengths.forEach(strength => {
+                    markdown += `- ${strength}\n`;
+                });
+                markdown += `\n`;
+            }
+            
+            if (currentPhaseConfidence.areasForImprovement && currentPhaseConfidence.areasForImprovement.length > 0) {
+                markdown += `## Areas for Improvement\n\n`;
+                currentPhaseConfidence.areasForImprovement.forEach(area => {
+                    markdown += `- ${area}\n`;
+                });
+                markdown += `\n`;
+            }
+            
+            // Add phase conversation
+            markdown += `## Phase Conversation Transcript\n\n`;
+            markdown += `*Note: This transcript shows the conversation for Phase ${currentPhaseIndex + 1}*\n\n`;
+            
+            // Get messages for this phase (last phaseResponseCount * 2 messages)
+            const phaseMessages = conversationHistory.slice(-(phaseResponseCount * 2));
+            phaseMessages.forEach((message, index) => {
+                const sender = message.role === 'user' ? '**You:**' : '**AIpersona:**';
+                markdown += `${sender}\n`;
+                markdown += `${message.content}\n\n`;
+            });
+            
+            // Add learning notes section
+            markdown += `## Learning Notes\n\n`;
+            markdown += `*Use this space to add your own reflections for this phase:*\n\n`;
+            markdown += `### What went well in this phase:\n- \n- \n- \n\n`;
+            markdown += `### Areas for improvement:\n- \n- \n- \n\n`;
+            markdown += `### Key learnings:\n- \n- \n- \n\n`;
+            markdown += `### How to apply in future:\n- \n- \n- \n\n`;
+            
+            // Create and download the file
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `phase-${currentPhaseIndex + 1}-conversation-${currentScenario.id}-${new Date().toISOString().split('T')[0]}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Show success message
+            const downloadBtn = event.target;
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '✅ Exported!';
+            downloadBtn.classList.remove('bg-blue-100', 'hover:bg-blue-200', 'text-blue-600');
+            downloadBtn.classList.add('bg-green-100', 'text-green-600');
+            setTimeout(() => {
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.classList.remove('bg-green-100', 'text-green-600');
+                downloadBtn.classList.add('bg-blue-100', 'hover:bg-blue-200', 'text-blue-600');
+            }, 2000);
+        }
+
+        function downloadCurrentConversation() {
+            // Create the markdown content
+            let markdown = `# Sales Training Scenario: ${currentScenario ? currentScenario.title : 'Unknown'}\n\n`;
+            markdown += `**Date:** ${new Date().toLocaleDateString()}\n`;
+            markdown += `**Time:** ${new Date().toLocaleTimeString()}\n`;
+            markdown += `**Use Case:** ${currentScenario ? currentScenario.use_case : 'Unknown'}\n`;
+            markdown += `**Session ID:** ${sessionId}\n\n`;
+            
+            // Add scenario description
+            if (currentScenario) {
+                markdown += `## Scenario Overview\n\n`;
+                markdown += `${currentScenario.description.replace(/<[^>]*>/g, '')}\n\n`;
+            }
+            
+            // Add pre-assessment choice
+            if (preAssessmentChoice) {
+                const choiceLabels = {
+                    'technical_focus': 'Technical Post-Mortem Focus',
+                    'business_impact_focus': 'Surgeon\'s Email Focus', 
+                    'future_state_focus': 'Hardware Refresh Plan Focus'
+                };
+                markdown += `**Strategic Approach:** ${choiceLabels[preAssessmentChoice] || preAssessmentChoice}\n\n`;
+            }
+            
+            // Add conversation phases
+            if (phaseConfidenceScores.length > 0) {
+                markdown += `## Conversation Phases & Performance\n\n`;
+                phaseConfidenceScores.forEach((phase, index) => {
+                    markdown += `### Phase ${index + 1}: ${phase.phaseTitle}\n`;
+                    markdown += `**Confidence Level:** ${phase.confidenceLevel.level}\n`;
+                    markdown += `**Responses:** ${phase.actualResponses}/${phase.maxResponses}\n\n`;
+                });
+            }
+            
+            // Add full conversation history
+            markdown += `## Complete Conversation Transcript\n\n`;
+            markdown += `*Note: This transcript shows the complete conversation between you and the AIpersona*\n\n`;
+            
+            conversationHistory.forEach((message, index) => {
+                const sender = message.role === 'user' ? '**You:**' : '**AIpersona:**';
+                markdown += `${sender}\n`;
+                markdown += `${message.content}\n\n`;
+            });
+            
+            // Add overall assessment
+            if (phaseConfidenceScores.length > 0) {
+                const totalResponses = phaseConfidenceScores.reduce((sum, phase) => sum + phase.actualResponses, 0);
+                const totalMaxResponses = phaseConfidenceScores.reduce((sum, phase) => sum + phase.maxResponses, 0);
+                markdown += `## Overall Performance Summary\n\n`;
+                markdown += `**Total Responses:** ${totalResponses}/${totalMaxResponses}\n`;
+                markdown += `**Phases Completed:** ${phaseConfidenceScores.length}\n\n`;
+            }
+            
+            // Add learning notes section
+            markdown += `## Learning Notes\n\n`;
+            markdown += `*Use this space to add your own reflections and learning points:*\n\n`;
+            markdown += `### What went well:\n- \n- \n- \n\n`;
+            markdown += `### Areas for improvement:\n- \n- \n- \n\n`;
+            markdown += `### Key takeaways:\n- \n- \n- \n\n`;
+            markdown += `### Next steps:\n- \n- \n- \n\n`;
+            
+            // Create and download the file
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sales-training-conversation-${currentScenario ? currentScenario.id : 'unknown'}-${new Date().toISOString().split('T')[0]}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Show success message
+            const downloadBtn = event.target;
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '✅ Exported!';
+            downloadBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200', 'text-gray-600');
+            downloadBtn.classList.add('bg-green-100', 'text-green-600');
+            setTimeout(() => {
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.classList.remove('bg-green-100', 'text-green-600');
+                downloadBtn.classList.add('bg-gray-100', 'hover:bg-gray-200', 'text-gray-600');
+            }, 2000);
+        }
+
+        function toggleTTS() {
+            TTS_CONFIG.enabled = !TTS_CONFIG.enabled;
+            const button = document.getElementById('tts-toggle');
+            button.textContent = TTS_CONFIG.enabled ? '🔊 TTS: ON' : '🔇 TTS: OFF';
+            button.className = TTS_CONFIG.enabled ? 
+                'px-3 py-1 bg-green-100 text-green-600 rounded-md hover:bg-green-200 text-xs transition-colors border border-green-200' :
+                'px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 text-xs transition-colors border border-gray-200';
+        }
+
+        function changeVoice() {
+            const voiceSelect = document.getElementById('voice-select');
+            const selectedVoice = voiceSelect.value;
+            if (selectedVoice) {
+                TTS_CONFIG.voice = selectedVoice;
+            }
+        }
+
+        function changeSpeed() {
+            const speedSelect = document.getElementById('speed-select');
+            TTS_CONFIG.rate = parseFloat(speedSelect.value);
+        }
+
+        function speakText(text) {
+            if (!TTS_CONFIG.enabled || !('speechSynthesis' in window)) return;
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = TTS_CONFIG.rate;
+            utterance.pitch = TTS_CONFIG.pitch;
+            utterance.volume = TTS_CONFIG.volume;
+            
+            if (TTS_CONFIG.voice) {
+                utterance.voice = TTS_CONFIG.voice;
+            }
+            
+            speechSynthesis.speak(utterance);
+        }
+
+        function toggleCaseSummary() {
+            const content = document.getElementById('case-summary-content');
+            const toggle = document.getElementById('case-summary-toggle');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                toggle.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                toggle.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Auto-resize textarea
+        function autoResizeTextarea(textarea = null) {
+            const targetTextarea = textarea || document.getElementById('ai-user-input');
+            if (targetTextarea) {
+                targetTextarea.style.height = 'auto';
+                targetTextarea.style.height = Math.min(targetTextarea.scrollHeight, 128) + 'px';
+            }
+        }
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            console.log('🔧 Initializing event listeners...');
+            console.log('🔍 Document body:', document.body);
+            console.log('🔍 Document ready state:', document.readyState);
+            
+            // Test: Add a simple click handler to the body to test if events work
+            document.body.addEventListener('click', function(e) {
+                console.log('🖱️ Body clicked!', e.target);
+            });
+            
+            // Send message button
+            const sendButton = document.getElementById('send-ai-message');
+            if (sendButton) {
+                sendButton.addEventListener('click', sendAIMessage);
+                console.log('✅ Send button listener added');
+            } else {
+                console.log('❌ Send button not found');
+            }
+
+            // AI coaching button
+            const coachButton = document.getElementById('get-ai-coaching');
+            if (coachButton) {
+                coachButton.addEventListener('click', getAICoachingForConversation);
+                console.log('✅ Coach button listener added');
+            } else {
+                console.log('❌ Coach button not found');
+            }
+
+            // Demo button
+            const demoButton = document.getElementById('get-canned-response');
+            if (demoButton) {
+                demoButton.addEventListener('click', getCannedResponse);
+                console.log('✅ Demo button listener added');
+            } else {
+                console.log('❌ Demo button not found');
+            }
+
+            // Download conversation button
+            const downloadButton = document.getElementById('download-conversation');
+            if (downloadButton) {
+                downloadButton.addEventListener('click', downloadCurrentConversation);
+                console.log('✅ Download button listener added');
+            } else {
+                console.log('❌ Download button not found');
+            }
+
+            // Case summary toggle
+            const caseSummaryToggle = document.getElementById('case-summary-toggle-area');
+            if (caseSummaryToggle) {
+                caseSummaryToggle.addEventListener('click', toggleCaseSummary);
+                console.log('✅ Case summary toggle listener added');
+            } else {
+                console.log('❌ Case summary toggle not found');
+            }
+
+            // Textarea auto-resize
+            const textarea = document.getElementById('ai-user-input');
+            if (textarea) {
+                textarea.addEventListener('input', autoResizeTextarea);
+                textarea.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendAIMessage();
+                    }
+                });
+                console.log('✅ Textarea listeners added');
+            } else {
+                console.log('❌ Textarea not found');
+            }
+
+            // TTS controls
+            const ttsToggle = document.getElementById('tts-toggle');
+            if (ttsToggle) {
+                ttsToggle.addEventListener('click', toggleTTS);
+                console.log('✅ TTS toggle listener added');
+            } else {
+                console.log('❌ TTS toggle not found');
+            }
+
+            const voiceSelect = document.getElementById('voice-select');
+            if (voiceSelect) {
+                voiceSelect.addEventListener('change', changeVoice);
+                console.log('✅ Voice select listener added');
+            } else {
+                console.log('❌ Voice select not found');
+            }
+
+            const speedSelect = document.getElementById('speed-select');
+            if (speedSelect) {
+                speedSelect.addEventListener('change', changeSpeed);
+                console.log('✅ Speed select listener added');
+            } else {
+                console.log('❌ Speed select not found');
+            }
+
+            // Navigation buttons
+            const backToScenariosBtn = document.getElementById('back-to-scenarios');
+            if (backToScenariosBtn) {
+                backToScenariosBtn.addEventListener('click', backToScenarios);
+                console.log('✅ Back to scenarios listener added');
+            } else {
+                console.log('❌ Back to scenarios button not found');
+            }
+
+            const restartScenarioBtn = document.getElementById('restart-scenario');
+            if (restartScenarioBtn) {
+                restartScenarioBtn.addEventListener('click', restartScenario);
+                console.log('✅ Restart scenario listener added');
+            } else {
+                console.log('❌ Restart scenario button not found');
+            }
+
+            // Phase navigation buttons
+            const continueToNextPhaseBtn = document.getElementById('continue-to-next-phase');
+            if (continueToNextPhaseBtn) {
+                continueToNextPhaseBtn.addEventListener('click', continueToNextPhase);
+                console.log('✅ Continue to next phase listener added');
+            } else {
+                console.log('❌ Continue to next phase button not found');
+            }
+
+            const retryCurrentPhaseBtn = document.getElementById('retry-current-phase');
+            if (retryCurrentPhaseBtn) {
+                retryCurrentPhaseBtn.addEventListener('click', retryCurrentPhase);
+                console.log('✅ Retry current phase listener added');
+            } else {
+                console.log('❌ Retry current phase button not found');
+            }
+
+            const skipToFinalPhaseBtn = document.getElementById('skip-to-final-phase');
+            if (skipToFinalPhaseBtn) {
+                skipToFinalPhaseBtn.addEventListener('click', skipToFinalPhase);
+                console.log('✅ Skip to final phase listener added');
+            } else {
+                console.log('❌ Skip to final phase button not found');
+            }
+
+            const restartFullScenarioBtn = document.getElementById('restart-full-scenario');
+            if (restartFullScenarioBtn) {
+                restartFullScenarioBtn.addEventListener('click', restartFullScenario);
+                console.log('✅ Restart full scenario listener added');
+            } else {
+                console.log('❌ Restart full scenario button not found');
+            }
+
+            const backToScenarioSelectBtn = document.getElementById('back-to-scenario-select');
+            if (backToScenarioSelectBtn) {
+                backToScenarioSelectBtn.addEventListener('click', backToScenarios);
+                console.log('✅ Back to scenario select listener added');
+            } else {
+                console.log('❌ Back to scenario select button not found');
+            }
+
+            // API configuration save button
+            const saveApiConfigBtn = document.getElementById('save-api-config');
+            if (saveApiConfigBtn) {
+                saveApiConfigBtn.addEventListener('click', saveAPIConfiguration);
+                console.log('✅ Save API config listener added');
+            } else {
+                console.log('❌ Save API config button not found');
+            }
+
+            // Initialize TTS voices
+            if ('speechSynthesis' in window) {
+                const voiceSelect = document.getElementById('voice-select');
+                const speedSelect = document.getElementById('speed-select');
+                
+                // Enable the selects
+                if (voiceSelect) voiceSelect.disabled = false;
+                if (speedSelect) speedSelect.disabled = false;
+                
+                // Load voices (may need to wait for them to load)
+                function loadVoices() {
+                    const voices = speechSynthesis.getVoices();
+                    if (voiceSelect && voices.length > 0) {
+                        voiceSelect.innerHTML = voices.map((voice, index) => 
+                            `<option value="${index}">${voice.name} (${voice.lang})</option>`
+                        ).join('');
+                        console.log('✅ TTS voices initialized:', voices.length, 'voices');
+                    } else if (voiceSelect) {
+                        // If voices aren't loaded yet, try again in a moment
+                        setTimeout(loadVoices, 100);
+                    }
+                }
+                
+                // Load voices immediately and on voice change
+                loadVoices();
+                speechSynthesis.addEventListener('voiceschanged', loadVoices);
+            }
+            
+            console.log('🔧 Event listeners initialization complete');
+        }
+
+        // Missing navigation functions
+        function backToScenarios() {
+            document.getElementById('scenario-screen').classList.add('hidden');
+            document.getElementById('selection-screen').classList.remove('hidden');
+        }
+
+        function restartScenario() {
+            if (currentScenario) {
+                startScenario(currentScenario.id);
+            }
+        }
+
+        function restartFullScenario() {
+            if (currentScenario) {
+                startScenario(currentScenario.id);
+            }
+        }
+
+        function continueToNextPhase() {
+            document.getElementById('phase-analysis-section').classList.add('hidden');
+            
+            // Check if we're in the final phase
+            if (currentPhaseIndex >= currentScenario.conversationPhases.length - 1) {
+                // We're in the final phase, show the final analysis
+                showFinalAnalysis();
+            } else {
+                // Continue to the next phase
+                startConversationPhase(currentPhaseIndex + 1);
+            }
+        }
+        
+        function updateContinueButtonText() {
+            const continueBtn = document.getElementById('continue-to-next-phase');
+            const skipBtn = document.getElementById('skip-to-final-phase');
+            
+            if (continueBtn) {
+                if (currentPhaseIndex >= currentScenario.conversationPhases.length - 1) {
+                    continueBtn.textContent = 'View Final Summary';
+                } else {
+                    continueBtn.textContent = 'Continue to Next Phase';
+                }
+            }
+            
+            // Show/hide skip button based on current phase
+            if (skipBtn) {
+                if (currentPhaseIndex >= currentScenario.conversationPhases.length - 1) {
+                    // Hide skip button in final phase
+                    skipBtn.style.display = 'none';
+                } else {
+                    // Show skip button in other phases
+                    skipBtn.style.display = 'inline-block';
+                }
+            }
+        }
+
+        function retryCurrentPhase() {
+            document.getElementById('phase-analysis-section').classList.add('hidden');
+            startConversationPhase(currentPhaseIndex);
+        }
+
+        function skipToFinalPhase() {
+            // Confirm the skip action
+            if (!confirm('Skip to final phase? This will generate random scores for skipped phases. (Demo only)')) {
+                return;
+            }
+
+            // Hide the analysis section
+            document.getElementById('phase-analysis-section').classList.add('hidden');
+            
+            // Generate random scores for all phases except the current one
+            generateRandomScoresForSkippedPhases();
+            
+            // Jump to the final phase
+            const finalPhaseIndex = currentScenario.conversationPhases.length - 1;
+            startConversationPhase(finalPhaseIndex);
+            
+            console.log('⚡ Skipped to final phase with random scores for demo');
+        }
+
+        function generateRandomScoresForSkippedPhases() {
+            const totalPhases = currentScenario.conversationPhases.length;
+            
+            // Clear existing phase scores
+            phaseConfidenceScores = [];
+            
+            // Generate random scores for all phases except the current one
+            for (let i = 0; i < totalPhases; i++) {
+                if (i !== currentPhaseIndex) {
+                    const phase = currentScenario.conversationPhases[i];
+                    
+                    // Generate random confidence level
+                    const confidenceLevels = ['High', 'Medium', 'Low'];
+                    const randomLevel = confidenceLevels[Math.floor(Math.random() * confidenceLevels.length)];
+                    const confidenceLevel = getConfidenceLevelFromString(randomLevel);
+                    
+                    // Generate random strengths and areas for improvement
+                    const strengths = generateRandomStrengths();
+                    const areasForImprovement = generateRandomAreasForImprovement();
+                    
+                    // Generate random response count (1-2 for most phases, 1 for final)
+                    const maxResponses = i === totalPhases - 1 ? 1 : 2;
+                    const actualResponses = Math.floor(Math.random() * maxResponses) + 1;
+                    
+                    phaseConfidenceScores.push({
+                        phaseIndex: i,
+                        phaseTitle: phase.title,
+                        score: actualResponses,
+                        maxResponses: maxResponses,
+                        actualResponses: actualResponses,
+                        confidenceLevel: confidenceLevel,
+                        strengths: strengths,
+                        areasForImprovement: areasForImprovement
+                    });
+                }
+            }
+            
+            console.log('🎲 Generated random scores for skipped phases:', phaseConfidenceScores);
+        }
+
+        function generateRandomStrengths() {
+            const strengthTemplates = [
+                ['Demonstrated strong rapport building', 'Asked effective discovery questions'],
+                ['Showed excellent listening skills', 'Connected solution to customer needs'],
+                ['Handled objections professionally', 'Created urgency effectively'],
+                ['Built trust quickly', 'Identified key pain points'],
+                ['Presented value clearly', 'Secured next steps successfully']
+            ];
+            return strengthTemplates[Math.floor(Math.random() * strengthTemplates.length)];
+        }
+
+        function generateRandomAreasForImprovement() {
+            const improvementTemplates = [
+                ['Focus on deeper discovery questions', 'Work on objection handling'],
+                ['Improve rapport building', 'Enhance solution presentation'],
+                ['Strengthen closing techniques', 'Better time management'],
+                ['Develop more specific questions', 'Improve follow-up planning']
+            ];
+            return improvementTemplates[Math.floor(Math.random() * improvementTemplates.length)];
+        }
+
+        async function getAICoachingForConversation() {
+            console.log('💡 AI Coaching requested for current conversation');
+            
+            // Get the coach button and show loading state
+            const coachButton = document.getElementById('get-ai-coaching');
+            const originalText = coachButton.innerHTML;
+            coachButton.innerHTML = '⏳ Analyzing...';
+            coachButton.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            const coachingPrompt = `
+                You are a supportive AIcoach providing real-time guidance during a conversation.
+                
+                Current Phase: ${currentPhase.title}
+                Phase Objective: ${currentPhase.objective}
+                Success Criteria: ${currentPhase.successCriteria.join(', ')}
+                
+                The learner is in the middle of a conversation with the AIpersona. Provide brief, actionable coaching that:
+                1. Acknowledges what they're doing well
+                2. Suggests one specific improvement they could try
+                3. Keeps them motivated and confident
+                
+                Keep your response brief, in bullet format, and encouraging. Format as HTML.
+            `;
+            
+            try {
+                const coaching = await getAICoaching(coachingPrompt);
+                // Clean up the response - remove markdown formatting and HTML tags
+                const cleanCoaching = coaching
+                    .replace(/```html/g, '')
+                    .replace(/```/g, '')
+                    .replace(/<[^>]*>/g, '')
+                    .trim();
+                addAIMessage(`<div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg"><strong>💡 Coach Tip:</strong> ${cleanCoaching}</div>`, 'coach');
+            } catch (error) {
+                addAIMessage(`<div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg"><strong>💡 Coach Tip:</strong> You're doing great! Keep listening to the customer and connecting your solution to their specific needs.</div>`, 'coach');
+            } finally {
+                // Reset button state
+                coachButton.innerHTML = originalText;
+                coachButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        async function getCannedResponse() {
+            const userInput = document.getElementById('ai-user-input');
+            const loadingIndicator = document.getElementById('canned-response-loading');
+            const demoButton = document.getElementById('get-canned-response');
+            
+            // Show loading state
+            loadingIndicator.classList.remove('hidden');
+            demoButton.disabled = true;
+            demoButton.innerHTML = '⏳ Generating...';
+            demoButton.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            try {
+                // Try to get contextual response first
+                const analysisResult = await analyzeConversationContext();
+                const cannedResponse = await generateContextualCannedResponse(analysisResult);
+                
+                // Clean up the response (remove quotes, extra formatting)
+                const cleanResponse = cannedResponse.replace(/^["']|["']$/g, '').trim();
+                
+                // Insert into the input field
+                userInput.value = cleanResponse;
+                userInput.focus();
+                
+                // Auto-resize after inserting text
+                autoResizeTextarea(userInput);
+                
+                // Show a subtle indication that this is a canned response
+                userInput.style.backgroundColor = '#f3e8ff'; // Light purple background
+                setTimeout(() => {
+                    userInput.style.backgroundColor = '';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error generating canned response:', error);
+                // Fallback to simpler logic - use synchronous fallback
+                const fallbackResponse = generateFallbackCannedResponse();
+                userInput.value = fallbackResponse;
+                userInput.focus();
+                autoResizeTextarea(userInput);
+                
+                // Show fallback indication
+                userInput.style.backgroundColor = '#fef3c7'; // Light yellow background
+                setTimeout(() => {
+                    userInput.style.backgroundColor = '';
+                }, 2000);
+            } finally {
+                // Hide loading state
+                loadingIndicator.classList.add('hidden');
+                demoButton.disabled = false;
+                demoButton.innerHTML = '🥫 Demo';
+                demoButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        async function analyzeConversationContext() {
+            // Get ALL IT Director messages from this phase for comprehensive analysis
+            const phaseStartIndex = Math.max(0, conversationHistory.length - (phaseResponseCount * 2));
+            const phaseMessages = conversationHistory.slice(phaseStartIndex);
+            
+            const itDirectorMessages = phaseMessages.filter(msg => msg.role === 'assistant');
+            const userMessages = phaseMessages.filter(msg => msg.role === 'user');
+            
+            // Get the most recent IT Director message
+            const lastITDirectorMessage = itDirectorMessages[itDirectorMessages.length - 1]?.content || 'No previous message';
+            
+            // Get comprehensive conversation context for this phase
+            const phaseContext = phaseMessages.map(msg => 
+                `${msg.role === 'user' ? 'User' : 'AIpersona'}: ${msg.content}`
+            ).join('\n');
+            
+            // Get the full conversation history for broader context
+            const fullContext = conversationHistory.slice(-10).map(msg => 
+                `${msg.role === 'user' ? 'User' : 'AIpersona'}: ${msg.content}`
+            ).join('\n');
+            
+            // Analyze the IT Director's emotional state, concerns, and key points
+            const analysisPrompt = `
+                You are a conversation psychology expert analyzing an AIpersona conversation to understand their mindset and needs.
+                
+                CONVERSATION CONTEXT:
+                Current Phase: ${currentPhase.title}
+                Phase Objective: ${currentPhase.objective}
+                Success Criteria: ${currentPhase.successCriteria.join('; ')}
+                
+                FULL CONVERSATION HISTORY (Recent):
+                ${fullContext}
+                
+                CURRENT PHASE CONVERSATION:
+                ${phaseContext}
+                
+                AIPERSONA MESSAGES IN THIS PHASE (${itDirectorMessages.length} total):
+                ${itDirectorMessages.map((msg, i) => `Message ${i + 1}: ${msg.content}`).join('\n')}
+                
+                ANALYSIS TASK:
+                Analyze the AIpersona's responses and overall conversation to identify:
+                1. **Emotional State**: What emotions is the AIpersona showing? (frustrated, concerned, interested, skeptical, etc.)
+                2. **Key Concerns**: What are their main pain points or worries?
+                3. **Communication Level**: How technical or detailed is their language? (high-level, detailed, mixed)
+                4. **Urgency Level**: How urgent is their situation? (critical, moderate, low)
+                5. **Engagement Stage**: Where are they in the conversation process? (awareness, consideration, evaluation, decision)
+                6. **Objections**: What specific objections or hesitations have they raised?
+                7. **Success Criteria Alignment**: Which success criteria are most relevant to address right now?
+                8. **Specific Questions Asked**: What specific questions or requests has the AIpersona made?
+                9. **Conversation Flow**: How has the conversation been progressing? What direction is it heading?
+                10. **Concerns Evolution**: How have their concerns evolved through the conversation?
+                
+                Return a JSON object with this analysis.
+            `;
+            
+            try {
+                const analysisResponse = await getAICoaching(analysisPrompt);
+                return {
+                    context: phaseContext,
+                    fullContext: fullContext,
+                    lastITDirectorMessage: lastITDirectorMessage,
+                    itDirectorMessages: itDirectorMessages.map(msg => msg.content),
+                    analysis: analysisResponse,
+                    phaseInfo: {
+                        title: currentPhase.title,
+                        objective: currentPhase.objective,
+                        successCriteria: currentPhase.successCriteria
+                    }
+                };
+            } catch (error) {
+                console.error('Error analyzing conversation context:', error);
+                // Return a basic fallback analysis that won't cause further errors
+                return {
+                    context: phaseContext,
+                    fullContext: fullContext,
+                    lastITDirectorMessage: lastITDirectorMessage,
+                    itDirectorMessages: itDirectorMessages.map(msg => msg.content),
+                    analysis: 'Unable to analyze - using basic context',
+                    phaseInfo: {
+                        title: currentPhase.title,
+                        objective: currentPhase.objective,
+                        successCriteria: currentPhase.successCriteria
+                    }
+                };
+            }
+        }
+        
+        async function generateContextualCannedResponse(analysisResult) {
+            const { context, fullContext, lastITDirectorMessage, itDirectorMessages, analysis, phaseInfo } = analysisResult;
+            
+            const cannedPrompt = `
+                You are an expert conversation professional creating the PERFECT response for this specific situation.
+                
+                SITUATION ANALYSIS:
+                ${analysis}
+                
+                FULL CONVERSATION CONTEXT:
+                ${fullContext}
+                
+                CURRENT PHASE CONVERSATION:
+                ${context}
+                
+                AIPERSONA'S MESSAGES IN THIS PHASE:
+                ${itDirectorMessages.map((msg, i) => `Message ${i + 1}: ${msg}`).join('\n')}
+                
+                AIPERSONA'S MOST RECENT MESSAGE:
+                "${lastITDirectorMessage}"
+                
+                PHASE REQUIREMENTS:
+                - Phase: ${phaseInfo.title}
+                - Objective: ${phaseInfo.objective}
+                - Success Criteria: ${phaseInfo.successCriteria.join('; ')}
+                
+                CRITICAL INSTRUCTIONS:
+                1. **MUST address the AIpersona's specific questions and concerns** from their most recent message
+                2. **MUST demonstrate the success criteria** for this phase naturally
+                3. **MUST respond to their emotional state and communication style** throughout the conversation
+                4. **MUST advance the phase objective** while maintaining natural conversation flow
+                5. **MUST be strategic and focused** - sprinkle in relevant numbers or examples only when they add value
+                
+                TASK: Create the most effective response that:
+                1. **Directly addresses** their specific questions and concerns from their most recent message
+                2. **Demonstrates** the success criteria naturally for this phase
+                3. **Acknowledges their emotional state** and responds appropriately
+                4. **Uses their language** and references their specific situation and concerns
+                5. **Sprinkles in relevant data** - only when it adds value to support your point
+                6. **Smoothly advances** the phase objective without being pushy
+                7. **Sounds completely natural** - like a real professional
+                
+                STRATEGIC ELEMENTS TO CONSIDER (use sparingly):
+                - Relevant statistics only when they directly support your point
+                - Brief case study references when they add credibility
+                - Industry context when it helps explain your approach
+                - Technical details only if the IT Director is asking technical questions
+                - Business impact only when discussing ROI or value
+                - Timeline references only when discussing implementation
+                
+                RESPONSE GUIDELINES:
+                - 2-4 sentences maximum
+                - Address their specific questions and concerns
+                - Show empathy for their situation
+                - Use "you" and "your" to make it personal
+                - Reference their specific concerns and context
+                - Include relevant data only when it adds value
+                - Sound confident but not pushy
+                - Advance the phase objective naturally
+                - Focus on the BEST possible answer, not the most creative one
+                
+                Return ONLY the response text, no explanations or formatting.
+            `;
+            
+            try {
+                return await getAICoaching(cannedPrompt);
+            } catch (error) {
+                console.error('Error generating contextual canned response:', error);
+                // Return a fallback response instead of throwing
+                return generateFallbackCannedResponse();
+            }
+        }
+        
+        function generateFallbackCannedResponse() {
+            // Enhanced fallback responses that are more contextual
+            const fallbackResponses = {
+                'discovery': "I appreciate you taking the time to meet with me. I understand your industry faces unique challenges. Could you help me understand what's been keeping you up at night lately?",
+                'technical_deep_dive': "That sounds challenging for your team. What was the biggest impact you saw on your operations? I'd like to understand the full scope so I can see how we might help address this.",
+                'solution_exploration': "Based on what you've shared about the challenges and your team's workload, I think our solution could directly address those pain points. Would you like to see how this could work in your environment?",
+                'objection_handling': "I completely understand that concern - your team's expertise is important, and that's exactly why our solution was designed to be user-friendly. Let me share how other organizations with similar teams saw value quickly, without requiring extensive training.",
+                'next_steps': "Given everything we've discussed, I'd recommend a focused demonstration with your key stakeholders. We can show specifically how this would work for your situation. Would next week work for a session?"
+            };
+            
+            return fallbackResponses[currentPhase.id] || fallbackResponses['discovery'];
+        }
+
+
+        function showFinalAnalysis() {
+            // Show final scenario analysis
+            const analysisSection = document.getElementById('phase-analysis-section');
+            const analysisContent = document.getElementById('phase-analysis-content');
+            
+            // Show the analysis section
+            analysisSection.classList.remove('hidden');
+            
+            // Scroll to analysis
+            analysisSection.scrollIntoView({ behavior: 'smooth' });
+            
+            // Generate final analysis content
+            let finalAnalysisHTML = `
+                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border-l-4 border-green-400 mb-4">
+                    <h4 class="font-bold text-lg text-green-800 mb-2">🎉 Scenario Complete!</h4>
+                    <p class="text-green-700">Congratulations! You've completed all phases of the sales conversation.</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Overall Performance Summary</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-blue-800 mb-2">Phases Completed</h4>
+                            <p class="text-2xl font-bold text-blue-600">${phaseConfidenceScores.length}</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-purple-800 mb-2">Total Responses</h4>
+                            <p class="text-2xl font-bold text-purple-600">${phaseConfidenceScores.reduce((sum, phase) => sum + phase.actualResponses, 0)}</p>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-semibold text-gray-800 mt-6">Phase-by-Phase Breakdown</h3>
+                    <div class="space-y-3">
+            `;
+            
+            // Add each phase's results
+            phaseConfidenceScores.forEach((phase, index) => {
+                const confidenceIcon = phase.confidenceLevel.level === 'High' ? '🚀' : 
+                                     phase.confidenceLevel.level === 'Medium' ? '👍' : '💪';
+                
+                finalAnalysisHTML += `
+                    <div class="bg-gray-50 p-3 rounded-lg border-l-4 ${phase.confidenceLevel.borderColor}">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-semibold text-gray-800">${phase.phaseTitle}</h4>
+                                <p class="text-sm text-gray-600">${phase.actualResponses}/${phase.maxResponses} responses</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg">${confidenceIcon}</span>
+                                <p class="text-sm font-semibold ${phase.confidenceLevel.color}">${phase.confidenceLevel.level}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            finalAnalysisHTML += `
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
+                        <h4 class="font-semibold text-yellow-800 mb-2">Next Steps</h4>
+                        <ul class="text-yellow-700 space-y-1">
+                            <li>• Review your performance in each phase</li>
+                            <li>• Focus on areas marked for improvement</li>
+                            <li>• Practice the skills you demonstrated well</li>
+                            <li>• Try the scenario again to improve your scores</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            analysisContent.innerHTML = finalAnalysisHTML;
+            
+            console.log('Final analysis displayed');
+        }
+
+        // Initialize when page loads
+        console.log('🚀 Script starting...');
+        console.log('📄 Document ready state:', document.readyState);
+        
+        if (document.readyState === 'loading') {
+            console.log('⏳ Document still loading, waiting for DOMContentLoaded...');
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('✅ DOMContentLoaded fired');
+                initializeApp();
+                initializeEventListeners();
+            });
+        } else {
+            console.log('✅ Document already loaded, initializing immediately');
+            initializeApp();
+            initializeEventListeners();
+        }
+    </script>
+</body>
+</html>

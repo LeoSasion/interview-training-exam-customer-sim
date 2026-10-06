@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>产品规划 · 新员工仿真培训系统</title>
+<link rel="stylesheet" href="assets/shell.css">
+<style>
+/* ---------- 本文档页特有样式（其余全部复用 shell.css） ---------- */
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+section[id]{scroll-margin-top:82px}
+.sec{margin-top:40px}
+.sec-h{display:flex;align-items:center;gap:11px;margin:0 0 15px;flex-wrap:wrap}
+.sec-h .n{font-size:11.5px;font-weight:600;color:var(--acc-txt);background:var(--acc-soft);
+  border:1px solid var(--acc-bd);border-radius:7px;padding:3px 8px;letter-spacing:.02em}
+.sec-h h2{margin:0;font-size:18px;font-weight:600;letter-spacing:-.25px}
+.sec-h .m{margin-left:auto;font-size:11.5px;color:var(--txt3)}
+.p{font-size:13.5px;color:var(--txt2);line-height:1.85;margin:0 0 10px}
+.p:last-child{margin-bottom:0}
+.p b{color:var(--txt);font-weight:500}
+.p code{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:var(--panel2);
+  border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--txt)}
+.lede{font-size:16.5px;line-height:1.8;font-weight:400;color:var(--txt);margin:0}
+.lede em{font-style:normal;color:var(--acc-txt);font-weight:500}
+.quote{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--acc);
+  border-radius:0 12px 12px 0;padding:15px 18px;font-size:14.5px;line-height:1.85}
+.figure{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 12px;overflow-x:auto}
+.figure svg{display:block;width:100%;height:auto;min-width:700px}
+.figcap{font-size:11.5px;color:var(--txt3);margin-top:10px;text-align:center;line-height:1.7}
+.code-wrap{margin-top:12px}
+.code-t{font-size:11.5px;color:var(--txt3);margin:0 0 6px;display:flex;align-items:center;gap:7px}
+.code{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-xs);padding:14px 16px;margin:0;
+  font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:12px;line-height:1.75;
+  color:var(--txt2);overflow-x:auto;white-space:pre;box-shadow:var(--hi)}
+html[data-theme="light"] .code{background:#F7F7F7;color:#5A5A5F;box-shadow:none}
+.code .ky{color:#7CC4FF}
+html[data-theme="light"] .code .ky{color:#2F6FD0}
+.code .vl{color:var(--acc-txt)}
+.role{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 19px;box-shadow:var(--shadow-sm)}
+.role .rh{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.role .ic{width:34px;height:34px;border-radius:10px;flex:0 0 34px;display:flex;align-items:center;
+  justify-content:center;font-size:15px;font-weight:600;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+.role h3{margin:0;font-size:14.5px;font-weight:600}
+.role .rl{font-size:11.5px;color:var(--txt3);margin:0 0 12px 44px}
+.role .kvline .v{max-width:64%;font-weight:400;color:var(--txt2);text-align:right;line-height:1.7}
+.fx{background:var(--panel2);border:1px dashed var(--line2);border-radius:9px;padding:10px 13px;margin:7px 0 0;
+  font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:var(--txt)}
+.mcard{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 16px}
+.mcard h4{margin:0 0 4px;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+.mcard .mv{font-size:26px;font-weight:600;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.mcard .mv small{font-size:12.5px;font-weight:400;color:var(--txt3);margin-left:3px}
+.risk{border-radius:12px;padding:13px 15px;border:1px solid var(--line);background:var(--panel)}
+.risk .t{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:6px}
+.risk .d{font-size:12.5px;color:var(--txt2);line-height:1.75}
+.tagline{display:inline-flex;gap:6px;flex-wrap:wrap}
+.foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--txt3);
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.step-tbl td:first-child{white-space:nowrap;color:var(--txt)}
+.scn{border:1px solid var(--line);border-radius:12px;padding:14px 15px;background:var(--panel)}
+.scn .sh{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.scn .av{width:36px;height:36px;border-radius:9px;flex:0 0 36px;display:flex;align-items:center;
+  justify-content:center;color:#fff;font-size:14px;font-weight:500}
+.scn .nm{font-size:14px;font-weight:600;line-height:1.35}
+.scn .sb{font-size:11.5px;color:var(--txt3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.mini-t{font-size:11.5px;color:var(--txt3);margin:0 0 5px;letter-spacing:.02em}
+.objl{font-size:12.5px;color:var(--txt2);line-height:1.7;margin:0;padding-left:16px}
+.objl li{margin-bottom:2px}
+</style>
+</head>
+<body>
+
+<!-- ==================== 顶栏 ==================== -->
+<div class="topbar"><div class="topbar-in">
+  <div class="brand">
+    <span class="logo">训</span>
+    <span>新员工仿真培训系统<small id="brandSub">加载中…</small></span>
+  </div>
+  <nav class="nav-tabs" id="navTabs">
+    <a href="#overview" class="on">概览</a>
+    <a href="#roles">角色与场景</a>
+    <a href="#flow">业务闭环</a>
+    <a href="#model">数据模型</a>
+    <a href="#scoring">评分与指标</a>
+    <a href="#tech">技术方案</a>
+  </nav>
+  <span class="spacer"></span>
+  <div class="btn-row">
+    <a class="btn sm" href="管理后台-仿真培训.html">管理后台</a>
+    <a class="btn sm" href="教练工作台-带教主管.html">教练工作台</a>
+    <a class="btn sm" href="仿真培训原型-微信风格.html">学员端</a>
+    <button class="btn sm" id="themeBtn" onclick="toggleTheme()">浅色</button>
+  </div>
+</div></div>
+
+<div class="wrap">
+
+  <!-- ==================== 1. 首页概览 ==================== -->
+  <div class="page-head" id="overview">
+    <div class="row">
+      <div>
+        <h1>产品规划 · 新员工仿真培训系统</h1>
+        <p><span id="metaLine">…</span></p>
+      </div>
+      <div class="tagline">
+        <span class="tag b"><span class="dot b"></span>学员端原型已交付</span>
+        <span class="tag b"><span class="dot b"></span>管理端 / 教练端已交付</span>
+        <span class="tag b"><span class="dot b"></span>对标：AI 智能陪练 / AI Role-Play</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h2>一句话产品定义</h2><span class="sub">讲给老板听的版本</span></div>
+    <p class="lede">把新员工的话术训练，从「<em>老带新、靠悟性</em>」变成「<em>微信式仿真陪练 + 自动评分 + 风险预警</em>」——每名新员工在入职两周内，用微信聊天的方式和 AI 扮演的客户把必修场景练到达标线，管理者当天就能看到谁需要辅导、弱在哪一维。</p>
+    <p class="p mt14">学员端不是又一个在线课程，而是一个<b>可对话、可打分、可复盘</b>的练习场：客户会压价、会投诉、会说「我在忙」，学员用文字、语音条或语音通话回应，系统按 <b id="dimCount">5</b> 个能力维度实时打分，练习结束即出报告。管理后台把这份报告变成可执行的运营动作（下发任务、看完成率、按红黄绿分层）；<b>教练工作台</b>则把它变成带教动作（看我的学员弱在哪、写一对一辅导记录、抽检对话统一话术）——三端共用同一份数据与同一个评分引擎。</p>
+  </div>
+
+  <div class="grid g4 mt20">
+    <div class="kpi"><div class="lab">在训新员工</div><div class="val" id="kAcad">–<small>人</small></div><div class="foot" id="kAcadF">–</div></div>
+    <div class="kpi"><div class="lab">进行中训练任务</div><div class="val" id="kTask">–<small>个</small></div><div class="foot" id="kTaskF">–</div></div>
+    <div class="kpi"><div class="lab">累计练习场次</div><div class="val" id="kRec">–<small>场</small></div><div class="foot" id="kRecF">–</div></div>
+    <div class="kpi"><div class="lab">整体达标率</div><div class="val" id="kPass">–<small>%</small></div><div class="foot" id="kPassF">–</div></div>
+  </div>
+
+  <div class="grid g2 mt20">
+    <div class="card">
+      <div class="card-h"><h2>为什么做这个系统</h2><span class="sub">问题陈述</span></div>
+      <p class="p"><b>① 反馈慢。</b>新员工第一次真接客户，反馈要等主管复盘，一次练习的反馈周期以天计；说错了当场没人纠正，错了就重复错。</p>
+      <p class="p"><b>② 无法量化。</b>「这孩子挺机灵」是最常见的评价。谁的需求挖掘弱、谁的异议处理不会接情绪，全靠印象，无法比较、无法排序。</p>
+      <p class="p"><b>③ 无法复盘。</b>实战过程没有留痕，培训后再想找「他当时是怎么回这一句的」无从查起，优秀话术也沉淀不下来。</p>
+      <p class="p"><b>④ 依赖老带新。</b>带教主管时间有限，一次只能带一两个人；新员工越多，辅导质量越稀释，经验也随人走。</p>
+      <p class="p mt14" style="border-top:1px solid var(--line);padding-top:12px">结论：缺的不是课件，而是<b>练习场和反馈</b>。新员工需要的是一次可以反复失败、且每次失败都有人（或系统）明确指出「哪一句、错在哪」的机会——这正是本系统要提供的。</p>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>当前在跑的任务</h2><span class="sub">数据取自 <code>window.TRAIN</code></span></div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="taskMini">
+          <thead><tr><th>任务</th><th>场景</th><th class="num">达标线</th><th class="num">完成</th><th class="num">达标率</th><th>状态</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="p mt14" id="weakNote">…</p>
+    </div>
+  </div>
+
+  <!-- ==================== 2. 角色与场景 ==================== -->
+  <section class="sec" id="roles">
+    <div class="sec-h"><span class="n">02</span><h2>角色与场景</h2><span class="m">4 类角色 · <span id="scnCount">3</span> 个已上线场景</span></div>
+
+    <div class="grid g2">
+      <div class="role">
+        <div class="rh"><div class="ic" style="background:#5B9DF9">学</div><h3>学员 · 新员工</h3></div>
+        <div class="rl">销售代表 / 客户经理 · 入职 1–3 个月</div>
+        <div class="kvline"><span class="k">核心目标</span><span class="v">入职 2 周内把必修场景练到达标线，敢开口、会问需求</span></div>
+        <div class="kvline"><span class="k">典型痛点</span><span class="v">没人陪练、怕说错；练完不知道该改哪儿；实战机会少</span></div>
+        <div class="kvline"><span class="k">高频动作</span><span class="v">进会话 → 打字 / 发语音条 / 转语音通话 → 看报告 → 再练一次</span></div>
+        <div class="kvline"><span class="k">看 / 点 / 得</span><span class="v">看「本轮训练目标 + 5 维实时评分 + AI 带教提示」；点会话与输入框；得一份带逐句点评的训练报告</span></div>
+      </div>
+
+      <div class="role">
+        <div class="rh"><div class="ic" style="background:#FFB020">管</div><h3>带教主管 <span class="tag g">已有专属工作台</span></h3></div>
+        <div class="rl">师徒制里的「师傅」· 带 2–4 名新人 · <code>教练工作台-带教主管.html</code></div>
+        <div class="kvline"><span class="k">核心目标</span><span class="v">新人话术口径统一、尽快能独立接客户；把辅导时间花在最弱的人身上</span></div>
+        <div class="kvline"><span class="k">典型痛点</span><span class="v">不知道谁真弱、弱在哪；辅导靠听录音或凭印象，费时且不可比</span></div>
+        <div class="kvline"><span class="k">高频动作</span><span class="v">看我的学员与弱项 → 打开学员趋势 → 写一对一辅导记录 → 抽检对话、统一话术</span></div>
+        <div class="kvline"><span class="k">看 / 点 / 得</span><span class="v">看「我的学员 + 弱项榜 + 辅导待办」；点学员；得「这次该跟他聊什么」的依据与可留痕的辅导记录</span></div>
+      </div>
+
+      <div class="role">
+        <div class="rh"><div class="ic" style="background:#3EB575">运</div><h3>培训运营</h3></div>
+        <div class="rl">培训运营组 · 任务与内容的实际维护者</div>
+        <div class="kvline"><span class="k">核心目标</span><span class="v">把统一话术快速铺到全员，并追踪到人、到天</span></div>
+        <div class="kvline"><span class="k">典型痛点</span><span class="v">下发靠群里发文件，谁练了谁没练要手工数；达标线无法按批次调整</span></div>
+        <div class="kvline"><span class="k">高频动作</span><span class="v">建任务（选场景 → 选学员 → 设达标线 / 截止时间）→ 看完成率 → 催办</span></div>
+        <div class="kvline"><span class="k">看 / 点 / 得</span><span class="v">看任务看板；点任务下发向导；得实时完成率 / 达标率与待催办名单</span></div>
+      </div>
+
+      <div class="role">
+        <div class="rh"><div class="ic" style="background:#B983E8">负</div><h3>培训负责人</h3></div>
+        <div class="rl">连锁渠道事业部 · 培训负责人</div>
+        <div class="kvline"><span class="k">核心目标</span><span class="v">证明培训有效、投入花在刀刃上；发现系统性能力短板</span></div>
+        <div class="kvline"><span class="k">典型痛点</span><span class="v">效果说不清，只能汇报「参训率」；不知道整套话术体系缺哪一块</span></div>
+        <div class="kvline"><span class="k">高频动作</span><span class="v">看整体达标率与 5 维平均分 → 找最弱维度 → 决定场景与课程投入</span></div>
+        <div class="kvline"><span class="k">看 / 点 / 得</span><span class="v">看数据看板；点维度下钻；得一份可向上汇报的培训效果结论</span></div>
+      </div>
+    </div>
+
+    <div class="grid g2 mt20">
+      <div class="card">
+        <div class="card-h"><h2>权限与可见范围</h2><span class="sub">给研发的落地口径</span></div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>角色</th><th>所在端</th><th>可见数据</th><th>可操作</th></tr></thead>
+            <tbody>
+              <tr><td>学员</td><td>学员端（微信风格）</td><td>仅本人任务与本人成绩</td><td>练习 / 查看自己的报告</td></tr>
+              <tr><td>带教主管</td><td>教练工作台</td><td>所带学员全部记录、弱项与风险</td><td>看趋势与弱项、填一对一辅导记录、对话质检（抽检 / 统一话术）</td></tr>
+              <tr><td>培训运营</td><td>管理后台</td><td>全员任务与成绩</td><td>建 / 下发 / 关闭任务、维护场景库</td></tr>
+              <tr><td>培训负责人</td><td>管理后台</td><td>全组织聚合数据</td><td>只读看板与导出</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="p" style="margin:11px 0 0;font-size:12px;color:var(--txt3)">「能不能改」与「能看谁」是<b>两把独立的锁</b>：前者是 <code>can_edit</code> / <code>can_review</code>，后者是 <code>data_scope</code>（全部 / 本部门 / 本人带教）。带教主管填写辅导记录与对话质检<b>不卡 <code>can_edit</code></b>——那是他的本职动作；只卡可见范围（只能读写自己带教的学员）。删除成绩属于内容运营动作，才卡 <code>can_edit</code>。</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>已上线的 3 个训练场景</h2><span class="sub">取自 <code>TRAIN.scenes</code></span></div>
+        <div id="sceneList" class="grid" style="gap:11px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 3. 业务流程闭环 ==================== -->
+  <section class="sec" id="flow">
+    <div class="sec-h"><span class="n">03</span><h2>业务流程闭环</h2><span class="m">下发 → 练习 → 评分 → 报告 → 分层 → 辅导 → 复训 → 回到下发</span></div>
+
+    <div class="figure">
+      <svg viewBox="0 0 1200 400" role="img" aria-label="业务流程闭环流程图">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" style="fill:var(--txt3)"/>
+          </marker>
+        </defs>
+
+        <!-- 第一行：1 → 4 -->
+        <g>
+          <rect x="55" y="64" width="250" height="96" rx="12" style="fill:var(--panel);stroke:var(--line2)"/>
+          <circle cx="81" cy="94" r="11" style="fill:var(--acc)"/>
+          <text x="81" y="98.5" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:600">1</text>
+          <text x="101" y="99" style="fill:var(--txt);font-size:13px;font-weight:600">下发训练任务</text>
+          <text x="71" y="124" style="fill:var(--txt3);font-size:11px">产出：任务单（场景 / 达标线 / 截止时间）</text>
+          <text x="71" y="142" style="fill:var(--txt3);font-size:11px">当前进行中 <tspan id="svRunning" style="fill:var(--acc-txt)">–</tspan> 个任务</text>
+        </g>
+        <g>
+          <rect x="335" y="64" width="250" height="96" rx="12" style="fill:var(--panel);stroke:var(--line2)"/>
+          <circle cx="361" cy="94" r="11" style="fill:var(--acc)"/>
+          <text x="361" y="98.5" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:600">2</text>
+          <text x="381" y="99" style="fill:var(--txt);font-size:13px;font-weight:600">微信场景练习</text>
+          <text x="351" y="124" style="fill:var(--txt3);font-size:11px">产出：对话记录 / 语音条 / 通话转写</text>
+          <text x="351" y="142" style="fill:var(--txt3);font-size:11px">三条回复路径：文字 · 语音条 · 语音通话</text>
+        </g>
+        <g>
+          <rect x="615" y="64" width="250" height="96" rx="12" style="fill:var(--panel);stroke:var(--acc-bd)"/>
+          <circle cx="641" cy="94" r="11" style="fill:var(--acc)"/>
+          <text x="641" y="98.5" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:600">3</text>
+          <text x="661" y="99" style="fill:var(--txt);font-size:13px;font-weight:600">系统自动评分</text>
+          <text x="631" y="124" style="fill:var(--txt3);font-size:11px">产出：<tspan id="svDim">5</tspan> 维得分 / 综合分 / 目标达成</text>
+          <text x="631" y="142" style="fill:var(--txt3);font-size:11px">原型阶段 = 关键词命中，目标阶段 = Rubric</text>
+        </g>
+        <g>
+          <rect x="895" y="64" width="250" height="96" rx="12" style="fill:var(--panel);stroke:var(--line2)"/>
+          <circle cx="921" cy="94" r="11" style="fill:var(--acc)"/>
+          <text x="921" y="98.5" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:600">4</text>
+          <text x="941" y="99" style="fill:var(--txt);font-size:13px;font-weight:600">生成训练报告</text>
+          <text x="911" y="124" style="fill:var(--txt3);font-size:11px">产出：维度明细 / 逐句点评 / 带教建议</text>
+          <text x="911" y="142" style="fill:var(--txt3);font-size:11px">达标判定：综合分 ≥ 达标线</text>
+        </g>
+
+        <!-- 第二行：5 ← ... 7 -->
+        <g>
+          <rect x="895" y="232" width="250" height="96" rx="12" style="fill:var(--panel);stroke:var(--amber-bd)"/>
+          <circle cx="921" cy="262" r="11" style="fill:var(--amber)"/>
+          <text x="921" y="266.5" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:600">5</text>
+          <text x="941" y="267" style="fill:var(--txt);font-size:13px;font-weight:600">风险分层</text>
+          <text x="911" y="292" style="fill:var(--txt3);font-size:11px">产出：高 / 需关注 / 正常 三色名单</text>
+          <text x="911" y="310" style="fill:var(--txt3);font-size:11px">红 <tspan id="svRed" style="fill:var(--red)">–</tspan> · 黄 <tspan id="svYellow" style="fill:var(--amber)">–</tspan> · 绿 <tspan id="svGreen" style="fill:var(--acc-txt)">–</tspan></text>
+        </g>
+        <g>
+          <rect x="615" y="232" width="250" height="96" rx="12" style="fill:var(--panel);stroke:var(--line2)"/>
+          <circle cx="641" cy="262" r="11" style="fill:var(--acc)"/>
+          <text x="641" y="266.5" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:600">6</text>
+          <text x="661" y="267" style="fill:var(--txt);font-size:13px;font-weight:600">主管介入辅导</text>
+          <text x="631" y="292" style="fill:var(--txt3);font-size:11px">产出：一对一辅导记录 / 改进点</text>
+          <text x="631" y="310" style="fill:var(--txt3);font-size:11px">依据：报告里的最弱维度 + 逐句点评</text>
+        </g>
+        <g>
+          <rect x="335" y="232" width="250" height="96" rx="12" style="fill:var(--panel);stroke:var(--line2)"/>
+          <circle cx="361" cy="262" r="11" style="fill:var(--acc)"/>
+          <text x="361" y="266.5" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:600">7</text>
+          <text x="381" y="267" style="fill:var(--txt);font-size:13px;font-weight:600">复训（未达标重练）</text>
+          <text x="351" y="292" style="fill:var(--txt3);font-size:11px">产出：新一轮 Record / 是否达标</text>
+          <text x="351" y="310" style="fill:var(--txt3);font-size:11px">规则：未达标须在 3 天内复训一次</text>
+        </g>
+
+        <!-- 第一行连线 -->
+        <path d="M305 112 H335" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah)"/>
+        <path d="M585 112 H615" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah)"/>
+        <path d="M865 112 H895" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah)"/>
+        <text x="575" y="58" text-anchor="end" style="fill:var(--txt3);font-size:10.5px">达标</text>
+        <!-- 折行：4 → 5 -->
+        <path d="M1020 160 V232" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah)"/>
+        <text x="1030" y="200" style="fill:var(--txt3);font-size:10.5px">报告生成后</text>
+        <!-- 第二行反向连线 -->
+        <path d="M895 280 H865" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah)"/>
+        <path d="M615 280 H585" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah)"/>
+        <!-- 回环：7 → 1 -->
+        <path d="M335 280 H180 V164" style="stroke:var(--acc);stroke-width:1.8;fill:none;stroke-dasharray:6 5" marker-end="url(#ah)"/>
+        <text x="190" y="273" style="fill:var(--acc-txt);font-size:11px">未达标 → 自动生成复训任务，回到「下发」环节（闭环）</text>
+      </svg>
+      <div class="figcap">图 1 · 培训运营 / 学员 / 主管三类角色在同一闭环上的流转，每一步都产出可落库的结构化数据</div>
+    </div>
+
+    <div class="card mt20">
+      <div class="card-h"><h2>每一步的产出物与落库字段</h2><span class="sub">字段名与 <code>app-data.js</code> 对齐</span></div>
+      <div class="tbl-wrap">
+        <table class="tbl step-tbl">
+          <thead><tr><th>#</th><th>环节</th><th>责任角色</th><th>产出物</th><th>落到哪个实体</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>维护训练场景</td><td>培训运营</td><td>场景：元信息、训练目标、剧本轮次、语音脚本池、达标线</td><td><code>Scene</code>（后台可编辑 · 已交付）</td></tr>
+            <tr><td>1</td><td>下发训练任务</td><td>培训运营 / 主管</td><td>任务单：场景、达标线、截止时间、学员名单</td><td><code>Task</code>（sceneId / passLine / assignees / dueAt）</td></tr>
+            <tr><td>2</td><td>微信场景练习</td><td>学员</td><td>对话记录、语音条、通话转写</td><td>会话态（Session）+ <code>Record.turns / minutes / channel</code></td></tr>
+            <tr><td>3</td><td>系统自动评分</td><td>系统</td><td>5 维得分、综合分、训练目标达成情况</td><td><code>Record</code>（score / dimScores / passed）</td></tr>
+            <tr><td>4</td><td>生成训练报告</td><td>系统</td><td>维度明细、逐句点评、带教建议</td><td><code>Record</code> + 报告视图（只读）</td></tr>
+            <tr><td>5</td><td>风险分层</td><td>系统</td><td>高 / 需关注 / 正常 三色名单</td><td><code>Learner</code> 派生字段（<code>helpers.riskOf</code>）</td></tr>
+            <tr><td>6</td><td>主管介入辅导</td><td>带教主管</td><td>一对一辅导记录、改进点、话术质检结论</td><td>辅导记录（挂 learnerId + recordId）+ 质检结论（挂 recordId）</td></tr>
+            <tr><td>7</td><td>复训</td><td>学员</td><td>新一轮练习记录、是否达标</td><td>新增一条 <code>Record</code>（同 taskId + learnerId）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 4. 信息架构 ==================== -->
+  <section class="sec" id="ia">
+    <div class="sec-h"><span class="n">04</span><h2>信息架构</h2><span class="m">学员端 / 管理端 / 教练端 / 数据与引擎层 四块</span></div>
+
+    <div class="figure">
+      <svg viewBox="0 0 1200 430" role="img" aria-label="信息架构树状图">
+        <rect x="480" y="14" width="240" height="48" rx="12" style="fill:var(--acc-soft);stroke:var(--acc-bd)"/>
+        <text x="600" y="44" text-anchor="middle" style="fill:var(--acc-txt);font-size:13.5px;font-weight:600" id="iaRoot">新员工仿真培训系统</text>
+
+        <path d="M600 62 V80 M152 80 H1048 M152 80 V96 M450 80 V96 M748 80 V96 M1048 80 V96" style="stroke:var(--line2);stroke-width:1.4;fill:none"/>
+
+        <!-- 学员端 -->
+        <rect x="28" y="96" width="248" height="306" rx="12" style="fill:var(--panel);stroke:var(--line)"/>
+        <text x="44" y="126" style="fill:var(--txt);font-size:14px;font-weight:600">学员端 · 陪练</text>
+        <text x="260" y="126" text-anchor="end" style="fill:var(--acc-txt);font-size:10.5px">已交付</text>
+        <g style="font-size:12px">
+          <rect x="38" y="142" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="50" y="166" style="fill:var(--txt2)">微信会话列表（未读红点）</text>
+          <rect x="38" y="188" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="50" y="212" style="fill:var(--txt2)">1 对 1 对话 · 文字 / 语音条</text>
+          <rect x="38" y="234" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="50" y="258" style="fill:var(--txt2)">微信语音通话（转写 + 建议）</text>
+          <rect x="38" y="280" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="50" y="304" style="fill:var(--txt2)">训练报告（综合 / 5 维 / 点评）</text>
+          <rect x="38" y="326" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="50" y="350" style="fill:var(--txt2)">侧栏：目标 · 实时分 · AI 提示</text>
+          <rect x="38" y="372" width="228" height="0" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+        </g>
+        <text x="152" y="392" text-anchor="middle" style="fill:var(--txt3);font-size:10.5px">视角：我要练什么、我练得怎样</text>
+
+        <!-- 管理端 -->
+        <rect x="326" y="96" width="248" height="306" rx="12" style="fill:var(--panel);stroke:var(--line)"/>
+        <text x="342" y="126" style="fill:var(--txt);font-size:14px;font-weight:600">管理端 · 运营后台</text>
+        <text x="558" y="126" text-anchor="end" style="fill:var(--acc-txt);font-size:10.5px">已交付</text>
+        <g style="font-size:12px">
+          <rect x="336" y="142" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="348" y="166" style="fill:var(--txt2)">数据看板（达标率 / 维度 / 风险）</text>
+          <rect x="336" y="188" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="348" y="212" style="fill:var(--txt2)">任务下发向导（场景→学员→设线）</text>
+          <rect x="336" y="234" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="348" y="258" style="fill:var(--txt2)">任务列表与达标线（完成率 / 催办）</text>
+          <rect x="336" y="280" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="348" y="304" style="fill:var(--txt2)">学员报告与风险分层（红黄绿）</text>
+          <rect x="336" y="326" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="348" y="350" style="fill:var(--txt2)">场景库 + 场景剧本编辑器</text>
+          <rect x="336" y="372" width="228" height="18" rx="7" style="fill:var(--acc-soft);stroke:var(--acc-bd)"/>
+          <text x="348" y="385" style="fill:var(--acc-txt);font-size:11px">自助编辑 · 落库 · 版本回滚 · 审批发布</text>
+        </g>
+        <text x="450" y="392" text-anchor="middle" style="fill:var(--txt3);font-size:10.5px">视角：全员进度、谁掉队、任务怎么发</text>
+
+        <!-- 教练端 -->
+        <rect x="624" y="96" width="248" height="306" rx="12" style="fill:var(--panel);stroke:var(--acc-bd)"/>
+        <text x="640" y="126" style="fill:var(--txt);font-size:14px;font-weight:600">教练端 · 带教工作台</text>
+        <text x="856" y="126" text-anchor="end" style="fill:var(--acc-txt);font-size:10.5px">本轮新增</text>
+        <g style="font-size:12px">
+          <rect x="634" y="142" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="646" y="166" style="fill:var(--txt2)">总览（我的学员 / 待办 / 动态）</text>
+          <rect x="634" y="188" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="646" y="212" style="fill:var(--txt2)">我的学员（趋势 / 弱维 / 风险）</text>
+          <rect x="634" y="234" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="646" y="258" style="fill:var(--txt2)">一对一辅导（弱项 → 改进点记录）</text>
+          <rect x="634" y="280" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="646" y="304" style="fill:var(--txt2)">对话质检（抽检 → 统一话术）</text>
+          <rect x="634" y="326" width="228" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="646" y="350" style="fill:var(--txt2)">弱项建议 / 历史对比（读评分引擎）</text>
+          <rect x="634" y="372" width="228" height="0" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+        </g>
+        <text x="748" y="392" text-anchor="middle" style="fill:var(--txt3);font-size:10.5px">视角：我的学员弱在哪、怎么带、话术对不对</text>
+
+        <!-- 数据层 -->
+        <rect x="922" y="96" width="250" height="306" rx="12" style="fill:var(--panel);stroke:var(--line)"/>
+        <text x="938" y="126" style="fill:var(--txt);font-size:14px;font-weight:600">数据与引擎层</text>
+        <text x="1156" y="126" text-anchor="end" style="fill:var(--acc-txt);font-size:10.5px">唯一真相源</text>
+        <g style="font-size:12px">
+          <rect x="932" y="142" width="230" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="944" y="166" style="fill:var(--txt2)">app-data.js（window.TRAIN）</text>
+          <rect x="932" y="188" width="230" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="944" y="212" style="fill:var(--txt2)">scoring-engine.js（window.SCORER）</text>
+          <rect x="932" y="234" width="230" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="944" y="258" style="fill:var(--txt2)">场景 / 学员 / 任务 / 成绩</text>
+          <rect x="932" y="280" width="230" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="944" y="304" style="fill:var(--txt2)">helpers：统计口径（overview / riskOf）</text>
+          <rect x="932" y="326" width="230" height="38" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+          <text x="944" y="350" style="fill:var(--txt2)">dims / kw / levels / riskRules（口径常量）</text>
+          <rect x="932" y="372" width="230" height="0" rx="8" style="fill:var(--panel2);stroke:var(--line)"/>
+        </g>
+        <text x="1047" y="392" text-anchor="middle" style="fill:var(--txt3);font-size:10.5px">数据只读；算法一处修改，三端同步生效</text>
+      </svg>
+      <div class="figcap">图 2 · 三端一库一引擎：学员端产生行为数据，教练端做闭环辅导，管理端做全局决策，数据层与评分引擎是唯一口径</div>
+    </div>
+
+    <div class="grid g4 mt20">
+      <div class="card pad0">
+        <div class="item"><div class="ava-sq" style="background:#5B9DF9">端</div><div class="mid"><div class="t1">学员端 <span class="tag g">已交付</span></div><div class="t2">仿真培训原型-微信风格.html</div></div></div>
+        <div class="item"><div class="ava-sq" style="background:#5B9DF9">屏</div><div class="mid"><div class="t1">4 屏 · 3 条回复路径</div><div class="t2">会话列表 / 1 对 1 对话 / 语音通话 / 训练报告</div></div></div>
+        <div class="item"><div class="ava-sq" style="background:#5B9DF9">支</div><div class="mid"><div class="t1">演示直达</div><div class="t2">?demo=chat / call / report 可直达对应屏</div></div></div>
+      </div>
+      <div class="card pad0">
+        <div class="item"><div class="ava-sq" style="background:#FFB020">端</div><div class="mid"><div class="t1">管理端 <span class="tag g">已交付</span></div><div class="t2">管理后台-仿真培训.html</div></div></div>
+        <div class="item"><div class="ava-sq" style="background:#FFB020">页</div><div class="mid"><div class="t1">5 个页面</div><div class="t2">看板 / 下发向导 / 任务列表 / 学员报告 / 场景库</div></div></div>
+        <div class="item"><div class="ava-sq" style="background:#FFB020">口径</div><div class="mid"><div class="t1">禁止各端自写统计</div><div class="t2">完成率、达标率、风险分层统一走 helpers</div></div></div>
+      </div>
+      <div class="card pad0">
+        <div class="item"><div class="ava-sq" style="background:#07C160">端</div><div class="mid"><div class="t1">教练端 <span class="tag a">本轮新增</span></div><div class="t2">教练工作台-带教主管.html</div></div></div>
+        <div class="item"><div class="ava-sq" style="background:#07C160">页</div><div class="mid"><div class="t1">4 个模块</div><div class="t2">总览 / 我的学员 / 一对一辅导 / 对话质检</div></div></div>
+        <div class="item"><div class="ava-sq" style="background:#07C160">闭</div><div class="mid"><div class="t1">闭环落点</div><div class="t2">弱项 → 辅导记录 → 质检结论，接住管理端的分层结果</div></div></div>
+      </div>
+      <div class="card pad0">
+        <div class="item"><div class="ava-sq" style="background:#3EB575">库</div><div class="mid"><div class="t1">数据源 <span class="tag g">已就绪</span></div><div class="t2">data/app-data.js → window.TRAIN</div></div></div>
+        <div class="item"><div class="ava-sq" style="background:#3EB575">引</div><div class="mid"><div class="t1">评分引擎 <span class="tag g">已就绪</span></div><div class="t2">data/scoring-engine.js → window.SCORER（纯函数）</div></div></div>
+        <div class="item"><div class="ava-sq" style="background:#3EB575">量</div><div class="mid"><div class="t1" id="iaVol">–</div><div class="t2">场景 / 学员 / 任务 / 成绩</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 5. 数据模型 ==================== -->
+  <section class="sec" id="model">
+    <div class="sec-h"><span class="n">05</span><h2>数据模型</h2><span class="m">字段名与类型 100% 取自 <code>app-data.js</code></span></div>
+
+    <div class="figure">
+      <svg viewBox="0 0 1200 430" role="img" aria-label="实体关系图">
+        <defs>
+          <marker id="ah2" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" style="fill:var(--txt3)"/>
+          </marker>
+          <marker id="ah3" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" style="fill:var(--blue)"/>
+          </marker>
+        </defs>
+
+        <!-- Scene -->
+        <rect x="60" y="64" width="210" height="112" rx="12" style="fill:var(--panel);stroke:var(--blue-bd)"/>
+        <text x="76" y="88" style="fill:var(--blue);font-size:13px;font-weight:600">Scene 场景</text>
+        <path d="M60 98 H270" style="stroke:var(--line);stroke-width:1"/>
+        <g style="fill:var(--txt2);font-size:11.5px">
+          <text x="76" y="116">id · code · name · subtitle</text>
+          <text x="76" y="132">passLine · difficulty · duration</text>
+          <text x="76" y="148">script[] · tips[] · voicePool[][]</text>
+          <text x="76" y="164">objectives[{text, dim}] → Dim</text>
+        </g>
+
+        <!-- Task -->
+        <rect x="455" y="64" width="220" height="112" rx="12" style="fill:var(--panel);stroke:var(--blue-bd)"/>
+        <text x="471" y="88" style="fill:var(--blue);font-size:13px;font-weight:600">Task 训练任务</text>
+        <path d="M455 98 H675" style="stroke:var(--line);stroke-width:1"/>
+        <g style="fill:var(--txt2);font-size:11.5px">
+          <text x="471" y="116">id · code · title</text>
+          <text x="471" y="132">sceneId → Scene · passLine</text>
+          <text x="471" y="148">assignees[] → Learner</text>
+          <text x="471" y="164">dueAt · status · requireAll</text>
+        </g>
+
+        <!-- Learner -->
+        <rect x="860" y="64" width="210" height="112" rx="12" style="fill:var(--panel);stroke:var(--blue-bd)"/>
+        <text x="876" y="88" style="fill:var(--blue);font-size:13px;font-weight:600">Learner 学员</text>
+        <path d="M860 98 H1070" style="stroke:var(--line);stroke-width:1"/>
+        <g style="fill:var(--txt2);font-size:11.5px">
+          <text x="876" y="116">id · name · avatarText</text>
+          <text x="876" y="132">dept · position</text>
+          <text x="876" y="148">mentor（带教主管）</text>
+          <text x="876" y="164">joinDate</text>
+        </g>
+
+        <!-- Record -->
+        <rect x="455" y="250" width="220" height="124" rx="12" style="fill:var(--panel);stroke:var(--acc-bd)"/>
+        <text x="471" y="274" style="fill:var(--acc-txt);font-size:13px;font-weight:600">Record 练习记录</text>
+        <path d="M455 284 H675" style="stroke:var(--line);stroke-width:1"/>
+        <g style="fill:var(--txt2);font-size:11.5px">
+          <text x="471" y="302">id · taskId · learnerId · sceneId</text>
+          <text x="471" y="318">score · dimScores{d1…d5} → Dim</text>
+          <text x="471" y="334">passLine · passed</text>
+          <text x="471" y="350">finishedAt · minutes · turns</text>
+          <text x="471" y="366">channel</text>
+        </g>
+
+        <!-- Dim -->
+        <rect x="60" y="264" width="210" height="110" rx="12" style="fill:var(--panel);stroke:var(--amber-bd)"/>
+        <text x="76" y="288" style="fill:var(--amber);font-size:13px;font-weight:600">Dim 能力维度</text>
+        <path d="M60 298 H270" style="stroke:var(--line);stroke-width:1"/>
+        <g style="fill:var(--txt2);font-size:11.5px">
+          <text x="76" y="316">id · name</text>
+          <text x="76" y="332">desc（评分细则）</text>
+          <text x="76" y="348">weight（权重，合计 100）</text>
+          <text x="76" y="364">d1…d5 固定 5 条</text>
+        </g>
+
+        <!-- 关系连线 -->
+        <path d="M270 120 H455" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah2)"/>
+        <text x="290" y="111" style="fill:var(--txt3);font-size:11px">1 : N 「场景被下发为任务」</text>
+        <path d="M675 120 H860" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah2)"/>
+        <text x="690" y="111" style="fill:var(--txt3);font-size:11px">N : M 「经 Record」</text>
+        <path d="M565 176 V250" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah2)"/>
+        <text x="573" y="218" style="fill:var(--txt3);font-size:11px">taskId</text>
+        <path d="M165 176 V232 H420 V300 H455" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah2)"/>
+        <text x="188" y="224" style="fill:var(--txt3);font-size:11px">sceneId</text>
+        <path d="M955 176 V300 H675" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah2)"/>
+        <text x="760" y="292" style="fill:var(--txt3);font-size:11px">learnerId</text>
+        <path d="M270 320 H455" style="stroke:var(--blue);stroke-width:1.4;fill:none" marker-end="url(#ah3)"/>
+        <text x="292" y="313" style="fill:var(--blue);font-size:11px">dimScores 引用维度口径</text>
+
+        <text x="60" y="408" style="fill:var(--txt3);font-size:11px">卡片式记录：一名学员在同一任务上可产生多条 Record（复训即新增一条）；Scene 与 Learner 无直接外键，全部经由 Task / Record 关联。</text>
+        <text x="60" y="424" style="fill:var(--txt3);font-size:11px">objective.dim 与 dimScores 的 key 均指向 Dim.id，这是「训练目标 ↔ 评分维度」的正式映射，替代原型里写死的 objDim 数组。</text>
+      </svg>
+      <div class="figcap">图 3 · 实体关系：Scene 1—N Task、Task N—M Learner（经 Record）、Record 连接三者、Dim 被 Record 与 Scene 同时引用</div>
+    </div>
+
+    <div class="card mt20">
+      <div class="card-h"><h2>核心实体字段表</h2><span class="sub">类型写法：string / number / boolean / enum / FK</span></div>
+      <div class="grid g2">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th colspan="3">Scene · 场景（剧本）</th></tr>
+            <tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+            <tbody id="tblScene"></tbody>
+          </table>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th colspan="3">Learner · 学员</th></tr>
+            <tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+            <tbody id="tblLearner"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="grid g2 mt20">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th colspan="3">Task · 训练任务</th></tr>
+            <tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+            <tbody id="tblTask"></tbody>
+          </table>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th colspan="3">Record · 练习记录</th></tr>
+            <tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+            <tbody id="tblRecord"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tbl-wrap mt20">
+        <table class="tbl">
+          <thead><tr><th colspan="3">SceneVersion / SceneAudit · 场景内容治理（落库 · 版本 · 审批）</th></tr>
+          <tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+          <tbody id="tblSceneOps"></tbody>
+        </table>
+      </div>
+      <div class="tbl-wrap mt20">
+        <table class="tbl">
+          <thead><tr><th colspan="4">Dim · 能力维度（评分口径的唯一来源）</th></tr>
+          <tr><th>id</th><th>name</th><th>desc</th><th class="num">weight</th></tr></thead>
+          <tbody id="tblDim"></tbody>
+        </table>
+      </div>
+      <p class="p mt14">口径常量还有三组：<code>levels</code>（分数 → 等级）、<code>kw</code>（原型阶段关键词命中表）、<code>riskRules</code>（风险分层红黄绿）。三者都只允许在数据源维护，两端只读。</p>
+    </div>
+  </section>
+
+  <!-- ==================== 6. 评分机制 ==================== -->
+  <section class="sec" id="scoring">
+    <div class="sec-h"><span class="n">06</span><h2>评分机制</h2><span class="m">原型阶段：关键词命中（<code>scoring-engine.js</code>） → 目标阶段：大模型 Rubric</span></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-h"><h2>原型阶段 · 关键词命中代理</h2><span class="tag a">现状</span></div>
+        <p class="p">学员端先跑通「练习 → 评分 → 报告」的完整链路，用最便宜的办法产生分数：一份关键词命中表 <code>TRAIN.kw</code>（5 维共 <b id="kwTotal">–</b> 个词）充当打分代理。</p>
+        <p class="p">评分逻辑<b>不写在页面里</b>，而是抽成纯函数模块 <code>data/scoring-engine.js</code>（<code>window.SCORER</code>）。学员端判分、教练端给弱项建议、管理端复核分数，全部调用同一个 <code>scoreTurn()</code>——<b>一处修改，三端同步</b>，杜绝"两端算法打架"。</p>
+        <div class="fx">初始每维 42 分 → 命中该维任一关键词：+13（该维上限 97）<br>当轮考察目标达成 <b>且</b> 命中目标对应维度：再 +6<br>语音通话中发言：命中维度<b>补差到</b> +9（非叠加）</div>
+        <p class="p mt14">综合分 = 5 个维度得分的算术平均（<code>helpers.avg</code>，四舍五入），再与达标线比较得出是否达标。</p>
+        <p class="p"><b>接口（3 个消费方共用）：</b></p>
+        <div class="fx"><code>SCORER.detectHits(text, kw, dimIds)</code> → 命中维度 id 列表<br><code>SCORER.scoreTurn(text, ctx)</code> → 该轮 5 维得分 + 命中明细<br><code>SCORER.scoreSession(session)</code> → 整场综合分 / 达标判定<br><code>SCORER.compareWithHistory(result, history)</code> → 与历史同场景成绩对比<br><code>SCORER.suggestionsFor(weakDims)</code> → 弱项 → 带教建议</div>
+        <p class="p"><b>它解决了什么：</b>零成本、零依赖（<code>file://</code> 双击即用）、即时出分、完全可解释，让端到端体验先立起来。</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>目标阶段 · 大模型 Rubric 评分</h2><span class="tag b">目标</span></div>
+        <p class="p">关键词只能判断「有没有出现」，判断不了「有没有用对」。目标方案把评分交给大模型：输入场景剧本、训练目标、学员每一轮发言（语音先经 ASR 转文本）与上下文，模型按 <b>5 维 Rubric + 权重</b>输出结构化评分。</p>
+        <div class="fx">综合分 = Σ(dimScore × weight) / 100<br>达标：综合分 ≥ task.passLine（任务下发时可覆盖场景默认线）</div>
+        <p class="p mt14">输出除了分数，还要有<b>证据</b>（引用学员原话）、<b>目标达成逐条判定</b>、<b>置信度</b>与改进建议——分数要能被主管复核，而不是一个黑盒数字。</p>
+        <p class="p"><b>替换成本被引擎隔离到最小：</b><code>scoreTurn()</code> 的入参出参形状保持不变，内部由"关键词匹配"换成"模型调用"即可，三端的调用代码一行不改。</p>
+        <p class="p"><b>关键约束：</b>Rubric 版本化管理；低置信度样本转人工；每月用金标集校准，保证与人工评分的一致性。</p>
+      </div>
+    </div>
+
+    <div class="card mt20">
+      <div class="card-h"><h2>两阶段对比</h2><span class="sub">为什么必须换掉关键词</span></div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th style="width:14%">维度</th><th style="width:29%">原型阶段 · 关键词命中</th><th style="width:29%">目标阶段 · 大模型 Rubric</th><th>结论</th></tr></thead>
+          <tbody>
+            <tr><td>实现原理</td><td>文本包含关键词即加分，累加后取平均</td><td>模型阅读上下文，按细则逐维打分并引用证据</td><td>从「匹配」到「理解」</td></tr>
+            <tr><td>优点</td><td>零成本、即时、可解释、无网络依赖</td><td>懂语境、支持同义表达、可解释（附原话）、可对齐人工标准</td><td>原型换来速度，模型换来公信力</td></tr>
+            <tr><td>局限</td><td>同义换词就漏判；空话套话也会加分；评价不了结构与逻辑；容易被模板刷分</td><td>有成本与延迟；存在幻觉风险；需人工抽检与版本管理</td><td>关键词分只能内部参考，不能对外背书</td></tr>
+            <tr><td>典型误判</td><td>「我理解您的意思」+13，但后面并没有解决任何问题</td><td>「我先复述一下您的顾虑：价格、质量、售后，对吗？」识别为需求挖掘 + 异议处理双命中</td><td>—</td></tr>
+            <tr><td>用在什么场合</td><td>演示、内部走查、无网络环境</td><td>正式考核、达标线判定、风险分层、对外汇报</td><td>当前数据仅作演示口径</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt20">
+      <div class="card-h"><h2>5 维 Rubric 细则</h2><span class="sub">维度名 / 权重取自 <code>TRAIN.dims</code>；「评分锚点」为建议稿</span></div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>id</th><th>维度</th><th style="width:24%">评分细则（desc）</th><th class="num">weight</th><th>高分锚点（建议）</th><th>低分锚点（建议）</th></tr></thead>
+          <tbody id="tblRubric"></tbody>
+        </table>
+      </div>
+      <div class="grid g2 mt20">
+        <div>
+          <p class="mini-t">当前 28 条记录的维度平均分（<code>helpers.overview().dimAvg</code>）</p>
+          <div id="dimAvgBox"></div>
+        </div>
+        <div>
+          <p class="mini-t">分数 → 等级（<code>TRAIN.levels</code>）</p>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>区间</th><th>等级</th><th>系统动作</th></tr></thead>
+              <tbody id="tblLevel"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 7. 指标定义 ==================== -->
+  <section class="sec" id="metrics">
+    <div class="sec-h"><span class="n">07</span><h2>指标定义</h2><span class="m">公式与 <code>helpers</code> 实现完全一致</span></div>
+
+    <div class="grid g4">
+      <div class="mcard">
+        <h4>完成率</h4>
+        <div class="mv" id="mComp">–<small>%</small></div>
+        <div class="fx">已完成学员数 / 应完成学员数 × 100%</div>
+        <p class="p mt8"><b>口径：</b>分母 = <code>Task.assignees</code> 去重人数；分子 = 该任务下已存在 <code>Record</code> 的学员数（同一人多次练习只计一次，取最新记录）。当前口径取自 <code>helpers.taskProgress().rate</code>。</p>
+      </div>
+      <div class="mcard">
+        <h4>达标率</h4>
+        <div class="mv" id="mPass">–<small>%</small></div>
+        <div class="fx">达标记录数 / 已完成记录数 × 100%</div>
+        <p class="p mt8"><b>口径：</b>达标 = <code>Record.passed</code>（即 <code>score ≥ passLine</code>）。<b>单任务达标率</b>只算该任务；<b>整体达标率</b>按全部 <code>Record</code> 统计——两者不可混用，看板须标注清楚。</p>
+      </div>
+      <div class="mcard">
+        <h4>平均分</h4>
+        <div class="mv" id="mAvg">–<small>分</small></div>
+        <div class="fx">Σ Record.score / Record 条数（四舍五入）</div>
+        <p class="p mt8"><b>口径：</b>统一走 <code>helpers.avg</code>，与维度平均分、单任务平均分共用同一个取整规则，避免各处结果不一致。</p>
+      </div>
+      <div class="mcard">
+        <h4>风险分层</h4>
+        <div class="mv" id="mRisk">–<small>人待关注</small></div>
+        <div class="fx">按 red → yellow → green 顺序命中即停</div>
+        <p class="p mt8"><b>口径：</b>以学员全部历史记录计算最近一次是否达标与历史均分，规则严格取自 <code>TRAIN.riskRules</code>，见下。</p>
+      </div>
+    </div>
+
+    <div class="card mt20">
+      <div class="card-h"><h2>风险分层规则</h2><span class="sub">文案一字不差取自 <code>TRAIN.riskRules</code></span></div>
+      <div class="grid g3" id="riskBox"></div>
+      <div class="grid g2 mt20">
+        <div>
+          <p class="mini-t">判定顺序（<code>helpers.riskOf</code>）</p>
+          <div class="fx">1. 无任何练习记录 → yellow（需关注）<br>2. 最近一次未达标 且 历史均分 &lt; 65 → red（高风险）<br>3. 最近一次未达标 或 存在未达标记录 或 历史均分 &lt; 75 → yellow<br>4. 其余（最近一次达标 且 均分 ≥ 75）→ green（正常）</div>
+        </div>
+        <div>
+          <p class="mini-t">当前实时分布（<code>helpers.overview().risk</code>）</p>
+          <div id="riskDist" style="padding-top:4px"></div>
+          <p class="p mt14" id="riskNote">–</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt20">
+      <div class="card-h"><h2>各任务实时指标</h2><span class="sub">单任务口径，取自 <code>helpers.taskProgress</code></span></div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>任务</th><th>场景</th><th class="num">达标线</th><th class="num">应完成</th><th class="num">已完成</th><th class="num">完成率</th><th class="num">达标率</th><th class="num">平均分</th><th class="num">逾期未练</th><th>状态</th></tr></thead>
+          <tbody id="tblTaskMetrics"></tbody>
+        </table>
+      </div>
+      <p class="p mt14" id="metricFootNote">–</p>
+    </div>
+  </section>
+
+  <!-- ==================== 8. 技术方案 ==================== -->
+  <section class="sec" id="tech">
+    <div class="sec-h"><span class="n">08</span><h2>技术方案</h2><span class="m">接入真实大模型与语音的链路设计</span></div>
+
+    <div class="card">
+      <div class="card-h"><h2>架构说明</h2><span class="sub">文字优先、语音按需，评分与 NPC 双角色分离</span></div>
+      <p class="p">整条链路围绕「<b>一次对话轮次</b>」设计：学员在学员端发出内容（文字或语音），接入层把这一轮连同<b>会话状态</b>（第几轮、场景进度、已达成目标、历史对话）打包给 AI 能力层；<b>ASR</b> 先把语音转成文字，<b>LLM 扮演客户 NPC</b> 生成下一句回复与情绪，<b>LLM 做 Rubric 评分</b>在同一轮里对学员这句话打分并判定训练目标，<b>TTS</b> 把客户回复合成为语音条或通话语音回传；评分结果由编排层统一<b>落库</b>为 <code>Record</code>，供管理端看板、报告与风险分层消费。</p>
+      <p class="p">两个 LLM 角色<b>必须分离</b>：NPC 追求「像客户」，要有情绪、会压价、会打断；评分器追求「像考核官」，要冷静、可解释、可复核。合成一个模型会互相污染，导致分数随客户演得投入而虚高。</p>
+      <p class="p"><b>降级策略：</b>ASR/TTS 不可用时自动降级为纯文字；LLM 超时则回退到场景剧本 <code>script[i]</code> 的预设台词与关键词评分，保证练习不中断，并在记录上标记 <code>channel</code> 与降级标识。</p>
+    </div>
+
+    <div class="figure mt20">
+      <svg viewBox="0 0 1200 540" role="img" aria-label="技术架构图">
+        <defs>
+          <marker id="ah4" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" style="fill:var(--txt3)"/>
+          </marker>
+        </defs>
+
+        <!-- Lane 1 -->
+        <rect x="40" y="16" width="1120" height="74" rx="14" style="fill:var(--panel);stroke:var(--line)"/>
+        <text x="58" y="36" style="fill:var(--txt2);font-size:11.5px;font-weight:600">① 学员端（已完成）</text>
+        <rect x="58" y="42" width="1084" height="34" rx="9" style="fill:var(--panel2);stroke:var(--line2)"/>
+        <text x="600" y="63" text-anchor="middle" style="fill:var(--txt);font-size:12.5px">微信风格陪练 IM · 文字 / 语音条 / 微信语音通话 · 左侧训练目标与实时评分 · 结束出训练报告</text>
+
+        <!-- Lane 2 -->
+        <rect x="40" y="122" width="1120" height="104" rx="14" style="fill:var(--panel);stroke:var(--line)"/>
+        <text x="58" y="142" style="fill:var(--txt2);font-size:11.5px;font-weight:600">② 接入与编排层（管理端与学员端共用）</text>
+        <rect x="58" y="150" width="340" height="56" rx="9" style="fill:var(--panel2);stroke:var(--line2)"/>
+        <text x="228" y="173" text-anchor="middle" style="fill:var(--txt);font-size:12.5px;font-weight:600">API 网关 /api/v1/session*</text>
+        <text x="228" y="192" text-anchor="middle" style="fill:var(--txt3);font-size:11px">鉴权 · 限流 · 任务与场景校验</text>
+        <rect x="430" y="150" width="340" height="56" rx="9" style="fill:var(--panel2);stroke:var(--line2)"/>
+        <text x="600" y="173" text-anchor="middle" style="fill:var(--txt);font-size:12.5px;font-weight:600">会话状态管理 Session</text>
+        <text x="600" y="192" text-anchor="middle" style="fill:var(--txt3);font-size:11px">多轮上下文 · 进度 · 已达成目标 · 超时降级</text>
+        <rect x="802" y="150" width="340" height="56" rx="9" style="fill:var(--panel2);stroke:var(--line2)"/>
+        <text x="972" y="173" text-anchor="middle" style="fill:var(--txt);font-size:12.5px;font-weight:600">评分落库与报告</text>
+        <text x="972" y="192" text-anchor="middle" style="fill:var(--txt3);font-size:11px">写 Record · 触发风险分层 · 出报告</text>
+
+        <!-- Lane 3 -->
+        <rect x="40" y="258" width="1120" height="126" rx="14" style="fill:var(--panel);stroke:var(--acc-bd)"/>
+        <text x="58" y="278" style="fill:var(--txt2);font-size:11.5px;font-weight:600">③ AI 能力层</text>
+        <rect x="58" y="286" width="256" height="78" rx="9" style="fill:var(--panel2);stroke:var(--line2)"/>
+        <text x="186" y="312" text-anchor="middle" style="fill:var(--txt);font-size:12.5px;font-weight:600">ASR 语音转文字</text>
+        <text x="186" y="332" text-anchor="middle" style="fill:var(--txt3);font-size:11px">语音条 / 通话音频 → 文本</text>
+        <text x="186" y="349" text-anchor="middle" style="fill:var(--txt3);font-size:11px">含说话人分离与时间戳</text>
+        <rect x="334" y="286" width="256" height="78" rx="9" style="fill:var(--panel2);stroke:var(--blue-bd)"/>
+        <text x="462" y="312" text-anchor="middle" style="fill:var(--blue);font-size:12.5px;font-weight:600">LLM · 客户 NPC（角色 A）</text>
+        <text x="462" y="332" text-anchor="middle" style="fill:var(--txt3);font-size:11px">扮演张经理 / 王姐 / 李总</text>
+        <text x="462" y="349" text-anchor="middle" style="fill:var(--txt3);font-size:11px">生成下一句 + 情绪 + 是否松口</text>
+        <rect x="610" y="286" width="256" height="78" rx="9" style="fill:var(--panel2);stroke:var(--acc-bd)"/>
+        <text x="738" y="312" text-anchor="middle" style="fill:var(--acc-txt);font-size:12.5px;font-weight:600">LLM · Rubric 评分（角色 B）</text>
+        <text x="738" y="332" text-anchor="middle" style="fill:var(--txt3);font-size:11px">5 维打分 + 目标达成 + 证据</text>
+        <text x="738" y="349" text-anchor="middle" style="fill:var(--txt3);font-size:11px">输出 dimScores / confidence</text>
+        <rect x="886" y="286" width="256" height="78" rx="9" style="fill:var(--panel2);stroke:var(--line2)"/>
+        <text x="1014" y="312" text-anchor="middle" style="fill:var(--txt);font-size:12.5px;font-weight:600">TTS 客户语音合成</text>
+        <text x="1014" y="332" text-anchor="middle" style="fill:var(--txt3);font-size:11px">文本 → 客户语音条 / 通话语音</text>
+        <text x="1014" y="349" text-anchor="middle" style="fill:var(--txt3);font-size:11px">音色按场景角色绑定</text>
+
+        <!-- Lane 4 -->
+        <rect x="40" y="416" width="1120" height="96" rx="14" style="fill:var(--panel);stroke:var(--line)"/>
+        <text x="58" y="436" style="fill:var(--txt2);font-size:11.5px;font-weight:600">④ 数据层</text>
+        <rect x="58" y="444" width="340" height="44" rx="9" style="fill:var(--panel2);stroke:var(--line2)"/>
+        <text x="228" y="463" text-anchor="middle" style="fill:var(--txt);font-size:12.5px;font-weight:600">场景剧本库 SCENES</text>
+        <text x="228" y="479" text-anchor="middle" style="fill:var(--txt3);font-size:11px">script / tips / objectives / voicePool</text>
+        <rect x="430" y="444" width="340" height="44" rx="9" style="fill:var(--panel2);stroke:var(--line2)"/>
+        <text x="600" y="463" text-anchor="middle" style="fill:var(--txt);font-size:12.5px;font-weight:600">学员库 / 任务库</text>
+        <text x="600" y="479" text-anchor="middle" style="fill:var(--txt3);font-size:11px">LEARNERS / TASKS / assignees</text>
+        <rect x="802" y="444" width="340" height="44" rx="9" style="fill:var(--panel2);stroke:var(--acc-bd)"/>
+        <text x="972" y="463" text-anchor="middle" style="fill:var(--txt);font-size:12.5px;font-weight:600">成绩记录库 RECORDS</text>
+        <text x="972" y="479" text-anchor="middle" style="fill:var(--txt3);font-size:11px">score / dimScores / passed / riskRules</text>
+
+        <!-- 箭头 -->
+        <path d="M170 90 V122" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah4)"/>
+        <path d="M250 122 V90" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah4)"/>
+        <text x="262" y="110" style="fill:var(--txt3);font-size:10.5px">消息 / 音频 / 报告</text>
+
+        <path d="M200 226 V258" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah4)"/>
+        <text x="210" y="248" style="fill:var(--txt3);font-size:10.5px">① ASR 文本 + 会话上下文</text>
+        <path d="M1000 258 V226" style="stroke:var(--txt3);stroke-width:1.4;fill:none" marker-end="url(#ah4)"/>
+        <text x="990" y="248" text-anchor="end" style="fill:var(--txt3);font-size:10.5px">② 客户回复 / TTS 音频 / 评分</text>
+
+        <path d="M300 384 V416" style="stroke:var(--acc);stroke-width:1.4;fill:none" marker-end="url(#ah4)"/>
+        <text x="310" y="406" style="fill:var(--txt3);font-size:10.5px">评分结果落库：dimScores / objectives / passed</text>
+        <path d="M980 416 V384" style="stroke:var(--blue);stroke-width:1.4;fill:none" marker-end="url(#ah4)"/>
+        <text x="970" y="406" text-anchor="end" style="fill:var(--txt3);font-size:10.5px">读取场景剧本与 Rubric 标准</text>
+
+        <text x="600" y="532" text-anchor="middle" style="fill:var(--txt3);font-size:11px">管理端不直连模型，只读数据层与报告接口；模型、ASR、TTS 均为可替换供应商，通过适配层接入</text>
+      </svg>
+      <div class="figcap">图 4 · 目标架构：ASR → LLM（客户 NPC + Rubric 评分双角色）→ TTS，会话状态管理与评分落库由编排层统一负责</div>
+    </div>
+
+    <div class="grid g2 mt20">
+      <div class="card">
+        <div class="card-h"><h2>接口设计 · 一轮对话</h2><span class="tag b">POST</span></div>
+        <div class="code-t">/api/v1/session/{sessionId}/turn</div>
+        <pre class="code"><span class="ky">Request</span>
+{
+  "sessionId": "S-20261005-0001",
+  "taskId":    "T01",          // → Task.id
+  "sceneId":   "s1",           // → Scene.id
+  "learnerId": "L02",          // → Learner.id
+  "channel":   "voice",        // text | voice | call
+  "turn":      3,
+  "input": {
+    "text": null,              // channel=text 时直接给文本
+    "audioUrl": "…/turn3.m4a", // channel=voice/call 时给音频
+    "durationSec": 6
+  },
+  "history": [
+    { "role": "customer", "text": "你们这个价格…高不少啊。" },
+    { "role": "learner",  "text": "张经理您好，我是XX食品的小陈…" }
+  ],
+  "rubricVersion": "rubric-v1"  // 评分标准版本，可追溯
+}</pre>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>响应 · 结构化评分</h2><span class="tag g">200</span></div>
+        <div class="code-t">字段与 <code>Record</code> / <code>Scene.objectives</code> 一一对应</div>
+        <pre class="code"><span class="ky">Response</span>
+{
+  "sessionId": "S-20261005-0001",
+  "customerReply": {
+    "text":     "理解理解，您先说说具体哪块儿觉得不合适。",
+    "emotion":  "pressured",          // NPC 情绪，供前端做语气/表情
+    "audioUrl": "…/reply3.mp3",       // TTS 产物，文字模式为 null
+    "voiceSec": 5
+  },
+  "dimScores": { "d1": 82, "d2": 74, "d3": 68, "d4": 77, "d5": 71 },
+  "score":  74,                        // = Σ(dimScore × weight)/100
+  "passLine": 60,                      // 回显，前端用于即时达标提示
+  "objectives": [
+    { "dim": "d1", "text": "主动自我介绍并说明来意",
+      "achieved": true,  "evidence": "张经理您好，我是XX食品的小陈" },
+    { "dim": "d2", "text": "问清客户真正的顾虑（价格 / 质量 / 售后）",
+      "achieved": false, "evidence": null }
+  ],
+  "feedback":  "开场清楚；但还没有把「价格还是品质」问出口。",
+  "confidence": 0.86                   // < 0.6 建议转人工复核
+}</pre>
+      </div>
+    </div>
+
+    <div class="card mt20">
+      <div class="card-h"><h2>结束会话与落库</h2><span class="sub">写一条 Record，其余全部派生</span></div>
+      <div class="code-t">POST /api/v1/session/{sessionId}/finish</div>
+      <pre class="code"><span class="ky">RequestBody</span>
+{ "sessionId": "S-20261005-0001", "minutes": 8, "turns": 6 }
+
+<span class="ky">→ 落库为一条 Record（字段与现有数据模型一致）</span>
+{
+  "id":         "R029",
+  "taskId":     "T01",      "learnerId": "L02",     "sceneId": "s1",
+  "score":      74,
+  "dimScores":  { "d1": 82, "d2": 74, "d3": 68, "d4": 77, "d5": 71 },
+  "passLine":   60,                       // 取 Task.passLine，无则回退 Scene.passLine
+  "passed":     true,                     // score >= passLine
+  "finishedAt": "2026-10-05 15:20",
+  "minutes":    8,
+  "turns":      6,
+  "channel":    "微信沟通"
+}
+
+<span class="ky">→ 派生（不落库，实时算）</span>
+helpers.statsOf(learnerId) · helpers.riskOf(learnerId) · helpers.overview()</pre>
+      <p class="p mt14">生产环境落地时，只需把 <code>window.TRAIN</code> 的数据来源从本地文件换成上述接口返回的 JSON，<b>字段名保持不变</b>——学员端与管理端不用改渲染逻辑。</p>
+    </div>
+  </section>
+
+  <!-- ==================== 9. 迭代路线 ==================== -->
+  <section class="sec" id="roadmap">
+    <div class="sec-h"><span class="n">09</span><h2>迭代路线</h2><span class="m">P0 – P7 已交付 · 语音通道待接</span></div>
+    <div class="tbl-wrap card pad0">
+      <table class="tbl">
+        <thead><tr><th style="width:11%">阶段</th><th style="width:23%">交付物</th><th style="width:33%">验收标准</th><th>前置依赖</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="tag g">P0 已交付</span><div class="muted" style="font-size:11.5px;margin-top:5px">学员端原型</div></td>
+            <td>微信风格仿真陪练（4 屏）：会话列表、1 对 1 对话（文字 / 语音条）、微信语音通话（转写 + 建议话术）、训练报告；<b id="p0Scenes">3</b> 个客户场景剧本；5 维实时评分；训练目标清单。</td>
+            <td>1）<code>file://</code> 双击即可打开，无任何外部依赖；2）3 个场景都能走通「文字 / 语音条 / 语音通话」三条回复路径并出报告；3）报告含综合分、5 维明细、逐句点评与带教建议；4）<code>?demo=chat / call / report</code> 可直达对应屏，便于评审。</td>
+            <td>无（已完成）</td>
+          </tr>
+          <tr>
+            <td><span class="tag g">P1 已交付</span><div class="muted" style="font-size:11.5px;margin-top:5px">管理端 + 教练端 + 评分引擎 + 内容治理</div></td>
+            <td><b>管理后台</b> 6 页（数据看板 / 任务下发向导 / 任务列表与达标线 / 学员报告与风险分层 / 场景库 / <b>场景剧本编辑器</b>）；<b>教练工作台</b> 4 模块（总览 / 我的学员 / 一对一辅导 / 对话质检）；抽出共享 <code>data/scoring-engine.js</code> 纯函数评分引擎。<b>内容治理</b>：场景落库（<code>localStorage</code>）、版本快照与回滚、<b>草稿→待审→已发布审批流</b>。三端共用 <code>data/app-data.js</code> + <code>helpers</code> + <code>SCORER</code>。</td>
+            <td>1）运营可新建任务并下发到指定学员；2）成绩能在看板与风险分层中实时体现；3）<b>三端</b>的学员数、任务数、达标率、5 维均分与 <code>helpers.overview()</code> 完全一致，不允许各端自算；4）评分只走 <code>SCORER</code>，引擎单元测试全通过；5）抽取引擎前后，学员端两条路径得分逐项一致（文字 70 / 语音+通话 54）；6）教练端可对学员写辅导记录、对记录做质检结论；7）<b>场景编辑结果刷新不丢</b>，每次保存生成版本快照且可回滚；8）<b>未发布场景不可下发</b>（场景库按钮置灰 + 向导不出现），已发布场景被改动后自动回到待审。</td>
+            <td>P0 完成；共享数据源与评分引擎就绪（<b>已完成</b>）；三端页面结构与权限矩阵确认（见第 02 节）</td>
+          </tr>
+          <tr>
+            <td><span class="tag g">P2 已交付</span><div class="muted" style="font-size:11.5px;margin-top:5px">真实大模型 + 服务端落库 + 校准</div></td>
+            <td>零依赖 Node 服务层 <code>server/</code>：<b>LLM 双角色</b>（客户 NPC + Rubric 评分官，<code>server/rubric.js</code> 统一生成两侧 prompt，权重取自 <code>TRAIN.dims</code>）；<b>SQLite 落库</b>（13 张表：场景 / 版本 / 审批 / 用户 / 成绩 / 会话逐轮 / 审计 / Rubric / 金标集）；<b>权限与审计</b>（按部门编辑权、审核角色分离且提交人不可自审、写操作全程留痕）；<b>金标集校准</b>（10 条人工双盲样本，Pearson + MAE + 分维一致性）；管理后台新增「服务端 / AI」板块。<b>未交付</b>：ASR / TTS 真实语音（当前语音轮次按文本评分并带 <code>isCall</code> 标记）。</td>
+            <td>1）<b>模型故障自动降级</b>：无 Key / 超时 / 非法 JSON 一律回落关键词引擎 + 剧本，返回体 <code>source</code> 标记降级来源，练习不中断 ✅；2）<b>引擎接口形状不变</b>——<code>scoreTurn()</code> 语义与前端 <code>data/scoring-engine.js</code> 一致，三端调用代码零改动 ✅；3）每条评分可回溯到 Rubric 版本（<code>rubric-v1</code>）与证据原话 ✅；4）会话逐轮落库、<code>finish</code> 汇总写一条成绩，教练端 / 管理端可见 ✅；5）未发布场景不可下发、已发布编辑后自动转待审、提交人不可自审，越权 403 ✅；6）金标集校准给出 Pearson / MAE / 分维一致性，且明确区分「具备校准意义（<code>channel=llm</code>）」与「仅验证链路」✅（mock 模型实测 Pearson 0.885 / MAE 13.8）。</td>
+            <td>P1 落库字段已预留（<code>channel</code>、<code>rubricVersion</code>，<b>已完成</b>）；大模型 API Key（<b>已确认可提供</b>，接口为 OpenAI 兼容，DeepSeek / 通义 / 智谱 / OpenAI 均可）；语音通道需另接 ASR / TTS 服务（<b>待办</b>）；金标集扩充到 100+ 条并制定标注规范（<b>已提供导入界面，当前 10 条种子样本</b>）；成本预算与单人次成本上限</td>
+          </tr>
+          <tr>
+            <td><span class="tag g">P3 已交付</span><div class="muted" style="font-size:11.5px;margin-top:5px">登录鉴权 + 真落库 + 可部署</div></td>
+            <td><b>真实登录鉴权</b>（scrypt 口令哈希 + HMAC 无状态 token；接口分「公开 / 练习 / 管理」三档；<code>AUTH_MODE=open|enforce</code>）；<b>管理端场景编辑真正写服务端</b>（新建 / 保存 / 审批 / 驳回 / 下线 / 回滚 / 删除全部落库，本地仅作离线兜底）；<b>同源基址 + 监听可配 + CORS 白名单</b>；<b>部署形态</b>（启动脚本、零依赖 package.json、一键备份与恢复出厂、端到端自测 49 项断言）；<b>金标集导入界面</b>。<b>仍未交付</b>：ASR / TTS 真实语音；任务下发落服务端；HTTPS / 进程守护。</td>
+            <td>1）<b>越权口子已关闭</b>：删掉了「收不到操作人即默认超管」的回落；管理类接口必须可解析出身份，<code>enforce</code> 模式下无 token 一律 401（自测用独立进程实测）✅；2）口令以 scrypt 加盐哈希存储，服务端不保存明文，登录响应不含哈希字段 ✅；3）token 被篡改 / 过期一律 401，签名密钥持久化，重启不踢在线用户 ✅；4）<b>运营 A 改的场景运营 B 能看到</b>（服务端为准）✅；5）403 / 400 如实提示且界面回滚为服务端真实状态，不出现「假成功」✅；6）管理端登录门可用，顶栏显示真实身份与角色，按角色强校验（教练 403、提交人不可自审）✅；7）<code>node server/tools/selftest.js</code> 全绿（PASS 49）✅。</td>
+            <td>P2 服务层已就绪（<b>已完成</b>）；生产上线还需：HTTPS / 反代、进程守护（systemd / pm2 / Windows 服务）、把账号接到企业统一身份（替换 <code>server/auth.js</code>）。</td>
+          </tr>
+          <tr>
+            <td><span class="tag g">P4 已交付</span><div class="muted" style="font-size:11.5px;margin-top:5px">任务闭环 + 数据范围隔离</div></td>
+            <td><b>任务下发真正落服务端</b>：新增 <code>task_assignees</code> 指派关系表与 <code>tasks</code> 业务列（开始时间 / 创建人 / 全员 / 达标线 / 通道），任务的新建 / 更新 / 结束 / 重新开启 / 收回 / 删除全部落库，会话带 <code>taskId</code>、成绩记录归因到任务，形成「下发 → 练习 → 进度回填」闭环。<b>按角色数据范围隔离</b>：账号带 <code>data_scope</code>（<code>all</code> / <code>dept</code> / <code>mentor</code>），<code>/learners</code>、<code>/records</code>、<code>/tasks</code>、<code>/audit</code> 一律在<b>服务端</b>过滤，未识别取值 fail-closed。管理端改为「回拉服务端 → 原地水合数据源 → 复用同一套统计口径」渲染。<b>同时修复</b>一个老缺陷：播种脚本读 <code>l.coach</code> 而数据源字段名为 <code>mentor</code>，<code>coach</code> 列恒为空。<b>仍未交付</b>：ASR / TTS 真实语音、学员端场景热更新、HTTPS / 进程守护。</td>
+            <td>1）<b>运营下发的任务学员端立刻可见</b>（带 <code>?learnerId=</code> 匿名可读本人的），且只返回指派给自己的、草稿态不可见 ✅；2）任务进度随本人练习推进（如 1/2），结束后的成绩记录带 <code>taskId</code> 归因 ✅；3）<b>数据范围真的隔离</b>：同一接口下超管 12 名学员 / 部门运营 4 名 / 本人带教 4 名，教练读不到非名下学员 ✅；4）任务字段缺失、场景未发布、指派人不存在、达标线越界一律 400，无编辑权 403（含教练）✅；5）三端数字仍出自 <code>helpers</code> 单一口径，无第二套算法 ✅；6）<code>node server/tools/selftest.js</code> 全绿（<b>PASS 87</b>），并新增无浏览器前端验证 <code>node server/tools/frontend-test.js</code> 全绿（<b>PASS 54</b>）✅。</td>
+            <td>P3 登录鉴权与场景落库已就绪（<b>已完成</b>）；生产上线仍需：HTTPS / 反代、进程守护、接口分页（当前一次返回全量）、语音通道 ASR / TTS。</td>
+          </tr>
+          <tr>
+            <td><span class="tag g">P5 已交付</span><div class="muted" style="font-size:11.5px;margin-top:5px">教练台接服务端 + 辅导/质检落库</div></td>
+            <td><b>教练工作台接入服务端身份与可见范围</b>：启动探活 → <code>/auth/me</code> 取身份，按服务端给的范围筛学员；新增 <code>users.staff_name</code>（干净姓名）用于匹配 <code>learners.coach</code>（<code>users.name</code> 是带前缀的展示名，永远匹配不上）。<b>辅导记录与质检结论真正落库</b>：新增 <code>coach_notes</code> / <code>record_qc</code> 两表与 <code>GET·POST·DELETE /coach-notes</code>、<code>GET /qc</code>、<code>POST·DELETE /records/:id/qc</code>，写入「服务端优先、离线兜底」；<code>/records</code> 每条带上 <code>qc</code> 状态；新增 <code>DELETE /records/:id</code>（连带删质检结论）。<b>老库升级自动补演示辅导内容</b>；自测扩到 <b>121 + 93 项</b>，且开跑前会清扫上次中断留下的残渣。<b>仍未交付</b>：ASR / TTS 真实语音、学员端场景热更新、HTTPS / 进程守护、辅导记录全文检索与分页。</td>
+            <td>1）教练台登录后<b>只看到服务端允许范围内的学员</b>，<code>mentor</code> 范围下「全部学员」档直接隐藏、切换时再拦截一次（界面不比权限大）✅；2）<b>辅导记录与质检结论真正落库</b>——刷新页面、换账号登录都还在，不再「只存在本次会话」✅；3）越权与非法输入全部拦下：范围外学员写辅导 403、空内容 400、非法质检状态 400、缺状态 400、范围外记录质检 403、不存在记录 404 ✅；4）<b>无归属成绩</b>（请求未带 <code>learnerId</code>）对教练与管理员<b>都</b>不可质检（403，含 <code>scope=all</code> 绕过口子）✅；5）服务端拒绝时界面回滚本地改动并<b>如实提示</b>，不出现「看着存上了其实没存」✅；6）<b>老库（P4 时代建的）升级后教练台开箱有内容</b>，且两张表任一非空时整体跳过、不覆盖运维已维护数据 ✅；7）两套自测全绿：<code>selftest.js</code> <b>PASS 121</b> / <code>frontend-test.js</code> <b>PASS 93</b>，且连跑三遍演示数据稳定在 3 场景 / 5 任务 / 28 成绩 / 2 辅导 / 3 质检 ✅。</td>
+            <td>P3 登录鉴权与 P4 数据范围隔离已就绪（<b>已完成</b>）；生产上线仍需：HTTPS / 反代、进程守护、接口分页、辅导记录检索、语音通道 ASR / TTS。</td>
+          </tr>
+          <tr>
+            <td><span class="tag g">P6 已交付</span><div class="muted" style="font-size:11.5px;margin-top:5px">学员端场景池热更新（闭环最后一跳）</div></td>
+            <td><b>关掉 P4 / P5 一直挂着的那条「学员端场景不热更新」</b>。P4 打通了「下发 → 学员练」，但学员端的场景库读的是<b>页面加载时</b>的 <code>window.SCENES</code>（静态种子）——于是在剧本编辑器里新建、走完审批、被下发的场景，<b>学员刷新多少次都练不到</b>，这条链路对每个新场景都是断的，而且<b>不报任何错</b>。本轮新增<b>匿名</b>端点 <code>GET /scenes/published</code>（practice 档，只回 <code>publish='published'</code>，且只带学员端渲染与判分要用的字段，<b>不带</b> <code>audit</code>/<code>versions</code>/<code>owner</code>/<code>publish</code>/<code>status</code>/<code>updatedAt</code>/<code>brief</code>），学员端启动时与拉「我的任务」并列拉一次，交给新增的 <code>TRAIN.helpers.mergeScenes()</code> 合并进场景库，有变化才重渲染；离线或失败<b>一律静默</b>，保持本地种子，<code>file://</code> 双击照样能用。<b>合并语义刻意是「按 id 原地更新 + 未知 id 追加，不重排、不删除、不换数组与元素引用」</b>：<code>cur</code> 是数组下标、<code>SCENES[cur]</code> 在几十处实时求值，重排会让「当前会话」指向别的场景；服务端库可能不全，删本地种子会让学员<b>没场景可练</b>——两件事都<b>没有报错信号</b>。契约自测扩到 <b>129 + 145 项</b>，并新增「学员端整页脚本在沙箱里真跑一遍」这一层。<b>仍未交付</b>：ASR / TTS 真实语音、HTTPS / 进程守护、接口分页与辅导记录检索。</td>
+            <td>1）<b>运营新发布的场景，学员刷新即可练到</b>（已用「整页脚本沙箱真跑」验证：新建 → 提交 → 审核通过后，场景<b>真的出现在会话列表 HTML 里</b>）✅；2）<b>发布闸门在服务端收口</b>：只含已发布场景，且与 <code>?assignable=1</code> 的集合逐一一致；同一场景退回草稿后<b>立刻</b>从池中消失 ✅；3）<b>匿名端点不泄漏治理字段</b>（7 个字段逐个断言，并用「临时注入一个 <code>publish</code> 字段」验证过断言会变红）✅；4）<b>不破坏离线可用</b>：后端不可达时 <code>AIBOOT.scenes()</code> 返回 <code>null</code> 且<b>不抛错</b>，页面保留本地种子照常练 ✅；5）<b>不重排、不删本地种子</b>：合并后 id 序列与原有顺序一字未改、数组与元素引用均未替换 ✅；6）<code>enforce</code> 模式下该端点仍匿名可用（这条同时能抓到「<code>/scenes/published</code> 被 <code>/scenes/:id</code> 抢先匹配」的注册顺序错误）✅；7）两套自测全绿：<code>selftest.js</code> <b>PASS 129</b> / <code>frontend-test.js</code> <b>PASS 145</b>，连跑三遍演示数据稳定在 3 场景 / 5 任务 / 28 成绩 / 2 辅导 / 3 质检 ✅。</td>
+            <td>P3–P5 服务能力已就绪（<b>已完成</b>）；生产上线仍需：HTTPS / 反代、进程守护、接口分页、辅导记录检索、语音通道 ASR / TTS。学员端仍<b>不能自己挑未指派的场景</b>练（只能练下发给自己的），若要做「自由练习」需要再开一个场景选择入口。</td>
+          </tr>
+          <tr>
+            <td><span class="tag g">P7 已交付</span><div class="muted" style="font-size:11.5px;margin-top:5px">逐轮对话回读（「对话质检」真的看得到对话）</div></td>
+            <td>把从 P2 起就<b>一直在写、却始终没有读路径</b>的 <code>session_turns</code> 接通：新增 <code>GET /records/:id/turns</code>（staff 档，复用成绩可见范围校验），<code>service.js</code> 新增 <code>turnRow()</code> 作为「一轮对话」的<b>唯一定义</b>——<code>finish()</code> 的返回体与落库的 <code>evidence</code> <b>共用它</b>，历史遗留的 4 字段简写由 <code>evidenceTurn()</code> 显式归一化。教练台「逐轮复盘」改为三段式呈现：<b>客户说了什么 / 学员实际答了什么 / 该轮得分与维度归属</b>，并可针对指定轮次直接写辅导；管理端学员报告新增「看逐轮对话」折叠区。<code>/records</code> 列表<b>刻意不带对话正文</b>（28 条 × 5~6 轮 ≈ 150 段文本，列表页一个字都不渲染），只给 <code>turnCount</code>。演示库 28 条成绩按<b>精确口径</b>补播 164 轮对话（<code>spreadExact()</code> 保证逐轮均分 === 成绩单总分、每个维度的逐轮均值 === 维度分）。<b>仍未交付</b>：ASR / TTS 真实语音、HTTPS / 进程守护、接口分页与辅导记录检索。</td>
+            <td>1）<b>两个页面真的看得到学员原话</b>：教练台逐轮复盘与管理端学员报告渲染出<b>学员实际作答文本</b>（把 <code>learnerText</code> 置空后断言立刻变红）✅；2）<b>同一份数据只有一种形状</b>：<code>finish()</code> 返回的 <code>turns</code> 与逐轮接口返回<b>字段集逐一相等</b>，且 <code>dimScores</code> 必须五维俱全——不能是 <code>evidence</code> 那种 4 字段简写（改回简写后断言变红；顺带发现「是对象即可」的弱断言拦不住，已收紧为「五维俱全」）✅；3）<b>逐轮均分与成绩单总分精确一致</b>：28 条成绩 / 164 轮，总分与<b>五个维度</b>的逐轮均值全部零偏差（<code>+1</code> 偏移后断言立刻变红）✅；4）<b>列表减负</b>：<code>/records</code> 不返回 <code>evidence</code>（加回后 29 条记录逐条报红）、只给 <code>turnCount</code>（分布 5 轮 ×4 / 6 轮 ×24）✅；5）<b>权限与成绩同口径</b>：不存在 404、可见范围外 403、<b>无归属记录一律 403</b>（且文案是「无法查看逐轮对话」而不是「无法做质检」）、<code>enforce</code> 下无 token 401 ✅；6）<b>不假装有数据</b>：离线 / 未取到 / 无逐轮留存三种情况各有明确文案，且<b>明确标注当前展示的是场景剧本参考而非学员作答</b>（删掉提示文案后断言变红）✅；7）<b>老库与全新库都开箱可用</b>：老库首启补 28 条成绩的逐轮对话、二次启动幂等（无输出），全新库同样 28 条 / 164 轮 ✅；8）两套自测全绿：<code>selftest.js</code> <b>PASS 147</b> / <code>frontend-test.js</code> <b>PASS 185</b>，并新增「把教练台渲染函数的<b>真源码</b>取进沙箱、喂真实逐轮数据跑一遍」这一层 ✅。</td>
+            <td>P2 起 <code>session_turns</code> 一直有写、P5 已打通成绩可见范围校验（<b>已完成</b>）；生产上线仍需：HTTPS / 反代、进程守护、接口分页、辅导记录检索、语音通道 ASR / TTS。另需注意：<b>P7 之前产生的成绩没有逐轮留存</b>，接口回空数组并明确提示，不能拿来当学员作答点评。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid g2 mt20">
+      <div class="card"><div class="card-h"><h2>P0 留下什么</h2></div><p class="p">一套可演示、可体验的学员端，验证了「微信式陪练」这个形态在新员工中的接受度；同时定义了 5 维能力口径、3 个场景剧本与报告结构——这些在 P2 换模型后<b>全部复用</b>，只有打分实现被替换。</p></div>
+      <div class="card"><div class="card-h"><h2>P1 的关键取舍</h2></div><p class="p">本轮不碰模型，把「管理动作 + 带教动作 + 内容动作」跑通：下发、追踪、分层、辅导、质检、<b>场景自助编辑</b>，并为内容补上<b>落库 / 版本 / 审批</b>三道治理闸门。先冻结<b>数据口径</b>与<b>评分引擎</b>两条命脉，P2 换模型时三端零改动。因此 P1 的验收重点不是功能多，而是<b>口径一致</b>。</p></div>
+      <div class="card"><div class="card-h"><h2>P2 验证了什么</h2></div><p class="p">P2 的最大不确定性不是模型能不能打分，而是<b>打的分和主管心里的分是不是一回事</b>。因此交付重点放在<b>金标集校准链路</b>而非更聪明的模型：实测 Pearson 0.885 说明模型排序与人工判断高度一致，但 MAE 13.8 说明<b>绝对分系统性偏高</b>，Rubric 需要收紧——这条结论本身比「接入成功」更有价值。分维上「方案讲解 0.577」最弱，是最该补锚点的维度。</p></div>
+      <div class="card"><div class="card-h"><h2>P3 补上了什么</h2></div><p class="p">P2 交付了服务能力，但还差「能不能真的给别人用」。P3 不新增功能，专补三处硬伤：<b>①权限是自觉还是强制</b>——删掉「收不到操作人即默认超管」的回落，加上登录与 token，越权从「靠约定」变成「服务端拦」；<b>②多人协作是真的还是假的</b>——场景改动从只写浏览器本地改为写服务端，运营 A 编的场景运营 B 能看到；<b>③崩了怎么办</b>——启动脚本、一键备份、恢复出厂、49 项端到端自测。仍差的（语音、任务落库、HTTPS、守护进程）都已列在 P3 行的前置依赖里，不含糊。</p></div>
+      <div class="card"><div class="card-h"><h2>P4 为什么先做这两件</h2></div><p class="p">P3 把「服务能收数据」解决了，但业务闭环里还有两处是<b>假的</b>：任务下发只在管理端内存里转一圈、学员根本收不到；staff 接口谁都能读全量、教练看得见全公司成绩。这两条都不是「锦上添花」，而是<b>一试用就会被戳穿</b>的诚实性问题，所以 P4 不铺新功能，先把它们做真——<b>下发真的到达学员、可见范围真的按角色收口</b>。顺带把管理端从「读页面加载时的静态数据」改成「回拉服务端后原地水合」，这样三端数字继续同源，不会长出第二套统计口径。</p></div>
+      <div class="card"><div class="card-h"><h2>P5 补上了什么</h2></div><p class="p">P1 就交付了教练工作台，但它是三端里唯一<b>始终没接服务端</b>的：身份写死在页面里、读静态数据源、辅导记录与质检结论只存在内存里，而 UI 文案却在说「交接给下一次带教」「转交培训运营更新剧本」——<b>界面在说谎，比缺功能更严重</b>，所以 P5 优先把它做真。两个设计判断值得记下：<b>①</b> 教练的写权限<b>刻意不卡 <code>can_edit</code></b>，因为写辅导、做质检正是带教主管的本职，而教练角色的 <code>can_edit</code> 本来就是 0，卡它就等于把教练台变成只读页；该卡的是<b>可见范围</b>。删成绩才属于内容运营动作，才卡 <code>can_edit</code>。<b>②</b> 老库升级只建表不补内容是常见疏漏，P5 把它当成缺陷修掉——凡「升级后开箱仍可用」的承诺，都要有对应的迁移动作，不能只靠「重新播种」。</p></div>
+      <div class="card"><div class="card-h"><h2>P6 为什么是它</h2></div><p class="p">P4 让任务「下发真的到达学员」，但场景这一半还是断的：学员端的场景库<b>在页面加载时就定死了</b>，运营新发布的场景学员根本看不到。也就是说<b>「下发 → 学员练」这条闭环只对老场景成立，对每一个新场景都是断的</b>——而它<b>不报任何错</b>，只在学员那头表现为「就是没有这个场景」，运营那头的界面还一切正常。这类「静默的断点」比崩溃危险得多，所以 P6 只做一件事：把它接上。<br>实现上最大的难点不是加接口，而是<b>合并语义</b>。三个约束都来自学员端已有的实现：<b>①不能重排</b>（<code>cur</code> 是数组下标、<code>SCENES[cur]</code> 在几十处实时求值，重排会让「当前会话」指向别的场景）；<b>②不能删本地种子</b>（服务端库可能不全，清掉就让学员没场景可练）；<b>③不能换引用</b>（<code>HELPERS</code> 闭包持有数组引用、<code>?demo</code> 分支会先抓 <code>SCENES[0]</code> 再回填）。这三件事<b>全都不会有报错</b>，只能靠断言看住——所以 P6 的验收重点不是「功能有了」，而是「这些约束有测试看着」。</p></div>
+      <div class="card"><div class="card-h"><h2>P7 为什么是它</h2></div><p class="p">P2 起每轮对话就落进了 <code>session_turns</code> 表，但它<b>从来没有读的路径</b>：没有读的路由，两个页面里连 <code>evidence</code> 这个词都搜不到，演示库 28 条成绩的逐轮明细<b>非空 0 条</b>。于是教练台的「逐轮复盘」整块是<b>拿场景剧本拼出来的</b>——客户的词、一句「参考表达」，而<b>学员当时答了什么一个字都没有</b>；更糟的是那一屏、那个按钮都叫「对话质检」。<b>一个看不到对话的对话质检，比没有这个功能更危险</b>：主管以为自己是在按原话点评，实际是在对剧本发表意见，而且这些结论会被写进辅导记录、交接给下一次带教。<br>所以 P7 只做一件事：把这条读路径接通。<br>过程里最值得记下的不是接口本身，而是两处<b>静默失真</b>：<b>①同一份数据有两种形状</b>——<code>finish()</code> 返回的逐轮对象用 <code>learnerText</code>，落库的 <code>evidence</code> 用 <code>learner</code>，前端照前者写就会<b>读到 <code>undefined</code>——不报错、不抛异常，只是空白</b>（这是本项目第二次踩同一个坑，因此现在定成硬规矩：逐轮对象的形状<b>只允许在 <code>turnRow()</code> 里定义一次</b>，读旧数据必须显式归一化）。<b>②口径必须精确到「分」</b>——<code>finish()</code> 的维度分是「逐轮算术平均再取整」，给演示数据补逐轮分时若随手取整，教练台就会并排显示「逐轮均分 72 / 总分 58」，看的人只会以为系统坏了；所以补数据用 <code>spreadExact()</code> 把逐轮和配到<b>与总分严丝合缝</b>。这两处都不抛异常，只能靠断言看住——这也是 P7 把自测扩到 147 + 185 项、并把教练台渲染函数真源码搬进沙箱跑的原因。</p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 10. 风险与依赖 ==================== -->
+  <section class="sec" id="risks">
+    <div class="sec-h"><span class="n">10</span><h2>风险与依赖</h2><span class="m">按「影响 × 应对」列，标注需谁配合</span></div>
+    <div class="tbl-wrap card pad0">
+      <table class="tbl">
+        <thead><tr><th style="width:20%">风险</th><th style="width:9%">等级</th><th style="width:38%">影响</th><th>应对措施</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>大模型评分与人工评分不一致</td>
+            <td><span class="tag r">高</span></td>
+            <td>分数与主管直觉对不上，评分失去公信力，业务方不再用报告做决策；一旦被质疑，整个系统退回「演示品」。</td>
+            <td>建立 100+ 条人工标注金标集；每月抽检 10% 对话做双盲评分，出一致性报告；低置信度（<code>confidence &lt; 0.6</code>）转人工；Rubric 与 prompt 版本化管理，每次改动都要在金标集上回归。责任人：培训运营 + 研发。</td>
+          </tr>
+          <tr>
+            <td>语音方案成本与延迟</td>
+            <td><span class="tag a">中高</span></td>
+            <td>ASR + TTS 按调用量计费，语音通话场景时长长、单价高；实时转写延迟高会破坏「像打电话」的体验。</td>
+            <td>文字优先、语音按需：默认文字陪练，语音作为可选路径；对固定客户台词做 TTS 缓存，避免重复合成；通话场景先做「半双工 + 打断降级」，控制并发；设定单人次成本上限并监控。责任人：研发 + 采购。</td>
+          </tr>
+          <tr>
+            <td>场景内容更新跟不上业务</td>
+            <td><span class="tag a">中</span></td>
+            <td>话术口径、产品卖点、售后政策变化后，剧本与标准答案过时，学员学到错的东西。</td>
+            <td>把场景做成后台可配置：脚本、训练目标、达标线由运营自助维护，不改代码即可上线（<b>P1 已交付「场景剧本编辑器」</b>，含 7 类结构校验）；每个场景标注 <code>updatedAt</code> 与 <code>owner</code>，每季度复审一次；政策类场景（如服务承诺）变更时强制重发任务。<b>P1 已交付落库 / 版本回滚 / 审批流三道闸门</b>——内容改动刷新不丢、可回滚、未发布不可下发；<b>P3 已把编辑动作真正切到服务端持久化</b>（P2 只建了服务端表结构与接口，前端写路径仍在本地，P3 才接通），并补上按角色强制校验与操作审计；<b>P6 把最后一跳接上</b>——学员端启动时会匿名拉取「已发布场景池」并原地合并进场景库，运营新发布 / 改过的场景学员刷新即可练到（此前学员端场景库在读页面加载时的静态快照，新场景下发下去也练不到）。责任人：培训运营 + 业务方。</td>
+          </tr>
+          <tr>
+            <td>学员应付式练习</td>
+            <td><span class="tag a">中</span></td>
+            <td>为刷分而背模板、开两个窗口照着念；关键词阶段尤其容易被绕过，练习场变成形式主义。</td>
+            <td>用 Rubric 把评分从「命中词」转向「是否推进了对话状态」；NPC 回复引入随机化与多轮上下文，同一场景每次客户反应不同；限制单位时间重试次数，并把首次成绩计入档案；主管看的是逐句点评而非只有总分（<b>P7 已让「逐轮复盘」真正显示学员原话</b>——此前那一屏取的是场景剧本，学员当时答了什么一个字都没有，主管只能对剧本发表意见；现在可以按轮次点评并直接落到辅导记录上）。责任人：产品 + 研发。</td>
+          </tr>
+          <tr>
+            <td>对话数据与隐私</td>
+            <td><span class="tag a">中</span></td>
+            <td>练习留痕包含客户称呼与业务信息，语音文件更敏感；权限放开后可能越权查看他人记录。</td>
+            <td>客户身份做匿名化（用场景化代号而非真实客户名）；按第 02 节权限矩阵做数据隔离，学员只能看自己；语音仅用于训练与评分，不出培训域；设定保留期与到期清理策略。<b>P4 已把「数据隔离」落到服务端</b>：账号带 <code>data_scope</code>（全部 / 本部门 / 本人带教），记录、学员、任务、审计四类查询一律在服务端按范围过滤，取值不识别时「看不到人」而非放开全量。责任人：研发 + 法务 / 安全。</td>
+          </tr>
+          <tr>
+            <td>单机部署的并发与落盘策略</td>
+            <td><span class="tag a">中</span></td>
+            <td>服务端是「单进程 + 同步 SQLite」，写入天然串行；若落盘级别、模型配额或磁盘性能不匹配，会表现为「人一多就卡」——而且<b>功能全对、不报任何错</b>，最容易被误判成「网络慢」或「模型慢」。</td>
+            <td>把容量当成<b>交付项</b>而不是上线后再说：<b>①落盘级别</b>——SQLite 出厂默认 <code>synchronous=FULL</code> 在 WAL 下<b>每次提交都 fsync</b>，实测单条写入提交 <b>43.96ms</b>（<code>NORMAL</code> 仅 <b>0.06ms</b>，约 700 倍）；更坑的是 fsync 阻塞单线程事件循环，写入并发时读接口从 2ms 劣化到 1.5s。本方案默认 <code>DB_SYNC=NORMAL</code>（WAL 官方推荐值，进程崩溃不损坏库，只可能丢最后几个已提交事务），<code>/status</code> 回报真实生效值、自测有断言看住，需要「断电也不丢」可设回 <code>FULL</code>。<b>②容量按模型算，不按机器算</b>——单轮真实模型调用 0.5–3s，再叠加供应商 RPM / TPM 限流，100 人同时练峰值也只有约 50 次调用/秒，服务端远不是瓶颈。<b>③上限在哪</b>：SQLite 单文件 + 单进程，实测写吞吐约 470 req/s、读约 1100–2900 req/s（够数百人同时练），再往上要迁 PostgreSQL 并考虑多进程分片。责任人：研发 + 运维。</td>
+          </tr>
+          <tr>
+            <td>两端数据口径漂移</td>
+            <td><span class="tag b">中低</span></td>
+            <td>学员端与管理端各自实现一套统计，出现「学员看到已达标、主管看到未达标」这类互相打脸的 bug。</td>
+            <td>强制唯一真相源：所有统计只允许调用 <code>TRAIN.helpers</code>，禁止各端自写聚合；口径变更只改数据源并被两端自动继承；看板数字必须在验收时与 <code>helpers.overview()</code> 逐项对齐。责任人：研发（代码评审卡点）。</td>
+          </tr>
+          <tr>
+            <td>对专家的判断</td>
+            <td><span class="tag b">中低</span></td>
+            <td>附赠风险，需提醒业务方：评分标尺本身是否被业务认可，比技术实现更决定成败。</td>
+            <td>P1 期间由业务方参与制定 5 维 Rubric 锚点（高 / 低分特征），而不是研发单方面定义；先把「什么样的回复算好」写成双方签字的口径，再交给模型执行。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span id="footL">–</span>
+    <span id="footR">–</span>
+  </div>
+
+</div>
+
+<script src="data/app-data.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var T = window.TRAIN;
+  if (!T) { document.body.insertAdjacentHTML('afterbegin', '<p style="padding:24px">数据源 data/app-data.js 未加载，页面数字无法渲染。</p>'); return; }
+  var H = T.helpers;
+
+  function $(id) { return document.getElementById(id); }
+  function setT(id, v) { var e = $(id); if (e) e.textContent = v; }
+  function setH(id, v) { var e = $(id); if (e) e.innerHTML = v; }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* ---------- 主题 ---------- */
+  window.toggleTheme = function () {
+    var root = document.documentElement;
+    var light = root.dataset.theme === 'light';
+    root.dataset.theme = light ? '' : 'light';
+    setT('themeBtn', light ? '浅色' : '深色');
+    try { localStorage.setItem('planTheme', light ? '' : 'light'); } catch (e) {}
+  };
+  (function initTheme() {
+    var saved = '';
+    try { saved = localStorage.getItem('planTheme') || ''; } catch (e) {}
+    var st = saved || 'dark';
+    document.documentElement.dataset.theme = st === 'light' ? 'light' : '';
+    setT('themeBtn', st === 'light' ? '深色' : '浅色');
+  })();
+
+  /* ---------- 元信息 ---------- */
+  var ov = H.overview();
+  setT('brandSub', T.meta.org);
+  setT('metaLine', T.meta.version + ' · 更新于 ' + T.meta.updatedAt + ' · ' + T.meta.owner + ' · 本文档所有数字实时取自 window.TRAIN');
+  setT('dimCount', T.dims.length);
+  setT('svDim', T.dims.length);
+
+  /* ---------- KPI ---------- */
+  var depts = {}, mentors = {};
+  T.learners.forEach(function (l) { depts[l.dept] = 1; mentors[l.mentor] = 1; });
+  var deptN = Object.keys(depts).length, mentorN = Object.keys(mentors).length;
+  var byStatus = { running: 0, finished: 0, draft: 0 };
+  T.tasks.forEach(function (t) { byStatus[t.status] = (byStatus[t.status] || 0) + 1; });
+  var perCapita = (ov.totalRecords / T.learners.length).toFixed(1);
+
+  setH('kAcad', ov.learnerCount + '<small>人</small>');
+  setH('kAcadF', '覆盖 <b>' + deptN + '</b> 个部门 · <b>' + mentorN + '</b> 位带教主管');
+  setH('kTask', ov.runningTasks + '<small>个</small>');
+  setH('kTaskF', '任务总数 <b>' + T.tasks.length + '</b>（已结束 ' + (byStatus.finished || 0) + ' / 草稿 ' + (byStatus.draft || 0) + '）');
+  setH('kRec', ov.totalRecords + '<small>场</small>');
+  setH('kRecF', '人均 <b>' + perCapita + '</b> 场 · 覆盖 <b>' + T.scenes.length + '</b> 个场景');
+  setH('kPass', ov.passRate + '<small>%</small>');
+  setH('kPassF', '平均分 <b>' + ov.avgScore + '</b> · 高风险 <b class="down">' + ov.risk.red + '</b> 人');
+  setT('p0Scenes', T.scenes.length);
+
+  /* ---------- 流程图里的动态小数字 ---------- */
+  setT('svRunning', ov.runningTasks);
+  setT('svRed', ov.risk.red);
+  setT('svYellow', ov.risk.yellow);
+  setT('svGreen', ov.risk.green);
+
+  /* ---------- 概览：在跑的任务小表 + 最弱维度 ---------- */
+  var rows = T.tasks.map(function (t) {
+    var p = H.taskProgress(t.id);
+    var sc = T.sceneById(t.sceneId);
+    var stTag = t.status === 'running' ? '<span class="tag g">进行中</span>'
+      : t.status === 'finished' ? '<span class="tag">已结束</span>' : '<span class="tag a">草稿</span>';
+    return '<tr><td>' + esc(t.title) + '</td><td class="muted">' + esc(sc ? sc.name : '') + '</td>' +
+      '<td class="num">' + t.passLine + '</td>' +
+      '<td class="num">' + p.finishedCount + ' / ' + p.total + '</td>' +
+      '<td class="num">' + p.passRate + '%</td>' +
+      '<td>' + stTag + '</td></tr>';
+  }).join('');
+  document.querySelector('#taskMini tbody').innerHTML = rows;
+  setH('weakNote', '从 <b>' + ov.totalRecords + '</b> 条练习记录看，最弱的维度是 <b>' + esc(ov.weakest.name) + '</b>（平均 ' + ov.weakest.avg +
+    ' 分），最弱的任务口径是已达标的复训任务——这正是「达标线一旦提高、老问题就暴露」的典型信号。');
+
+  /* ---------- 场景卡片 ---------- */
+  setH('sceneList', T.scenes.map(function (s) {
+    var dims = {};
+    s.objectives.forEach(function (o) { dims[o.dim] = 1; });
+    var dw = Object.keys(dims).map(function (d) {
+      var f = T.dims.filter(function (x) { return x.id === d; })[0];
+      return f ? f.name : d;
+    }).join(' / ');
+    return '<div class="scn">' +
+      '<div class="sh"><div class="av" style="background:' + s.color + '">' + esc(s.avatarText) + '</div>' +
+      '<div><div class="nm">' + esc(s.name) + ' <span class="muted" style="font-size:11.5px;font-weight:400">' + esc(s.code) + '</span></div>' +
+      '<div class="sb">' + esc(s.subtitle) + '</div></div></div>' +
+      '<div class="chips"><span class="tag">' + esc(s.category) + '</span>' +
+      '<span class="tag ' + (s.difficulty === '高' ? 'r' : 'a') + '">难度 ' + esc(s.difficulty) + '</span>' +
+      '<span class="tag">达标线 ' + s.passLine + '</span>' +
+      '<span class="tag">建议 ' + s.duration + ' 分钟</span>' +
+      '<span class="tag b">' + s.script.length + ' 轮对话</span></div>' +
+      '<p class="mini-t">考察维度</p><p class="p" style="font-size:12.5px">' + esc(dw) + '</p>' +
+      '<p class="mini-t" style="margin-top:6px">训练目标（' + s.objectives.length + ' 条）</p>' +
+      '<ul class="objl">' + s.objectives.map(function (o) { return '<li>' + esc(o.text) + '</li>'; }).join('') + '</ul>' +
+      '</div>';
+  }).join(''));
+
+  /* ---------- 信息架构：数据量 ---------- */
+  setT('iaVol', T.scenes.length + ' 场景 / ' + T.learners.length + ' 学员 / ' + T.tasks.length + ' 任务 / ' + T.records.length + ' 成绩');
+  setT('scnCount', T.scenes.length);
+
+  /* ---------- 数据模型：字段表 ---------- */
+  function fields(list) {
+    return list.map(function (f) {
+      return '<tr><td><code>' + f[0] + '</code></td><td class="muted nowrap">' + f[1] + '</td><td class="muted">' + esc(f[2]) + '</td></tr>';
+    }).join('');
+  }
+  setH('tblScene', fields([
+    ['id', 'string PK', '场景唯一标识，如 s1'],
+    ['code', 'string', '业务编号，如 SC-001'],
+    ['name', 'string', '客户代号，如 张经理'],
+    ['subtitle', 'string', '客户身份，如 连锁餐饮 · 采购负责人'],
+    ['avatarText', 'string', '头像文字（1 个字）'],
+    ['color', 'string', '头像底色（hex）'],
+    ['last', 'string', '会话列表最后一条消息摘要'],
+    ['time', 'string', '会话列表时间显示'],
+    ['unread', 'number', '未读条数（仅 UI）'],
+    ['taskName', 'string', '场景对应的训练任务名'],
+    ['channel', 'string', '沟通渠道，当前恒为 微信沟通'],
+    ['category', 'string', '场景分类，如 客户异议 / 客户投诉 / 新客开发'],
+    ['difficulty', 'string', '难度，中 / 高'],
+    ['passLine', 'number', '默认达标线（任务可覆盖）'],
+    ['duration', 'number', '建议练习时长（分钟）'],
+    ['status', 'string', 'active 等场景状态'],
+    ['publish', 'string', '发布态：draft / review / published / offline（决定能否下发）'],
+    ['owner', 'string', '内容负责人'],
+    ['updatedAt', 'string', '内容更新时间'],
+    ['brief', 'string', '场景背景说明'],
+    ['script', 'Array&lt;{t, v}&gt;', '客户台词与语音条时长（v 为秒）'],
+    ['tips', 'string[]', '逐步带教提示，与 script 一一对应'],
+    ['objectives', 'Array&lt;{text, dim}&gt;', '训练目标，dim → Dim.id'],
+    ['voicePool', 'string[][]', '每轮可选话术池（语音条 / 通话）']
+  ]));
+  setH('tblSceneOps', fields([
+    ['versions[sceneId]', 'Array&lt;{v, at, by, note, snapshot}&gt;', '场景版本快照，每次保存归档，保留最近 20 版'],
+    ['audit[sceneId]', 'object', '审批审计：status / submitBy / submitAt / reviewBy / reviewAt / rejectReason'],
+    ['seq', 'number', '场景编号自增游标，保证 id 不复用']
+  ]));
+  setH('tblLearner', fields([
+    ['id', 'string PK', '学员编号，如 L01'],
+    ['name', 'string', '姓名'],
+    ['avatarText', 'string', '头像文字'],
+    ['color', 'string', '头像底色（hex）'],
+    ['dept', 'string', '所属部门'],
+    ['position', 'string', '岗位，如 客户经理 / 销售代表'],
+    ['mentor', 'string', '带教主管姓名（主管看板的归属依据）'],
+    ['joinDate', 'string', '入职日期']
+  ]));
+  setH('tblTask', fields([
+    ['id', 'string PK', '任务编号，如 T01'],
+    ['code', 'string', '业务单号，如 RW-20261005-01'],
+    ['title', 'string', '任务标题'],
+    ['sceneId', 'string FK→Scene', '所用训练场景'],
+    ['passLine', 'number', '本次任务的达标线（覆盖场景默认值）'],
+    ['assignees', 'string[] FK→Learner', '派发学员名单'],
+    ['dueAt', 'string', '截止时间，逾期未练计入 overdueCount'],
+    ['startAt', 'string', '开始时间'],
+    ['createdAt', 'string', '创建时间'],
+    ['createdBy', 'string', '创建人（运营或区域主管）'],
+    ['requireAll', 'boolean', '是否要求全员达标'],
+    ['status', 'enum', 'running / finished / draft'],
+    ['note', 'string', '任务说明与规则备注']
+  ]));
+  setH('tblRecord', fields([
+    ['id', 'string PK', '记录编号，如 R001'],
+    ['taskId', 'string FK→Task', '所属任务'],
+    ['learnerId', 'string FK→Learner', '学员'],
+    ['sceneId', 'string FK→Scene', '所用场景'],
+    ['score', 'number', '综合分（5 维算术平均）'],
+    ['dimScores', 'object&lt;d1..d5&gt;', '各维度得分，key → Dim.id'],
+    ['passLine', 'number', '本次判定所用达标线（任务优先）'],
+    ['passed', 'boolean', 'score ≥ passLine'],
+    ['finishedAt', 'string', '提交时间'],
+    ['minutes', 'number', '用时（分钟）'],
+    ['turns', 'number', '对话轮次'],
+    ['channel', 'string', '沟通渠道']
+  ]));
+  setH('tblDim', T.dims.map(function (d) {
+    return '<tr><td><code>' + d.id + '</code></td><td>' + esc(d.name) + '</td><td class="muted">' + esc(d.desc) + '</td><td class="num">' + d.weight + '</td></tr>';
+  }).join('') + '<tr><td colspan="3" class="muted">权重合计</td><td class="num"><b>' +
+    T.dims.reduce(function (a, d) { return a + d.weight; }, 0) + '</b></td></tr>');
+
+  /* ---------- Rubric 细则 ---------- */
+  var anchors = {
+    d1: ['开场自报家门 + 说明来意，一句到位，不等客户追问', '没有自我介绍、上来就推产品，或开场啰嗦超过 3 句'],
+    d2: ['用开放问题问出真实顾虑与用量规模，并复述确认', '只做陈述式介绍，全程没有问句；或问了但不追答案'],
+    d3: ['先接情绪（理解 / 认责）再给具体解决方案', '直接辩解或报价，忽略客户情绪'],
+    d4: ['用案例、数据、标准、承诺支撑观点', '只用「很好、放心、绝对没问题」这类形容词'],
+    d5: ['把下一步说死：发什么、什么时候、谁对接', '结尾停在「有需要再联系」，没有明确动作']
+  };
+  var kwTotal = 0;
+  setH('tblRubric', T.dims.map(function (d) {
+    var kw = T.kw[d.id] || [];
+    kwTotal += kw.length;
+    return '<tr><td><code>' + d.id + '</code></td><td><b>' + esc(d.name) + '</b></td>' +
+      '<td class="muted">' + esc(d.desc) + '</td>' +
+      '<td class="num">' + d.weight + '%</td>' +
+      '<td class="muted">' + esc(anchors[d.id][0]) + '</td>' +
+      '<td class="muted">' + esc(anchors[d.id][1]) + '</td></tr>';
+  }).join(''));
+  setT('kwTotal', kwTotal);
+
+  var lv = T.levels;
+  setH('tblLevel', lv.map(function (l, i) {
+    var next = i === 0 ? 100 : lv[i - 1].min - 1;
+    var range = '≥ ' + l.min + (i === 0 ? '' : ' 且 ≤ ' + next);
+    if (i === lv.length - 1) range = '< ' + lv[i - 1].min;
+    var act = l.key === 'good' ? '报告标绿，可进入下一场景'
+      : l.key === 'mid' ? '报告标黄，建议针对性复训'
+      : '报告标红，列入风险名单并触发复训任务';
+    return '<tr><td class="num">' + range + '</td><td><span class="tag ' +
+      (l.key === 'good' ? 'g' : l.key === 'mid' ? 'a' : 'r') + '">' + l.label + '</span></td><td class="muted">' + act + '</td></tr>';
+  }).join(''));
+
+  setH('dimAvgBox', ov.dimAvg.map(function (d) {
+    var cls = d.avg >= 75 ? '' : d.avg >= 60 ? ' a' : ' r';
+    return '<div class="dim"><div class="top"><span>' + esc(d.name) + ' <span class="muted">(weight ' +
+      (T.dims.filter(function (x) { return x.id === d.id; })[0] || {}).weight + '%)</span></span><span>' + d.avg + '</span></div>' +
+      '<div class="bar"><i class="' + cls + '" style="width:' + d.avg + '%"></i></div></div>';
+  }).join('') + '<p class="p mt8">最弱维度为 <b>' + esc(ov.weakest.name) + '</b>（' + ov.weakest.avg + ' 分），建议在 P2 的 Rubric 中对该维度的评分锚点做更细的分档，并在场景库中补充对应练习场景。</p>');
+
+  /* ---------- 指标定义 ---------- */
+  var runningTasks = T.tasks.filter(function (t) { return t.status === 'running'; });
+  var totA = 0, totF = 0;
+  runningTasks.forEach(function (t) { var p = H.taskProgress(t.id); totA += p.total; totF += p.finishedCount; });
+  var compRate = totA ? Math.round(totF / totA * 100) : 0;
+  setH('mComp', compRate + '<small>%</small>');
+  setH('mPass', ov.passRate + '<small>%</small>');
+  setH('mAvg', ov.avgScore + '<small>分</small>');
+  setH('mRisk', (ov.risk.red + ov.risk.yellow) + '<small>人待关注</small>');
+
+  var rk = T.riskRules;
+  setH('riskBox', ['red', 'yellow', 'green'].map(function (k) {
+    var r = rk[k];
+    var cnt = ov.risk[k];
+    return '<div class="risk" style="border-color:' + r.color + '33">' +
+      '<div class="t"><span class="dot" style="background:' + r.color + '"></span>' + esc(r.label) +
+      ' <span class="muted" style="font-weight:400">· ' + cnt + ' 人</span></div>' +
+      '<div class="d">' + esc(r.desc) + '</div></div>';
+  }).join(''));
+
+  var totalL = T.learners.length;
+  setH('riskDist', ['red', 'yellow', 'green'].map(function (k) {
+    var r = rk[k], cnt = ov.risk[k];
+    var pct = Math.round(cnt / totalL * 100);
+    return '<div class="dim"><div class="top"><span><span class="dot" style="background:' + r.color +
+      ';margin-right:6px"></span>' + esc(r.label) + '</span><span>' + cnt + ' 人 · ' + pct + '%</span></div>' +
+      '<div class="bar"><i style="width:' + pct + '%;background:' + r.color + '"></i></div></div>';
+  }).join(''));
+  setH('riskNote', '当前 ' + totalL + ' 名学员中，<b>' + ov.risk.red + '</b> 人高风险、<b>' + ov.risk.yellow +
+    '</b> 人需关注、<b>' + ov.risk.green + '</b> 人正常。高风险名单同时是主管的辅导排期表，规则随新记录实时重算，不需人工维护。');
+
+  setH('tblTaskMetrics', T.tasks.map(function (t) {
+    var p = H.taskProgress(t.id);
+    var sc = T.sceneById(t.sceneId);
+    var stTag = t.status === 'running' ? '<span class="tag g">进行中</span>'
+      : t.status === 'finished' ? '<span class="tag">已结束</span>' : '<span class="tag a">草稿</span>';
+    var passRateCell = p.finishedCount ? p.passRate + '%' : '<span class="muted">—</span>';
+    var avgCell = p.finishedCount ? p.avgScore : '<span class="muted">—</span>';
+    return '<tr><td>' + esc(t.title) + '<div class="muted" style="font-size:11.5px">' + esc(t.code) + '</div></td>' +
+      '<td class="muted">' + esc(sc ? sc.name : '') + '</td>' +
+      '<td class="num">' + t.passLine + '</td>' +
+      '<td class="num">' + p.total + '</td>' +
+      '<td class="num">' + p.finishedCount + '</td>' +
+      '<td class="num">' + p.rate + '%</td>' +
+      '<td class="num">' + passRateCell + '</td>' +
+      '<td class="num">' + avgCell + '</td>' +
+      '<td class="num">' + p.overdueCount + '</td>' +
+      '<td>' + stTag + '</td></tr>';
+  }).join(''));
+  setH('metricFootNote', '三个进行中任务的整体完成率为 <b>' + compRate + '%</b>（已完成 ' + totF + ' / 应完成 ' + totA +
+    '），整体达标率 <b>' + ov.passRate + '%</b>（全部 ' + T.records.length + ' 条记录口径）、平均分 <b>' + ov.avgScore +
+    ' 分</b>。注意已结束的复训任务达标率为 0%——它的达标线被提高到 75 分，这正是「达标线可覆盖」这条设计的验证。');
+
+  /* ---------- 页脚 ---------- */
+  setT('footL', T.meta.product + ' · ' + T.meta.version + ' · ' + T.meta.org);
+  setT('footR', '更新于 ' + T.meta.updatedAt + ' · 数据源：data/app-data.js（' + T.scenes.length + ' 场景 / ' +
+    T.learners.length + ' 学员 / ' + T.tasks.length + ' 任务 / ' + T.records.length + ' 成绩）· 维护：' + T.meta.owner);
+
+  /* ---------- 导航高亮 + hash 直达 ---------- */
+  var ids = ['overview', 'roles', 'flow', 'model', 'scoring', 'tech', 'roadmap', 'risks'];
+  var links = document.querySelectorAll('#navTabs a');
+  function sync() {
+    var y = window.scrollY + 120, cur = ids[0];
+    ids.forEach(function (id) { var el = $(id); if (el && el.offsetTop <= y) cur = id; });
+    // tech 之后（roadmap/risks）仍高亮 tech 之前最近的一个 tab
+    if (cur === 'roadmap' || cur === 'risks') cur = 'tech';
+    links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + cur); });
+  }
+  window.addEventListener('scroll', sync, { passive: true });
+  window.addEventListener('hashchange', sync);
+  sync();
+  window.__TRAIN_PLAN = { overview: ov, compRate: compRate, totF: totF, totA: totA };
+})();
+</script>
+</body>
+</html>

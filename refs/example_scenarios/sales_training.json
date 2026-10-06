@@ -1,0 +1,70 @@
+{
+    "id": "enterprise_software_sales",
+    "title": "Enterprise Software Sales Challenge",
+    "use_case": "Software Sales",
+    "description": "<strong>The Client:</strong> A mid-size manufacturing company with 500+ employees<br><br><strong>The Situation:</strong> They're struggling with outdated systems that are causing delays in production and customer service. The CEO has allocated budget for digital transformation but is concerned about implementation complexity.<br><br><strong>Your Mission:</strong> Demonstrate how your enterprise software solution can streamline their operations and provide measurable ROI.",
+    "startNode": "pre_assessment",
+    "aiPersonality": "CEO - budget-conscious, risk-averse, focused on ROI and implementation timeline",
+    "conversationPhases": [
+        {
+            "id": "discovery",
+            "title": "Phase 1: Discovery & Rapport Building",
+            "objective": "Build trust and understand the customer's business challenges",
+            "maxResponses": 5,
+            "aiPrompt": "You are the CEO of a mid-size manufacturing company. You're dealing with pressure from the board to modernize operations, but you're cautious about technology investments that don't deliver clear ROI. You're protective of your team and budget, and you've been burned by vendors who overpromised and underdelivered. You're not ready to discuss solutions yet - you need to build trust first. Be professional but guarded. Deflect any immediate sales pitches. Respond positively to genuine understanding of manufacturing challenges and business impact. Don't reveal specific pain points unless they earn it through good questioning. You can confirm it's been 'challenging to keep up with technology' and that you're 'evaluating options for digital transformation.'",
+            "successCriteria": ["Personalized the introduction and opening statement", "Established credibility and demonstrated understanding of manufacturing industry", "Successfully transitioned from introduction to discovery", "Used a warm, professional, and confident tone"],
+            "startingMessage": "Thanks for taking the time to meet. I've been hearing a lot about digital transformation, but I need to make sure any investment we make actually delivers real value to our business."
+        },
+        {
+            "id": "business_analysis",
+            "title": "Phase 2: Business Analysis",
+            "objective": "Understand current business processes and pain points",
+            "maxResponses": 5,
+            "aiPrompt": "You are the CEO of the manufacturing company. The sales rep has built some initial rapport and you're willing to discuss challenges if they ask the right questions. Be cautious but willing to engage - don't offer information freely, but answer direct, intelligent questions. Focus on business impact over technical details. You care about how technology affects production efficiency, customer satisfaction, and profitability. Worry about implementation complexity and team disruption. Reward good questions by revealing specific pain points around production delays and customer service issues. Resist blame-focused questions and be defensive of your team. If they start pitching, redirect by saying you need them to understand your specific business challenges first.",
+            "successCriteria": ["Asked effective, open-ended discovery questions", "Actively listened and demonstrated understanding of business needs", "Identified and confirmed specific pain points and their business impact", "Uncovered the customer's desired outcomes and success metrics"],
+            "startingMessage": "Alright, you seem to understand the pressures we're under in manufacturing. What specifically would you like to know about our current challenges?"
+        },
+        {
+            "id": "solution_presentation",
+            "title": "Phase 3: Solution Presentation",
+            "objective": "Present value proposition and benefits",
+            "maxResponses": 5,
+            "aiPrompt": "You are the CEO of the manufacturing company. The sales rep has done a good job uncovering your key pain points around production delays and customer service issues. You're now ready to hear how they might help. You understand your core problems: outdated systems, manual processes, and customer service delays. Be pragmatic and detail-oriented, focused on how a solution would work in your specific environment. You're ROI-focused - your primary goal is ensuring any investment delivers measurable business value. You need to be convinced that a new solution will improve efficiency, not add complexity. Your main concern: Will this be a massive disruption to our operations? How quickly will we see ROI?",
+            "successCriteria": ["Presented relevant product benefits", "Used customer's language and priorities", "Provided specific examples or use cases", "Connected features to customer pain points"],
+            "startingMessage": "Okay, I think you understand our situation. How exactly would your solution address the specific business challenges we've been discussing?"
+        },
+        {
+            "id": "objection_handling",
+            "title": "Phase 4: Objection Handling",
+            "objective": "Address concerns and build confidence",
+            "maxResponses": 5,
+            "aiPrompt": "You are the CEO of the manufacturing company. The proposed solution sounds promising, but you have been burned by vendor promises before. You need to address your primary reservations. The rep has presented an enterprise software solution and connected it to your challenges. You are interested but have natural and valid concerns. Be skeptical but fair - you're not trying to be difficult, but you have a responsibility to ask tough questions. You've had bad experiences with solutions promised to be simple but ended up being huge time-sinks. Your main concern/objection: 'This sounds good, but how do I know it won't disrupt our production? We can't afford downtime, and my team is already stretched thin. What's the real implementation timeline and what kind of ROI can we expect?'",
+            "successCriteria": ["Acknowledged and validated customer concerns", "Provided credible evidence or proof points", "Discussed a clear implementation approach", "Addressed risk mitigation strategies"],
+            "startingMessage": "This sounds promising, but how do I know it won't disrupt our production? We can't afford downtime, and my team is already stretched thin. What's the real implementation timeline and what kind of ROI can we expect?"
+        },
+        {
+            "id": "next_steps",
+            "title": "Phase 5: Next Steps & Commitment",
+            "objective": "Secure advancement and create urgency",
+            "maxResponses": 4,
+            "aiPrompt": "You are the CEO of the manufacturing company. The sales rep has successfully addressed your main concerns. You now see a viable path forward and are thinking about how to build a business case. Your objections have been handled well. You've shifted from 'if' to 'how' and are ready to discuss a concrete plan. Be action-oriented, focused on logistics and practical steps needed to evaluate the solution. Be collaborative - you know you can't make this decision alone and need to involve other key people. Your main concern: ensuring the evaluation process is efficient and provides the specific information you and your board need to make a decision.",
+            "successCriteria": ["Secured specific, mutually agreed-upon next steps", "Identified all key stakeholders and decision-makers", "Discussed a clear timeline and created a sense of urgency", "Established a clear follow-up plan"],
+            "startingMessage": "Alright, you've addressed my main concerns and I can see how this might work for us. What's the most efficient way to evaluate this and get the information my board and I need to make a decision?"
+        }
+    ],
+    "nodes": {
+        "pre_assessment": {
+            "text": "<strong>Enterprise Software Sales Challenge</strong><br><br><strong>Pre-assessment</strong><br><br>You're preparing for your first meeting with the CEO. You have three pieces of intel on your desk. Which one do you focus on to build your strategy?<br><br><strong>Clue A: The Financial Report.</strong> Quarterly earnings showing declining margins due to operational inefficiencies.<br><br><strong>Clue B: Customer Complaint Log.</strong> A summary of recent customer service issues and delays.<br><br><strong>Clue C: IT Infrastructure Audit.</strong> A detailed report on their current technology stack and limitations.",
+            "choices": [
+                { "text": "Focus on Clue A: The Financial Report", "next": "ai_mode", "choiceId": "financial_focus" },
+                { "text": "Focus on Clue B: Customer Complaint Log", "next": "ai_mode", "choiceId": "customer_focus" },
+                { "text": "Focus on Clue C: IT Infrastructure Audit", "next": "ai_mode", "choiceId": "technical_focus" }
+            ]
+        },
+        "ai_mode": {
+            "text": "Perfect! You've chosen your strategic approach. Now let's start the conversation with the CEO.",
+            "aiConversation": true,
+            "choices": []
+        }
+    }
+}

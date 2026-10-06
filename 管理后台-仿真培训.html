@@ -1,0 +1,3111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>新员工仿真培训系统 · 运营管理后台</title>
+<link rel="stylesheet" href="assets/shell.css">
+<style>
+/* ===== 本页补充样式（底座已有的一律不重写） ===== */
+.topbar-in{max-width:1440px}
+.wrap{max-width:1440px}
+.nav-tabs a{padding:7px 12px}
+
+.sec{display:none}
+.sec.on{display:block}
+
+/* 风险堆叠条 */
+.rbar{display:flex;height:38px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--panel2)}
+.rbar .sg{display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;
+  transition:filter .18s;cursor:pointer;overflow:hidden;white-space:nowrap;min-width:0}
+.rbar .sg:hover{filter:brightness(1.12)}
+.rbar .sg.rr{background:var(--red)}
+.rbar .sg.ry{background:var(--amber)}
+.rbar .sg.rg{background:var(--acc)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:14px}
+.legend .lg{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--txt2);cursor:pointer;
+  padding:4px 8px;border-radius:7px;transition:.18s}
+.legend .lg:hover{background:var(--panel2)}
+.legend .lg b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+.legend .lg .pc{color:var(--txt3)}
+
+/* 最弱维度标记 */
+.wtag{font-size:10.5px;line-height:16px;padding:0 6px;border-radius:5px;background:var(--amber-soft);
+  border:1px solid var(--amber-bd);color:var(--amber);margin-left:6px;font-weight:500}
+
+/* 看板：任务进度行 */
+.tp{border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+.tp+.tp{margin-top:11px}
+.tp .r1{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}
+.tp .r1 .tt{font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:8px;min-width:0}
+.tp .r1 .tt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp .metrics{display:flex;gap:18px;flex-wrap:wrap;margin-top:9px;font-size:12.5px;color:var(--txt3)}
+.tp .metrics b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* 选中卡片（向导步骤1 / 场景库） */
+.pick{border:1px solid var(--line);border-radius:11px;padding:14px 15px;cursor:pointer;transition:.18s;background:var(--panel2)}
+.pick:hover{border-color:var(--line2)}
+.pick.on{border-color:var(--acc);background:var(--acc-soft);box-shadow:0 0 0 1px var(--acc-bd) inset}
+.pick .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.pick .nm{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.pick .sub{font-size:12.5px;color:var(--txt3);margin-bottom:8px}
+.pick .meta{font-size:12.5px;color:var(--txt2);display:flex;gap:14px;flex-wrap:wrap}
+.pick .meta b{color:var(--txt);font-weight:500}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--txt3);letter-spacing:.02em}
+
+/* 部门分组（选学员） */
+.dept{margin-bottom:14px}
+.dept-h{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-size:12.5px;color:var(--txt2);padding:4px 0 9px;border-bottom:1px solid var(--line);margin-bottom:11px}
+.dept-h b{color:var(--txt);font-weight:600}
+
+/* 场景库栅格：保证展开后的「目标 / 剧本」两栏有足够阅读宽度 */
+.scenegrid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(620px,1fr))}
+@media(max-width:1340px){.scenegrid{grid-template-columns:1fr}}
+
+/* 场景库展开区 */
+.exp{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);display:grid;grid-template-columns:1fr 1fr;gap:8px 26px}
+.exp h4{margin:0 0 9px;font-size:12.5px;color:var(--txt2);font-weight:600;letter-spacing:.02em}
+.objlist,.scriptlist{list-style:none;margin:0;padding:0}
+.objlist li{display:flex;align-items:flex-start;gap:9px;font-size:13px;padding:6px 0;color:var(--txt)}
+.objlist li .tx{flex:1;min-width:0}
+.objlist li .tag{margin-left:4px;vertical-align:1px}
+.objlist li .dot{margin-top:8px}
+.scriptlist li{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:6px 0;color:var(--txt2)}
+.scriptlist li .idx{flex:0 0 20px;height:20px;border-radius:6px;background:var(--panel3);color:var(--txt3);
+  font-size:11px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.scriptlist li .tx{flex:1;min-width:0;line-height:1.6}
+.scriptlist li .vd{flex:0 0 auto;color:var(--txt3);font-size:12px;font-variant-numeric:tabular-nums}
+
+/* 表格内学员单元格 */
+.who-cell{display:flex;align-items:center;gap:9px}
+.who-cell .nm{font-weight:500}
+
+/* ============ 场景编辑器 ============ */
+.editor-layout{align-items:start;grid-template-columns:300px minmax(0,1fr)}
+@media(max-width:1180px){.editor-layout{grid-template-columns:1fr}}
+.ed-side{position:sticky;top:78px}
+.ed-item{display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid var(--line);border-radius:9px;
+  background:var(--panel2);cursor:pointer;transition:.16s;margin-bottom:8px}
+.ed-item:hover{border-color:var(--line2);background:var(--panel3)}
+.ed-item.on{border-color:var(--acc-bd);background:var(--acc-soft)}
+.ed-item .ic2{flex:0 0 30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;color:#fff}
+.ed-item .mtx{flex:1;min-width:0}
+.ed-item .mtx .t1{font-size:13px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ed-item .mtx .t2{font-size:11.5px;color:var(--txt3);margin-top:2px}
+.ed-item .badge{flex:0 0 auto;font-size:11px;color:var(--txt3)}
+
+.ed-sec{margin-bottom:18px}
+.ed-sec > h3{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--txt);display:flex;align-items:center;gap:8px}
+.ed-sec > h3 .n{width:20px;height:20px;border-radius:6px;background:var(--acc-soft);color:var(--acc-txt);
+  font-size:11px;display:flex;align-items:center;justify-content:center;flex:0 0 20px}
+.ed-sec > h3 .hint-in{font-size:11.5px;color:var(--txt3);font-weight:400;margin-left:auto}
+
+.ed-rowsave{display:flex;align-items:center;gap:8px}
+.ed-rowsave .num{flex:0 0 22px;height:22px;border-radius:6px;background:var(--panel3);color:var(--txt3);
+  font-size:11px;display:flex;align-items:center;justify-content:center;align-self:flex-start;margin-top:8px}
+.ed-row{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.ed-row:last-child{border-bottom:0}
+.ed-row .flds{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.ed-row .inline{display:flex;gap:7px;align-items:center}
+.ed-row .inline .sel{flex:0 0 150px}
+.ed-row .iconbtn{flex:0 0 28px;height:28px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);
+  color:var(--txt3);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;transition:.16s;align-self:center}
+.ed-row .iconbtn:hover{border-color:var(--red);color:var(--red)}
+.ed-row .iconbtn.add:hover{border-color:var(--acc);color:var(--acc)}
+
+.ed-kwgroup{border:1px solid var(--line);border-radius:10px;padding:13px 14px;margin-bottom:11px;background:var(--panel2)}
+.ed-kwgroup .kh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.ed-kwgroup .kh .t{font-size:12.5px;font-weight:600;color:var(--txt);display:flex;align-items:center;gap:7px}
+.ed-kwgroup .kh .w{font-size:11.5px;color:var(--txt3)}
+.kwchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px;min-height:24px}
+.kwchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 5px 4px 10px;border-radius:7px;
+  background:var(--panel3);border:1px solid var(--line);color:var(--txt2)}
+.kwchip .x2{cursor:pointer;color:var(--txt3);font-size:14px;line-height:1;padding:0 3px;border-radius:4px}
+.kwchip .x2:hover{color:var(--red);background:rgba(250,81,81,.12)}
+.ed-addkw{display:flex;gap:7px}
+.ed-addkw .inp{flex:1}
+
+.ed-validate{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--panel2)}
+.ed-validate .vrow{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;padding:5px 0;color:var(--txt2)}
+.ed-validate .vrow .vi{flex:0 0 16px;text-align:center;line-height:1.6}
+.ed-validate .vrow.bad{color:var(--red)}
+.ed-validate .vrow.warn{color:var(--amber)}
+.ed-validate .vrow.good{color:var(--acc-txt)}
+
+.ed-savebar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;
+  padding:13px 16px;margin-top:6px;border:1px solid var(--line);border-radius:12px;
+  background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(6px)}
+.ed-savebar .st{flex:1;font-size:12.5px;color:var(--txt3)}
+
+/* 发布状态条 */
+.pubbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:4;padding:12px 16px}
+.pubbar .pb-l{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.pubbar .pb-lab{font-size:12px;color:var(--txt3);letter-spacing:.4px}
+.pubbar .pb-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vchip{display:inline-flex;align-items:center;font-size:11.5px;padding:2px 9px;border-radius:20px;
+  border:1px solid var(--line2);color:var(--txt2);white-space:nowrap}
+.vchip.ok{color:var(--acc-txt);border-color:var(--acc-line);background:var(--acc-soft)}
+.vchip.warn{color:var(--amber);border-color:var(--amber-bd);background:var(--amber-soft)}
+.vchip.off{color:var(--txt3);border-color:var(--line)}
+.vchip.draft{color:var(--blue);border-color:var(--blue-bd);background:var(--blue-soft)}
+
+/* 版本历史列表 */
+.vlist{display:flex;flex-direction:column;gap:8px}
+.vrow2{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.vrow2.on{border-color:var(--acc-line);background:var(--acc-soft)}
+.vrow2 .vbadge{flex:0 0 auto;font-size:12.5px;font-weight:600;color:var(--acc-txt);
+  background:var(--acc-soft);border:1px solid var(--acc-line);border-radius:7px;padding:4px 9px;font-variant-numeric:tabular-nums}
+.vrow2 .vmain{flex:1;min-width:0}
+.vrow2 .vt{font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vrow2 .vs{font-size:12px;color:var(--txt3);margin-top:3px}
+
+/* 版本对比表 */
+.vtable{width:100%;border-collapse:collapse;font-size:13px}
+.vtable th{text-align:left;font-weight:500;color:var(--txt3);font-size:12px;padding:8px 10px;border-bottom:1px solid var(--line2)}
+.vtable td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.vtable td.old{color:var(--txt3);text-decoration:line-through}
+.vtable td.new{color:var(--acc-txt)}
+
+/* 抽屉：趋势图 */
+.chart-box{border:1px solid var(--line);border-radius:11px;background:var(--panel2);padding:8px 6px 2px;margin-bottom:6px}
+
+/* 抽屉：记录列表 */
+.rec-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.rec-item:last-child{border-bottom:0}
+.rec-item .mid{flex:1;min-width:0}
+.rec-item .t1{font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rec-item .t2{font-size:12px;color:var(--txt3);margin-top:3px}
+.rec-item .sc{text-align:right;flex:0 0 auto}
+.rec-item .sc .v{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+
+/* 逐轮对话（P7）：报告抽屉里按需展开 */
+.turnwrap{margin:2px 0 12px}
+.turnwrap>.dnote{font-size:11.5px;line-height:1.6;color:var(--txt3);padding:7px 11px;border-radius:8px;
+  background:var(--panel2);border:1px dashed var(--line2);margin-bottom:9px}
+.turnwrap>.dnote.warn{color:var(--amber);border-color:var(--amber-bd)}
+.turnrow{padding:10px 12px;border-radius:10px;background:var(--panel2);margin-bottom:9px}
+.turnrow .th{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
+.turnrow .tq,.turnrow .ta{font-size:12.5px;line-height:1.7;padding:7px 10px;border-radius:8px;margin-bottom:6px}
+.turnrow .tq{color:var(--txt2);background:var(--panel3);border-left:2px solid var(--line2)}
+.turnrow .ta{border-left:2px solid var(--acc);background:var(--acc-soft)}
+.turnrow .ta.bad{border-left-color:var(--red);background:var(--red-soft)}
+.turnrow .ta.neutral{border-left-color:var(--line2);background:var(--panel3);color:var(--txt2)}
+.turnrow .meta{font-size:11.5px;color:var(--txt3)}
+.turnrow details.refd>summary{font-size:11.5px;color:var(--txt3);cursor:pointer;list-style:none;padding:2px 0}
+.turnrow details.refd>summary::-webkit-details-marker{display:none}
+.turnrow details.refd>summary::before{content:'▸ '}
+.turnrow details.refd[open]>summary::before{content:'▾ '}
+.turnrow .refb{font-size:12px;color:var(--txt2);line-height:1.7;padding:6px 9px;margin-top:4px;
+  border-radius:7px;background:var(--panel3)}
+
+/* 表格行可点 */
+.tbl tbody tr.clickable{cursor:pointer}
+@keyframes flashRow{from{background:var(--acc-soft)}to{background:transparent}}
+tr.flash td{animation:flashRow 2.2s ease-out}
+
+/* 提示条 */
+#toast{position:fixed;left:50%;bottom:38px;transform:translate(-50%,16px);z-index:90;
+  background:var(--panel3);border:1px solid var(--line2);color:var(--txt);border-radius:10px;
+  padding:11px 20px;font-size:13.5px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.22s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.kv:last-child{border-bottom:0}
+.kv span{color:var(--txt3)}
+.kv b{color:var(--txt);font-weight:500;text-align:right}
+</style>
+<style>
+  /* ---- 登录门 ---- */
+  .authbox{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-46%) scale(.98);width:min(420px,92vw);
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;z-index:70;
+    box-shadow:0 24px 60px rgba(0,0,0,.42);opacity:0;pointer-events:none;
+    transition:opacity .22s ease, transform .22s cubic-bezier(.3,.8,.3,1);
+  }
+  .authbox.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  .authbox-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;border-bottom:1px solid var(--line)}
+  .authbox-h h3{margin:0;font-size:15.5px;font-weight:600}
+  .authbox-b{padding:18px 20px 6px}
+  .authbox-f{display:flex;justify-content:flex-end;gap:9px;padding:14px 20px;border-top:1px solid var(--line);background:var(--panel2)}
+  .authErr{margin:2px 0 12px;padding:8px 11px;border-radius:9px;font-size:12.5px;
+    background:var(--red-soft);border:1px solid var(--red-bd);color:var(--red)}
+  .authbox details{margin:4px 0 12px}
+  .authbox summary{cursor:pointer;font-size:12.5px;color:var(--txt2);outline:none}
+  .authbox summary:hover{color:var(--txt)}
+  .acctbl{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;margin-top:9px}
+  .acctbl th{text-align:left;font-weight:500;color:var(--txt3);padding:5px 8px;border-bottom:1px solid var(--line)}
+  .acctbl td{padding:6px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  .acctbl tr:last-child td{border-bottom:0}
+  .who{cursor:pointer}
+  .who:hover .av{box-shadow:0 0 0 3px var(--ring)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <span class="logo">仿</span>
+      <div>新员工仿真培训系统<small id="orgLine">—</small></div>
+    </div>
+    <nav class="nav-tabs" id="tabs">
+      <a href="#dash" data-act="go" data-sec="dash" class="on">数据看板</a>
+      <a href="#assign" data-act="go" data-sec="assign">任务下发</a>
+      <a href="#tasks" data-act="go" data-sec="tasks">任务列表</a>
+      <a href="#report" data-act="go" data-sec="report">学员报告</a>
+      <a href="#scenes" data-act="go" data-sec="scenes">场景库</a>
+      <a href="#editor" data-act="go" data-sec="editor">场景编辑器</a>
+      <a href="#server" data-act="go" data-sec="server">服务端 / AI</a>
+    </nav>
+    <span class="spacer"></span>
+    <button class="btn sm ghost" id="themeBtn" data-act="theme">浅色模式</button>
+    <a class="btn sm ghost" href="仿真培训原型-微信风格.html" target="_blank" rel="noopener">学员端</a>
+    <a class="btn sm ghost" href="教练工作台-带教主管.html" target="_blank" rel="noopener">教练端</a>
+    <a class="btn sm ghost" href="产品规划-新员工培训系统.html" target="_blank" rel="noopener">产品规划</a>
+    <div class="who" id="whoChip" data-act="auth" title="点击登录 / 退出"><span class="av" id="whoAv">王</span><span id="whoTxt">培训运营组 · 王倩</span></div>
+    <button class="btn sm ghost" id="authBtn" data-act="auth">登录</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- =============== ① 数据看板 =============== -->
+  <section class="sec on" id="sec-dash">
+    <div class="page-head">
+      <div class="row">
+        <div>
+          <h1>数据看板</h1>
+          <p>全部指标均由共享数据源 <code class="code">data/app-data.js</code> 的统计口径实时计算，与学员端成绩同源。</p>
+        </div>
+        <div class="muted" id="dashStamp">—</div>
+      </div>
+    </div>
+
+    <div class="grid g5" id="kpiRow"></div>
+
+    <div class="card mt20">
+      <div class="card-h">
+        <h2>风险分层</h2>
+        <span class="sub">点击任意一层，可跳转到「学员报告」并自动筛选</span>
+      </div>
+      <div id="riskBar"></div>
+    </div>
+
+    <div class="grid g2 mt20">
+      <div class="card">
+        <div class="card-h"><h2>能力维度均分</h2><span class="sub">五个维度 · 百分制</span></div>
+        <div id="dimAvgBox"></div>
+        <div class="hint" id="dimConclusion"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>最近练习动态</h2><span class="sub">最新 6 条</span></div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="recentTbl"></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt20">
+      <div class="card-h"><h2>任务完成进度</h2><span class="sub">仅显示「进行中」任务</span></div>
+      <div id="taskProgBox"></div>
+    </div>
+  </section>
+
+  <!-- =============== ② 任务下发 =============== -->
+  <section class="sec" id="sec-assign">
+    <div class="page-head">
+      <h1>任务下发</h1>
+      <p>四步完成一次下发：选场景 → 选学员 → 设达标线与时间 → 确认下发。下发后可在「任务列表」查看。</p>
+    </div>
+    <div class="card">
+      <div class="steps" id="wizSteps"></div>
+      <div id="wizBody"></div>
+      <div class="btn-row" id="wizFoot" style="justify-content:flex-end;margin-top:20px"></div>
+    </div>
+  </section>
+
+  <!-- =============== ③ 任务列表 =============== -->
+  <section class="sec" id="sec-tasks">
+    <div class="page-head">
+      <h1>任务列表</h1>
+      <p>点击任意一行查看下发明细与学员完成情况。</p>
+    </div>
+    <div class="card pad0">
+      <div class="flex-b" style="padding:14px 18px">
+        <div class="seg" id="taskSeg">
+          <button data-act="task-filter" data-f="all" class="on">全部</button>
+          <button data-act="task-filter" data-f="running">进行中</button>
+          <button data-act="task-filter" data-f="finished">已结束</button>
+          <button data-act="task-filter" data-f="draft">草稿</button>
+        </div>
+        <span class="muted" id="taskCount"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>任务编码</th><th>任务名称</th><th>场景</th><th>达标线</th><th>参与人数</th>
+            <th style="min-width:150px">完成进度</th><th>达标率</th><th>截止时间</th><th>状态</th><th>操作</th>
+          </tr></thead>
+          <tbody id="taskRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== ④ 学员报告 =============== -->
+  <section class="sec" id="sec-report">
+    <div class="page-head">
+      <h1>学员报告</h1>
+      <p>风险分层、练习次数、平均分均调用 <code class="code">TRAIN.helpers.statsOf / riskOf</code>；点击学员查看训练档案。</p>
+    </div>
+    <div class="card pad0">
+      <div class="flex-b" style="padding:14px 18px;flex-wrap:wrap;gap:12px">
+        <div class="seg" id="riskSeg">
+          <button data-act="rep-risk" data-r="all" class="on">全部</button>
+          <button data-act="rep-risk" data-r="red">高风险</button>
+          <button data-act="rep-risk" data-r="yellow">需关注</button>
+          <button data-act="rep-risk" data-r="green">正常</button>
+        </div>
+        <div class="flex" style="gap:10px">
+          <select class="sel" id="repDept" data-act="rep-dept" style="width:190px"></select>
+          <input class="inp" id="repQ" data-act="rep-q" placeholder="搜索姓名 / 岗位 / 导师" style="width:220px">
+          <span class="muted" id="repCount"></span>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>学员</th><th>部门</th><th>岗位</th><th>导师</th><th>练习次数</th>
+            <th>平均分</th><th>最近得分</th><th>风险分层</th><th>操作</th>
+          </tr></thead>
+          <tbody id="repRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== ⑤ 场景库 =============== -->
+  <section class="sec" id="sec-scenes">
+    <div class="page-head">
+      <div class="row">
+        <div>
+          <h1>场景库</h1>
+          <p>共 <b id="sceneCount">0</b> 个训练场景。展开可查看训练目标清单与剧本轮次，也可直接下发或进入编辑器修改。</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn sm ghost" data-act="reload-scenes" title="服务端在线时，从服务端重新拉取场景库（含他人改动）">↻ 从服务端刷新</button>
+          <button class="btn sm ghost" data-act="editor-new">＋ 新建场景</button>
+        </div>
+      </div>
+    </div>
+    <div class="scenegrid" id="sceneBox"></div>
+  </section>
+
+  <!-- =============== ⑥ 场景编辑器 =============== -->
+  <section class="sec" id="sec-editor">
+    <div class="page-head">
+      <div class="row">
+        <div>
+          <h1>场景剧本编辑器</h1>
+          <p>培训运营自助维护场景：元信息 / 训练目标 / 剧本轮次 / 语音条脚本 / 评分关键词。保存后立即在「场景库」与「任务下发」中生效，无需改代码。</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn sm ghost" data-act="editor-new">＋ 新建场景</button>
+          <button class="btn sm ghost" data-act="editor-duplicate" id="edDupBtn">复制当前场景</button>
+          <button class="btn sm ghost" data-act="editor-export">导出 JSON</button>
+          <button class="btn sm ghost" data-act="editor-reset" title="清空本地改动，恢复为 app-data.js 初始场景">重置数据</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g4 editor-layout">
+      <!-- 左：场景列表 -->
+      <div class="card ed-side">
+        <div class="card-h"><h2>场景列表</h2><span class="sub" id="edSideCount">—</span></div>
+        <div id="edList"></div>
+        <div class="hint" id="edDirtyTip" style="display:none">有未保存的修改</div>
+      </div>
+
+      <!-- 右：编辑区 -->
+      <div class="ed-main" id="edMain"></div>
+    </div>
+  </section>
+
+  <!-- =============== ⑦ 服务端 / AI =============== -->
+  <section class="sec" id="sec-server">
+    <div class="page-head">
+      <div class="row">
+        <div>
+          <h1>服务端 / AI 通道</h1>
+          <p>后端 Node 服务（零依赖，<code class="code">server/index.js</code>）提供：真实大模型双角色评分、SQLite 落库、场景版本与审批、操作审计、金标集校准。未启动时本页优雅提示，各端自动降级为本地引擎。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px" id="srvKpis"></div>
+
+    <div class="grid" style="grid-template-columns:1.1fr .9fr">
+      <div class="card">
+        <div class="card-h"><h3>服务端连接状态</h3><span class="tag" id="srvStatusTag">检测中…</span></div>
+        <div class="card-b" id="srvStatusBody"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>金标集校准（Rubric 与人工一致性）</h3>
+          <button class="btn sm" data-act="run-calib">运行校准</button></div>
+        <div class="card-b" id="srvCalibBody">
+          <p class="hint">金标集是人工双盲标注的对话样本。校准会计算「模型综合分 vs 人工总分」的 Pearson 相关系数与 MAE，用来验证评分口径是否与人类判断一致（目标：相关系数 ≥ 0.8、MAE ≤ 8）。样本越多结论越可靠 —— 可在下方批量导入。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">
+      <div class="card">
+        <div class="card-h"><h3>身份与权限</h3><span class="tag" id="srvAuthTag">—</span></div>
+        <div class="card-b" id="srvAuthBody">
+          <p class="hint">连接服务端后可查看当前登录身份与账号权限矩阵。</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>数据备份</h3>
+          <button class="btn sm" data-act="do-backup">立即备份</button></div>
+        <div class="card-b" id="srvBackupBody">
+          <p class="hint">全部数据在一个 SQLite 文件里，建议定期快照。<code class="code">VACUUM INTO</code> 生成一致性副本，无需停服；自动保留最近若干份。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-h"><h3>金标集导入</h3>
+        <div class="btn-row">
+          <button class="btn sm ghost" data-act="gold-sample">填入示例格式</button>
+          <button class="btn sm" data-act="do-gold-import">导入</button>
+        </div>
+      </div>
+      <div class="card-b">
+        <p class="hint" style="margin-bottom:10px">粘贴 JSON 数组，每项含 <code class="code">id / sceneId / turnIndex / customerText / learnerText / humanScores（d1–d5）/ humanTotal / annotator</code>。同 id 覆盖更新，用于持续扩充人工标注样本。</p>
+        <textarea class="txa" id="goldText" style="min-height:130px;font-family:ui-monospace,Consolas,monospace;font-size:12px"
+          placeholder='[{"id":"G101","sceneId":"s1","turnIndex":1,"customerText":"...","learnerText":"...","humanScores":{"d1":80,"d2":75,"d3":70,"d4":65,"d5":60},"annotator":"双盲均值"}]'></textarea>
+        <div class="hint" id="goldMsg" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-h"><h3>操作审计日志</h3><button class="btn sm ghost" data-act="reload-audit">刷新</button></div>
+      <div class="card-b" id="srvAuditBody" style="padding:0">
+        <p class="hint" style="padding:14px 16px">连接服务端后可查看「谁在什么时候改了什么」——登录、场景保存、提交审核、审批通过、回滚、备份等操作全程留痕。</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- 抽屉 -->
+<div class="mask" id="mask" data-act="close-drawer"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-h"><h3 id="drTitle">—</h3><button class="x" data-act="close-drawer">×</button></div>
+  <div class="drawer-b" id="drBody"></div>
+  <div class="drawer-f" id="drFoot"></div>
+</aside>
+
+<div id="toast"></div>
+
+<!-- 登录门：服务端在线且需要身份时出现 -->
+<div class="mask" id="authMask" data-act="auth-close"></div>
+<div class="authbox" id="authBox" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="authbox-h">
+    <h3 id="authTitle">登录 · 新员工仿真培训系统</h3>
+    <button class="x" data-act="auth-close" title="关闭">×</button>
+  </div>
+  <div class="authbox-b">
+    <p class="hint" id="authHint" style="margin:0 0 14px">用「培训运营 / 带教主管 / 教练」账号登录后，所有场景改动会写入服务端并留痕，权限按角色强制校验。</p>
+    <div class="field">
+      <label>账号</label>
+      <input class="inp" id="authAcc" autocomplete="username" placeholder="如 wangqian">
+    </div>
+    <div class="field">
+      <label>口令</label>
+      <input class="inp" id="authPwd" type="password" autocomplete="current-password" placeholder="请输入口令">
+    </div>
+    <div class="authErr" id="authErr" style="display:none"></div>
+    <details id="authDemoBox">
+      <summary>查看演示账号（可一键填入）</summary>
+      <div id="authAccList"></div>
+    </details>
+  </div>
+  <div class="authbox-f">
+    <button class="btn sm ghost" data-act="auth-close">取消</button>
+    <button class="btn sm pri" id="authDo" data-act="auth-do">登录</button>
+  </div>
+</div>
+
+<script src="data/app-data.js"></script>
+<!-- 服务端同步层（可选）：后端未启动时自动退化到 localStorage，页面行为不变 -->
+<script src="assets/admin-server-sync.js"></script>
+<script>
+(function () {
+  'use strict';
+  var T = window.TRAIN;
+  var H = T.helpers;
+  var DIMS = T.dims, LEARNERS = T.learners;
+  /* 场景改用工作副本 SCENES：data/app-data.js 保持只读，编辑结果只落在内存态，
+     场景库 / 下发向导 / 编辑器三处统一读它，保证「一处改、三处同步」。 */
+  var SCENES = (T.scenes || []).map(function (s) { return JSON.parse(JSON.stringify(s)); });
+
+  /* ------------------------------------------------------------------ *
+   * 常量与页面状态（内存态，不改动 data/app-data.js）
+   * ------------------------------------------------------------------ */
+  var RISK_META = {
+    red:    { label: '高风险', tag: 'r', dot: 'r', color: 'var(--red)' },
+    yellow: { label: '需关注', tag: 'a', dot: 'a', color: 'var(--amber)' },
+    green:  { label: '正常',   tag: 'g', dot: 'g', color: 'var(--acc)' }
+  };
+  var STATUS_META = {
+    running:  { label: '进行中', tag: 'g' },
+    finished: { label: '已结束', tag: '' },
+    draft:    { label: '草稿',   tag: 'a' }
+  };
+  var ADVICE = {
+    d1: '开场明显偏长、礼貌用语不足。建议把第一句压缩到 20 秒以内：自报家门 + 说明来意 + 争取沟通许可，不要一上来就介绍产品。',
+    d2: '提问密度不够，常在客户还没说清顾虑时就开始给方案。建议每轮至少提 3 个开放问题，先把「用量 / 预算 / 顾虑点」问清再进入讲解。',
+    d3: '面对客户情绪时习惯先解释、后安抚，容易把沟通推向对立。建议固定使用「先接情绪 → 再追问 → 后给方案」三步法，先复述客户感受再谈解决。',
+    d4: '方案讲解偏形容词堆砌，缺少案例与数据支撑。建议每次讲解至少准备 1 个同类型客户案例 + 1 组可验证数据（质检报告 / 合作门店数 / 交付记录）。',
+    d5: '收尾时下一步动作不明确，沟通容易停在「再联系」。建议结束前把「发什么、什么时候发、谁跟进」说死，并当场确认时间。'
+  };
+  var SECS = { dash: 'sec-dash', assign: 'sec-assign', tasks: 'sec-tasks', report: 'sec-report', scenes: 'sec-scenes', editor: 'sec-editor', server: 'sec-server' };
+
+  /* ------------------------------------------------------------------ *
+   * 场景工作副本 + 持久化（localStorage）
+   *   data/app-data.js 保持只读；编辑结果落在 SCENES / KWCOPY 工作副本里，
+   *   并写入 localStorage，刷新后自动恢复。
+   *   场景库 / 下发向导 / 编辑器三处统一读它，保证一致。
+   *
+   *   存储结构（键 TRAIN_SCENE_STORE_V1）：
+   *     { scenes: [...], kw: {...}, versions: {"SC01": [{v,at,by,note,snapshot}]},
+   *       audit: { "SC01": {status,submitBy,submitAt,reviewBy,reviewAt,rejectReason} },
+   *       seq: 4 }
+   * ------------------------------------------------------------------ */
+  var STORE_KEY = 'TRAIN_SCENE_STORE_V1';
+
+  function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+  function today() { return (T.meta && T.meta.updatedAt) || '2026-10-05'; }
+  function nowStamp() {
+    var d = new Date();
+    var p = function (n) { return String(n).padStart(2, '0'); };
+    return today() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  /* 当前操作人：已登录则取服务端身份，否则退回数据源里的默认负责人 */
+  function actor() {
+    try {
+      if (window.ADMIN_SYNC && ADMIN_SYNC.authUser && ADMIN_SYNC.authUser.name) return ADMIN_SYNC.authUser.name;
+    } catch (e) { /* ignore */ }
+    return (T.meta && T.meta.owner) || '培训运营组';
+  }
+
+  /* 从原始数据源生成初始库（首次访问 / 重置时用） */
+  function seedStore() {
+    var scenes = (T.scenes || []).map(function (s) {
+      var c = deepClone(s);
+      // 初始场景默认视为「已发布」，运营可正常下发
+      if (!c.publish) c.publish = 'published';
+      return c;
+    });
+    var audit = {};
+    scenes.forEach(function (s) {
+      audit[s.id] = { status: 'published', submitBy: actor(), submitAt: today(),
+        reviewBy: actor(), reviewAt: today(), rejectReason: '' };
+    });
+    return {
+      scenes: scenes,
+      kw: deepClone(T.kw || {}),
+      versions: scenes.reduce(function (a, s) { a[s.id] = []; return a; }, {}),
+      audit: audit,
+      seq: scenes.length + 1
+    };
+  }
+
+  var STORE = (function () {
+    var raw = null;
+    try { raw = window.localStorage.getItem(STORE_KEY); } catch (e) { raw = null; }
+    if (raw) {
+      try {
+        var o = JSON.parse(raw);
+        if (o && o.scenes && o.scenes.length) {
+          if (!o.kw) o.kw = deepClone(T.kw || {});
+          if (!o.versions) o.versions = {};
+          if (!o.audit) o.audit = {};
+          if (!o.seq) o.seq = o.scenes.length + 1;
+          return o;
+        }
+      } catch (e2) { /* 数据损坏则回落到初始库 */ }
+    }
+    return seedStore();
+  })();
+
+  var SCENES = STORE.scenes;
+  var KWCOPY = STORE.kw;   /* 评分关键词工作副本（修掉 T.kw 直读的双状态问题） */
+
+  function persist() {
+    try { window.localStorage.setItem(STORE_KEY, JSON.stringify(STORE)); }
+    catch (e) { /* 隐私模式 / 配额满：静默降级为内存态 */ }
+  }
+  function resetStore() {
+    try { window.localStorage.removeItem(STORE_KEY); } catch (e) {}
+    var fresh = seedStore();
+    STORE.scenes = fresh.scenes; STORE.kw = fresh.kw;
+    STORE.versions = fresh.versions; STORE.audit = fresh.audit; STORE.seq = fresh.seq;
+    SCENES = STORE.scenes; KWCOPY = STORE.kw;
+    ED.curId = SCENES[0] ? SCENES[0].id : null;
+    ED.dirty = false;
+    persist();
+  }
+
+  /* 关键词统一读工作副本（页内任何地方都不再读 T.kw） */
+  function kwOf(dimId) { return KWCOPY[dimId] || []; }
+
+  var ED = { curId: SCENES[0] ? SCENES[0].id : null, dirty: false, kwDraft: {},
+             vdiff: null, vpick: null };
+  function sceneById2(id) {
+    return SCENES.filter(function (s) { return s.id === id; })[0] || null;
+  }
+  function dimName(id) {
+    var d = DIMS.filter(function (x) { return x.id === id; })[0];
+    return d ? d.name : id;
+  }
+  /* 生成新场景 id：SC<序号>（用 STORE.seq 递增，删场景后不复用 id） */
+  function nextSceneId() {
+    var id;
+    do { id = 'SC' + String(STORE.seq).padStart(2, '0'); STORE.seq++; } while (sceneById2(id));
+    return id;
+  }
+
+  /* --- 版本与审计 --- */
+  var V_STATUS = { draft: '草稿', review: '待审核', published: '已发布', offline: '已下线' };
+  function versionsOf(id) { return (STORE.versions && STORE.versions[id]) || []; }
+  /* 版本数：本地快照数 与 服务端版本号 取大者（在线时服务端才是真相） */
+  function versionCount(id) {
+    var s = sceneById2(id);
+    return Math.max(versionsOf(id).length, (s && s._versions) || 0);
+  }
+  function auditOf(id) {
+    return (STORE.audit && STORE.audit[id]) ||
+      { status: 'draft', submitBy: '', submitAt: '', reviewBy: '', reviewAt: '', rejectReason: '' };
+  }
+  function setAudit(id, patch) {
+    if (!STORE.audit[id]) STORE.audit[id] = auditOf(id);
+    for (var k in patch) if (patch.hasOwnProperty(k)) STORE.audit[id][k] = patch[k];
+  }
+  /* 归档一个版本快照 */
+  function pushVersion(s, note) {
+    if (!STORE.versions[s.id]) STORE.versions[s.id] = [];
+    var list = STORE.versions[s.id];
+    list.unshift({
+      v: list.length + 1,
+      at: nowStamp(),
+      by: actor(),
+      note: note || '保存修改',
+      snapshot: deepClone(s)
+    });
+    /* 只保留最近 20 版，避免 localStorage 膨胀 */
+    if (list.length > 20) list.length = 20;
+  }
+  /* 场景可下发判定：必须已发布 */
+  function canAssign(id) { return auditOf(id).status === 'published'; }
+  function statusChip(id) {
+    var st = auditOf(id).status;
+    var cls = st === 'published' ? 'ok' : st === 'review' ? 'warn' : st === 'offline' ? 'off' : 'draft';
+    return '<span class="vchip ' + cls + '">' + (V_STATUS[st] || st) + '</span>';
+  }
+
+  var WIZ = { step: 1, sceneId: null, sel: {}, passLine: '', dueAt: '', note: '' };
+  var REP_F = { risk: 'all', dept: 'all', q: '' };
+  var TASK_F = 'all';
+  var CUR_SEC = 'dash';
+
+  /* ------------------------------------------------------------------ *
+   * 基础工具（仅做展示格式化，统计口径一律走 TRAIN.helpers）
+   * ------------------------------------------------------------------ */
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function mmdd(s) { return String(s).slice(5, 10); }
+  function depts() {
+    var seen = {}, out = [];
+    LEARNERS.forEach(function (l) { if (!seen[l.dept]) { seen[l.dept] = 1; out.push(l.dept); } });
+    return out;
+  }
+  function sceneTag(sid) {
+    var s = sceneById2(sid);
+    return s ? esc(s.code + ' · ' + s.name) : esc(sid);
+  }
+  /* 仅用于「向导中新建、尚未进入 helpers 索引」的内存任务做零进度占位 */
+  function progOf(task) {
+    var p = H.taskProgress(task.id);
+    if (p) return p;
+    return {
+      task: task, total: task.assignees.length, finishedCount: 0, passedCount: 0,
+      overdueCount: 0, avgScore: 0, rate: 0, passRate: 0,
+      records: task.assignees.map(function () { return null; })
+    };
+  }
+  function dueInfo(str) {
+    var due = new Date(String(str).replace(/-/g, '/'));
+    var diff = due.getTime() - Date.now();
+    if (diff < 0) return { overdue: true, tag: 'r', txt: '已逾期 ' + Math.max(1, Math.ceil(-diff / 86400000)) + ' 天' };
+    var d = Math.floor(diff / 86400000);
+    if (d === 0) return { overdue: false, tag: 'a', txt: '今日截止' };
+    return { overdue: false, tag: d <= 2 ? 'a' : 'b', txt: '剩余 ' + d + ' 天' };
+  }
+  function nowStamp() {
+    var d = new Date(), p = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function toLocalInput(d) {
+    var p = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function shortDT(s) { return String(s).slice(5, 16); }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var n = $('toast');
+    n.textContent = msg;
+    n.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { n.classList.remove('on'); }, 2200);
+  }
+  /* KPI 数字递增：用定时器驱动（不依赖 requestAnimationFrame，保证任何环境下都能收尾到准确值） */
+  function countUp(node, to) {
+    var steps = 14, i = 0, gap = 40;
+    node.textContent = '0';
+    var iv = setInterval(function () {
+      i++;
+      var k = i / steps;
+      node.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+      if (i >= steps) { clearInterval(iv); node.textContent = to; }
+    }, gap);
+    setTimeout(function () { clearInterval(iv); node.textContent = to; }, steps * gap + 200);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 抽屉
+   * ------------------------------------------------------------------ */
+  function openDrawer(title, body, foot) {
+    $('drTitle').textContent = title;
+    $('drBody').innerHTML = body;
+    $('drFoot').innerHTML = foot || '';
+    $('mask').classList.add('on');
+    $('drawer').classList.add('on');
+  }
+  function closeDrawer() {
+    $('mask').classList.remove('on');
+    $('drawer').classList.remove('on');
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 路由
+   * ------------------------------------------------------------------ */
+  function goto(sec) {
+    if (!SECS[sec]) sec = 'dash';
+    CUR_SEC = sec;
+    Object.keys(SECS).forEach(function (k) { $(SECS[k]).classList.toggle('on', k === sec); });
+    [].forEach.call(document.querySelectorAll('#tabs a'), function (a) {
+      a.classList.toggle('on', a.getAttribute('data-sec') === sec);
+    });
+    if (location.hash.slice(1) !== sec) location.hash = sec;
+    if (sec === 'dash') renderDash();
+    if (sec === 'assign') renderWizard();
+    if (sec === 'tasks') renderTasks();
+    if (sec === 'report') renderReport();
+    if (sec === 'scenes') renderScenes();
+    if (sec === 'editor') renderEditor();
+    if (sec === 'server') renderServer();
+    window.scrollTo(0, 0);
+  }
+
+  /* ================================================================== *
+   * ① 数据看板
+   * ================================================================== */
+  function kpiCard(lab, val, unit, foot, to) {
+    return '<div class="kpi"><div class="lab">' + esc(lab) + '</div>' +
+      '<div class="val"><span class="n" data-to="' + to + '">0</span><small>' + esc(unit) + '</small></div>' +
+      '<div class="foot">' + foot + '</div></div>';
+  }
+
+  /* 把 helpers.level() 的等级映射到进度条配色 */
+  function lvCls(score) {
+    var k = H.level(score).key;
+    return k === 'good' ? '' : (k === 'mid' ? 'a' : 'r');
+  }
+
+  function renderDash() {
+    var o = H.overview();
+    var sortedDims = o.dimAvg.slice().sort(function (a, b) { return b.avg - a.avg; });
+    var strong = sortedDims[0];
+    var gap = Math.max(0, strong.avg - o.weakest.avg);
+
+    $('orgLine').textContent = T.meta.org;
+    $('dashStamp').textContent = '数据口径 ' + T.meta.version + ' · 更新于 ' + T.meta.updatedAt;
+
+    /* --- KPI --- */
+    $('kpiRow').innerHTML =
+      kpiCard('在职学员数', o.learnerCount, '人', '覆盖 ' + depts().length + ' 个部门 · ' + T.meta.owner, o.learnerCount) +
+      kpiCard('进行中任务', o.runningTasks, '个', '任务总数 ' + T.tasks.length + ' 个', o.runningTasks) +
+      kpiCard('累计练习场次', o.totalRecords, '场', '人均 ' + (o.totalRecords / o.learnerCount).toFixed(1) + ' 场', o.totalRecords) +
+      kpiCard('平均分', o.avgScore, '分', '全部练习综合均分', o.avgScore) +
+      kpiCard('整体达标率', o.passRate, '%', '以各任务达标线为准', o.passRate);
+    [].forEach.call($('kpiRow').querySelectorAll('.n'), function (n) {
+      countUp(n, parseInt(n.getAttribute('data-to'), 10) || 0);
+    });
+
+    /* --- 风险分层堆叠条 --- */
+    var order = ['red', 'yellow', 'green'];
+    var segs = order.map(function (k) {
+      var n = o.risk[k];
+      var pc = Math.round(n / o.learnerCount * 100);
+      return { k: k, n: n, pc: pc };
+    });
+    var bar = segs.map(function (s) {
+      if (!s.n) return '';
+      var vis = s.pc >= 12;
+      return '<div class="sg ' + (s.k === 'red' ? 'rr' : s.k === 'yellow' ? 'ry' : 'rg') + '" ' +
+        'style="width:' + (s.n / o.learnerCount * 100) + '%" data-act="risk-jump" data-risk="' + s.k + '" ' +
+        'title="' + RISK_META[s.k].label + ' ' + s.n + ' 人 · ' + s.pc + '%">' +
+        (vis ? RISK_META[s.k].label + ' ' + s.n + ' 人 · ' + s.pc + '%' : '') + '</div>';
+    }).join('');
+    var legend = segs.map(function (s) {
+      return '<div class="lg" data-act="risk-jump" data-risk="' + s.k + '">' +
+        '<span class="dot ' + RISK_META[s.k].dot + '"></span>' +
+        RISK_META[s.k].label + ' <b>' + s.n + '</b> 人 <span class="pc">· ' + s.pc + '%</span></div>';
+    }).join('');
+    $('riskBar').innerHTML =
+      '<div class="rbar">' + bar + '</div>' +
+      '<div class="legend">' + legend + '</div>' +
+      '<div class="hint">分层规则来自 <code class="code">TRAIN.riskRules</code>：高风险 = ' +
+      esc(T.riskRules.red.desc) + '；需关注 = ' + esc(T.riskRules.yellow.desc) + '；正常 = ' + esc(T.riskRules.green.desc) + '。</div>';
+
+    /* --- 能力维度均分 --- */
+    $('dimAvgBox').innerHTML = o.dimAvg.map(function (d) {
+      var weakest = d.id === o.weakest.id;
+      var cls = weakest ? 'a' : lvCls(d.avg);
+      var def = DIMS.filter(function (x) { return x.id === d.id; })[0] || { weight: 0 };
+      return '<div class="dim"><div class="top"><span>' + esc(d.name) +
+        ' <span class="muted">权重 ' + def.weight + '%</span>' +
+        (weakest ? '<span class="wtag">最弱环节</span>' : '') + '</span><span>' + d.avg + '</span></div>' +
+        '<div class="bar"><i class="' + cls + '" style="width:' + d.avg + '%"></i></div></div>';
+    }).join('');
+    $('dimConclusion').innerHTML = '结论：当前最弱环节是 <b>' + esc(o.weakest.name) + '（' + o.weakest.avg +
+      ' 分）</b>，最强项为「' + esc(strong.name) + '」（' + strong.avg + ' 分），两者相差 ' + gap +
+      ' 分。建议本轮下发优先安排能覆盖「' + esc(o.weakest.name) + '」的场景做专项复训。';
+
+    /* --- 最近练习动态 --- */
+    var recent = T.records.slice().sort(function (a, b) { return a.finishedAt < b.finishedAt ? 1 : -1; }).slice(0, 6);
+    $('recentTbl').innerHTML =
+      '<thead><tr><th>学员</th><th>场景</th><th>得分</th><th>结果</th><th>完成时间</th></tr></thead><tbody>' +
+      recent.map(function (r) {
+        var l = T.learnerById(r.learnerId), s = sceneById2(r.sceneId);
+        return '<tr>' +
+          '<td><div class="who-cell"><span class="ava-rd" style="background:' + l.color + '">' + esc(l.avatarText) + '</span>' +
+          '<span class="nm">' + esc(l.name) + '</span></div></td>' +
+          '<td><span class="muted">' + esc(s.code) + '</span> ' + esc(s.name) + '</td>' +
+          '<td class="num"><b>' + r.score + '</b></td>' +
+          '<td>' + (r.passed ? '<span class="tag g"><span class="dot g"></span>达标</span>' : '<span class="tag r"><span class="dot r"></span>未达标</span>') + '</td>' +
+          '<td class="muted mono">' + esc(r.finishedAt) + '</td>' +
+          '</tr>';
+      }).join('') + '</tbody>';
+
+    /* --- 任务完成进度 --- */
+    var running = T.tasks.filter(function (t) { return t.status === 'running'; });
+    if (!running.length) {
+      $('taskProgBox').innerHTML = '<div class="empty"><div class="ic">□</div>当前没有进行中的任务</div>';
+    } else {
+      $('taskProgBox').innerHTML = running.map(function (t) {
+        var p = progOf(t);
+        var d = dueInfo(t.dueAt);
+        return '<div class="tp">' +
+          '<div class="r1">' +
+            '<div class="tt"><span>' + esc(t.title) + '</span>' +
+              '<span class="tag g">进行中</span>' +
+              '<span class="muted code">' + esc(t.code) + '</span>' +
+            '</div>' +
+            '<div class="flex" style="gap:8px">' +
+              '<span class="tag b">' + esc(sceneTag(t.sceneId)) + '</span>' +
+              '<span class="tag ' + d.tag + '">' + esc(d.txt) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="bar"><i class="' + (p.rate >= 100 ? '' : 'b') + '" style="width:' + p.rate + '%"></i></div>' +
+          '<div class="metrics">' +
+            '<span>完成进度 <b>' + p.rate + '%</b>（' + p.finishedCount + '/' + p.total + '）</span>' +
+            '<span>达标率 <b>' + p.passRate + '%</b></span>' +
+            '<span>平均分 <b>' + (p.finishedCount ? p.avgScore : '—') + '</b></span>' +
+            '<span>截止 <b>' + esc(shortDT(t.dueAt)) + '</b></span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  /* ================================================================== *
+   * ② 任务下发（四步向导）
+   * ================================================================== */
+  function wizStepsHtml() {
+    var names = ['选场景', '选学员', '设达标线与时间', '确认下发'];
+    return names.map(function (n, i) {
+      var no = i + 1;
+      var cls = WIZ.step === no ? 'on' : (WIZ.step > no ? 'done' : '');
+      return (i ? '<div class="ln"></div>' : '') +
+        '<div class="step ' + cls + '"><span class="n">' + (WIZ.step > no ? '✓' : no) + '</span>' + n + '</div>';
+    }).join('');
+  }
+
+  function selectedLearners() {
+    return LEARNERS.filter(function (l) { return !!WIZ.sel[l.id]; });
+  }
+
+  function renderWizard() {
+    $('wizSteps').innerHTML = wizStepsHtml();
+    var body = '';
+    var scene = WIZ.sceneId ? sceneById2(WIZ.sceneId) : null;
+
+    if (WIZ.step === 1) {
+      var pubScenes = SCENES.filter(function (s) { return canAssign(s.id); });
+      var draftScenes = SCENES.filter(function (s) { return !canAssign(s.id); });
+      if (!pubScenes.length) {
+        body += '<div class="empty" style="padding:30px"><div class="ic">□</div>当前没有已发布的场景<br>' +
+          '<span class="muted" style="font-size:12.5px">请到「场景编辑器」完成编辑并提交审核通过后再下发</span></div>';
+      }
+      body += '<div class="grid g3">' + pubScenes.map(function (s) {
+        return '<div class="pick ' + (WIZ.sceneId === s.id ? 'on' : '') + '" data-act="wiz-scene" data-sid="' + s.id + '">' +
+          '<div class="ph"><span class="code">' + esc(s.code) + '</span><span class="tag b">' + esc(s.category) + '</span></div>' +
+          '<div class="nm">' + esc(s.name) + '</div>' +
+          '<div class="sub">' + esc(s.subtitle) + '</div>' +
+          '<div class="meta"><span>难度 <b>' + esc(s.difficulty) + '</b></span>' +
+            '<span>默认达标线 <b>' + s.passLine + ' 分</b></span>' +
+            '<span>时长 <b>' + s.duration + ' 分钟</b></span></div>' +
+        '</div>';
+      }).join('') + '</div>';
+      if (draftScenes.length) {
+        body += '<div class="card mt14" style="background:var(--panel2)">' +
+          '<div class="card-h"><h2>未发布场景 · 不可下发</h2><span class="sub">共 ' + draftScenes.length + ' 个</span></div>' +
+          '<div class="hint" style="margin:0">' + draftScenes.map(function (s) {
+            return esc(s.name) + '（' + V_STATUS[auditOf(s.id).status] + '）';
+          }).join('、') + ' —— 需在场景编辑器中提交审核通过后才可下发。</div>' +
+        '</div>';
+      }
+      if (scene) {
+        body += '<div class="card mt14" style="background:var(--panel2);border-color:var(--line2)">' +
+          '<div class="card-h"><h2>已选场景 · ' + esc(scene.name) + '</h2><span class="sub">' + esc(scene.taskName) + '</span></div>' +
+          '<div style="font-size:13px;color:var(--txt2);line-height:1.75">' + esc(scene.brief) + '</div>' +
+          '<div class="hint">训练目标 ' + scene.objectives.length + ' 项 · 剧本 ' + scene.script.length + ' 轮 · 下发时可直接使用默认达标线 ' + scene.passLine + ' 分。</div>' +
+        '</div>';
+      } else {
+        body += '<div class="empty" style="padding:26px"><div class="ic">□</div>请先选择一个训练场景</div>';
+      }
+    }
+
+    if (WIZ.step === 2) {
+      var cnt = selectedLearners().length;
+      body += '<div class="flex-b" style="margin-bottom:14px">' +
+        '<div>已选 <b id="wizCount" style="font-size:18px">' + cnt + '</b> <span class="muted">/ ' + LEARNERS.length + ' 名学员</span></div>' +
+        '<div class="btn-row">' +
+          '<button class="btn sm" data-act="wiz-selall">全选</button>' +
+          '<button class="btn sm" data-act="wiz-selnone">清空</button>' +
+        '</div></div>';
+      body += depts().map(function (dp) {
+        var list = LEARNERS.filter(function (l) { return l.dept === dp; });
+        var allOn = list.every(function (l) { return !!WIZ.sel[l.id]; });
+        return '<div class="dept">' +
+          '<div class="dept-h"><span><b>' + esc(dp) + '</b> · ' + list.length + ' 人</span>' +
+          '<button class="btn sm ghost" data-act="wiz-seldept" data-dept="' + esc(dp) + '">' +
+          (allOn ? '取消该部门' : '全选该部门') + '</button></div>' +
+          '<div class="checks">' + list.map(function (l) {
+            var on = !!WIZ.sel[l.id];
+            return '<div class="chk ' + (on ? 'on' : '') + '" data-act="wiz-chk" data-lid="' + l.id + '">' +
+              '<span class="bx">✓</span>' + esc(l.name) + ' · ' + esc(l.position) + '</div>';
+          }).join('') + '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    if (WIZ.step === 3) {
+      var pl = WIZ.passLine === '' ? (scene ? scene.passLine : 60) : WIZ.passLine;
+      body += '<div class="grid g2">' +
+        '<div>' +
+          '<div class="field"><label>达标线（分）<b>*</b></label>' +
+            '<input class="inp" type="number" min="1" max="100" id="wzPass" data-act="wiz-pass" value="' + esc(pl) + '">' +
+            '<div class="hint">当前场景「' + esc(scene ? scene.name : '—') + '」的默认达标线为 <b>' + (scene ? scene.passLine : '—') + ' 分</b>，可按批次调整。</div>' +
+          '</div>' +
+          '<div class="field"><label>截止时间<b>*</b></label>' +
+            '<input class="inp" type="datetime-local" id="wzDue" data-act="wiz-due" value="' + esc(WIZ.dueAt) + '">' +
+            '<div class="hint">建议不少于 3 个自然日，给学员留出复训窗口。</div>' +
+          '</div>' +
+        '</div>' +
+        '<div>' +
+          '<div class="field"><label>任务备注</label>' +
+            '<textarea class="txa" id="wzNote" data-act="wiz-note" placeholder="例如：新员工入职必修，未达标需在 3 天内复训一次。">' + esc(WIZ.note) + '</textarea>' +
+            '<div class="hint">备注会随任务一起写入学员端任务卡片。</div>' +
+          '</div>' +
+          '<div class="card" style="background:var(--panel2);border-color:var(--line2)">' +
+            '<div class="kvline"><span class="k">场景</span><span class="v">' + esc(sceneTag(WIZ.sceneId)) + '</span></div>' +
+            '<div class="kvline"><span class="k">参与学员</span><span class="v">' + selectedLearners().length + ' 人</span></div>' +
+            '<div class="kvline"><span class="k">下发人</span><span class="v">培训运营组 · 王倩</span></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    if (WIZ.step === 4) {
+      var sels = selectedLearners();
+      var byDept = {};
+      sels.forEach(function (l) { (byDept[l.dept] = byDept[l.dept] || []).push(l); });
+      var due = WIZ.dueAt ? WIZ.dueAt.replace('T', ' ') : '—';
+      body += '<div class="grid g2">' +
+        '<div class="card" style="background:var(--panel2);border-color:var(--line2)">' +
+          '<div class="card-h"><h2>下发信息确认</h2></div>' +
+          '<div class="kvline"><span class="k">训练场景</span><span class="v">' + esc(sceneTag(WIZ.sceneId)) + '</span></div>' +
+          '<div class="kvline"><span class="k">任务名称</span><span class="v">' + esc(scene ? scene.taskName : '—') + '</span></div>' +
+          '<div class="kvline"><span class="k">达标线</span><span class="v">' + esc(WIZ.passLine === '' ? (scene ? scene.passLine : 60) : WIZ.passLine) + ' 分</span></div>' +
+          '<div class="kvline"><span class="k">截止时间</span><span class="v">' + esc(due) + '</span></div>' +
+          '<div class="kvline"><span class="k">参与人数</span><span class="v">' + sels.length + ' 人</span></div>' +
+          '<div class="kvline"><span class="k">下发人</span><span class="v">培训运营组 · 王倩</span></div>' +
+          '<div class="kvline"><span class="k">任务备注</span><span class="v" style="max-width:60%;font-weight:400;color:var(--txt2)">' + esc(WIZ.note || '无') + '</span></div>' +
+        '</div>' +
+        '<div class="card" style="background:var(--panel2);border-color:var(--line2)">' +
+          '<div class="card-h"><h2>将下发到的学员名单</h2><span class="sub">' + sels.length + ' 人</span></div>' +
+          '<div style="max-height:340px;overflow:auto">' +
+            Object.keys(byDept).map(function (dp) {
+              return '<div class="dept-h"><span><b>' + esc(dp) + '</b></span><span class="muted">' + byDept[dp].length + ' 人</span></div>' +
+                byDept[dp].map(function (l) {
+                  return '<div class="item" style="padding:9px 4px">' +
+                    '<span class="ava-rd" style="background:' + l.color + '">' + esc(l.avatarText) + '</span>' +
+                    '<div class="mid"><div class="t1">' + esc(l.name) + '</div>' +
+                    '<div class="t2">' + esc(l.position) + ' · 导师 ' + esc(l.mentor) + ' · 入职 ' + esc(l.joinDate) + '</div></div></div>';
+                }).join('');
+            }).join('') || '<div class="empty">未选择学员</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    $('wizBody').innerHTML = body;
+    $('wizFoot').innerHTML =
+      (WIZ.step > 1 ? '<button class="btn" data-act="wiz-prev">上一步</button>' : '') +
+      (WIZ.step < 4 ? '<button class="btn pri" data-act="wiz-next">下一步</button>' : '<button class="btn pri" data-act="wiz-submit">立即下发</button>');
+  }
+
+  function wizNext() {
+    if (WIZ.step === 1) {
+      if (!WIZ.sceneId) return toast('请先选择一个训练场景');
+      if (WIZ.passLine === '') WIZ.passLine = sceneById2(WIZ.sceneId).passLine;
+    }
+    if (WIZ.step === 2 && !selectedLearners().length) return toast('请至少选择 1 名学员');
+    if (WIZ.step === 3) {
+      var pl = parseInt(WIZ.passLine, 10);
+      if (!pl || pl < 1 || pl > 100) return toast('达标线需为 1–100 之间的整数');
+      if (!WIZ.dueAt) return toast('请设置截止时间');
+      if (new Date(WIZ.dueAt.replace('T', ' ').replace(/-/g, '/')) <= new Date()) return toast('截止时间需晚于当前时间');
+    }
+    WIZ.step = Math.min(4, WIZ.step + 1);
+    renderWizard();
+  }
+
+  function submitWizard() {
+    var scene = sceneById2(WIZ.sceneId);
+    var sels = selectedLearners();
+    if (!scene || !sels.length) return toast('下发信息不完整');
+
+    var todayKey = nowStamp().slice(0, 10).replace(/-/g, '');
+    var prefix = 'RW-' + todayKey + '-';
+    var seq = T.tasks.filter(function (t) { return String(t.code).indexOf(prefix) === 0; }).length + 1;
+    var id = 'TN' + Date.now();
+
+    var task = {
+      id: id,
+      code: prefix + String(seq).padStart(2, '0'),
+      title: scene.taskName,
+      sceneId: scene.id,
+      passLine: parseInt(WIZ.passLine, 10) || scene.passLine,
+      assignees: sels.map(function (l) { return l.id; }),
+      dueAt: WIZ.dueAt.replace('T', ' '),
+      startAt: nowStamp(),
+      createdAt: nowStamp(),
+      createdBy: actor(),
+      requireAll: true,
+      status: 'running',
+      note: WIZ.note || ''
+    };
+
+    /* —— 服务端优先：在线就真正落库，学员端才收得到 —— */
+    if (canSrvWrite()) {
+      ADMIN_SYNC.saveTask(task).then(function (r) {
+        if (!r.ok) { srvFail(r, '任务下发失败'); return; }
+        /* 以服务端真值刷新任务快照，再跳转（这样进度/编码都是服务端的） */
+        hydrateFromServer().then(function () {
+          afterAssign(r.task && r.task.id ? r.task.id : id, (r.task && r.task.code) || task.code, scene.taskName, true);
+        });
+      });
+      return;
+    }
+
+    /* —— 离线兜底：只进本地内存，页面行为与之前一致 —— */
+    T.tasks.push(task);
+    afterAssign(id, task.code, scene.taskName, false);
+  }
+
+  /* 下发完成后的收尾（重置向导 / 跳任务列表 / 高亮新行 / 提示） */
+  function afterAssign(id, code, title, onServer) {
+    WIZ = { step: 1, sceneId: null, sel: {}, passLine: '', dueAt: '', note: '' };
+    TASK_F = 'running';
+    goto('tasks');
+    var seg = $('taskSeg').querySelector('[data-f="running"]');
+    if (seg) {
+      [].forEach.call($('taskSeg').children, function (b) { b.classList.remove('on'); });
+      seg.classList.add('on');
+    }
+    renderTaskRows();
+    var tr = $('taskRows').querySelector('tr[data-tid="' + id + '"]');
+    if (tr) {
+      tr.classList.add('flash');
+      tr.scrollIntoView({ block: 'center' });
+      setTimeout(function () { tr.classList.remove('flash'); }, 2400);
+    }
+    toast(onServer
+      ? '已下发「' + title + '」，任务编码 ' + code + '（已写入服务端）'
+      : '已下发「' + title + '」，任务编码 ' + code + ' · 服务端未连接，任务暂存在本机');
+  }
+
+  /* ================================================================== *
+   * ③ 任务列表
+   * ================================================================== */
+  function renderTasks() {
+    [].forEach.call($('taskSeg').children, function (b) {
+      b.classList.toggle('on', b.getAttribute('data-f') === TASK_F);
+    });
+    renderTaskRows();
+  }
+
+  function renderTaskRows() {
+    var list = T.tasks.filter(function (t) { return TASK_F === 'all' || t.status === TASK_F; });
+    $('taskCount').textContent = '共 ' + list.length + ' 个任务（筛选：' +
+      ({ all: '全部', running: '进行中', finished: '已结束', draft: '草稿' })[TASK_F] + '）';
+    if (!list.length) {
+      $('taskRows').innerHTML = '<tr><td colspan="10"><div class="empty"><div class="ic">□</div>当前筛选条件下没有任务</div></td></tr>';
+      return;
+    }
+    $('taskRows').innerHTML = list.map(function (t) {
+      var p = progOf(t);
+      var sm = STATUS_META[t.status] || STATUS_META.draft;
+      var d = dueInfo(t.dueAt);
+      return '<tr class="clickable" data-act="task-row" data-tid="' + t.id + '">' +
+        '<td class="code">' + esc(t.code) + '</td>' +
+        '<td>' + esc(t.title) + '</td>' +
+        '<td class="muted nowrap">' + esc(sceneTag(t.sceneId)) + '</td>' +
+        '<td class="num">' + t.passLine + ' 分</td>' +
+        '<td class="num">' + t.assignees.length + ' 人</td>' +
+        '<td><div class="flex" style="gap:10px"><div class="bar grow" style="min-width:70px"><i class="' +
+          (p.rate >= 100 ? '' : 'b') + '" style="width:' + p.rate + '%"></i></div>' +
+          '<span class="num nowrap">' + p.finishedCount + '/' + p.total + '</span></div></td>' +
+        '<td class="num">' + p.passRate + '%</td>' +
+        '<td class="nowrap">' + esc(t.dueAt) + '<div class="muted" style="font-size:11.5px">' +
+          (t.status === 'finished' ? '已结束' : esc(d.txt)) + '</div></td>' +
+        '<td><span class="tag ' + sm.tag + '">' + sm.label + '</span></td>' +
+        '<td><button class="btn sm" data-act="task-row" data-tid="' + t.id + '">查看明细</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function openTaskDrawer(tid) {
+    var t = T.tasks.filter(function (x) { return x.id === tid; })[0];
+    if (!t) return;
+    var p = progOf(t);
+    var scene = sceneById2(t.sceneId);
+    var sm = STATUS_META[t.status] || STATUS_META.draft;
+    var d = dueInfo(t.dueAt);
+
+    var head = '<div class="card" style="background:var(--panel2);border-color:var(--line2);padding:14px 16px">' +
+      '<div class="kvline"><span class="k">任务编码</span><span class="v code">' + esc(t.code) + '</span></div>' +
+      '<div class="kvline"><span class="k">任务名称</span><span class="v">' + esc(t.title) + '</span></div>' +
+      '<div class="kvline"><span class="k">训练场景</span><span class="v">' + esc(scene.code + ' · ' + scene.name) + '</span></div>' +
+      '<div class="kvline"><span class="k">达标线</span><span class="v">' + t.passLine + ' 分</span></div>' +
+      '<div class="kvline"><span class="k">起止时间</span><span class="v">' + esc(t.startAt) + ' → ' + esc(t.dueAt) + '</span></div>' +
+      '<div class="kvline"><span class="k">下发人 / 时间</span><span class="v">' + esc(t.createdBy) + ' · ' + esc(t.createdAt) + '</span></div>' +
+      '<div class="kvline"><span class="k">状态</span><span class="v"><span class="tag ' + sm.tag + '">' + sm.label +
+        '</span> <span class="tag ' + d.tag + '">' + esc(d.txt) + '</span></span></div>' +
+      '<div class="kvline"><span class="k">备注</span><span class="v" style="max-width:62%;font-weight:400;color:var(--txt2)">' + esc(t.note || '无') + '</span></div>' +
+      '</div>';
+
+    var stats = '<div class="grid g3 mt14">' +
+      '<div class="kpi" style="padding:12px 14px"><div class="lab">完成进度</div><div class="val" style="font-size:22px">' + p.rate + '<small>%</small></div></div>' +
+      '<div class="kpi" style="padding:12px 14px"><div class="lab">达标率</div><div class="val" style="font-size:22px">' + p.passRate + '<small>%</small></div></div>' +
+      '<div class="kpi" style="padding:12px 14px"><div class="lab">平均分</div><div class="val" style="font-size:22px">' + (p.finishedCount ? p.avgScore : '—') + '</div></div>' +
+      '</div>';
+
+    var rows = t.assignees.map(function (lid, i) {
+      var l = T.learnerById(lid);
+      var r = p.records[i];
+      var right;
+      if (r) {
+        right = '<div class="rt"><div class="num" style="font-size:16px;font-weight:600">' + r.score + ' 分</div>' +
+          (r.passed ? '<span class="tag g"><span class="dot g"></span>达标</span>' : '<span class="tag r"><span class="dot r"></span>未达标</span>') +
+          '<div class="muted" style="font-size:11.5px;margin-top:3px">' + esc(r.finishedAt) + '</div></div>';
+      } else {
+        right = d.overdue
+          ? '<span class="tag r"><span class="dot r"></span>已逾期</span>'
+          : '<span class="tag"><span class="dot"></span>未开始</span>';
+      }
+      return '<div class="item">' +
+        '<span class="ava-rd" style="background:' + l.color + '">' + esc(l.avatarText) + '</span>' +
+        '<div class="mid"><div class="t1">' + esc(l.name) + '</div>' +
+        '<div class="t2">' + esc(l.dept) + ' · ' + esc(l.position) + ' · 导师 ' + esc(l.mentor) + '</div></div>' +
+        right + '</div>';
+    }).join('');
+
+    var detail = '<div class="card-h mt20"><h2>学员完成情况</h2><span class="sub">' + p.finishedCount + '/' + p.total + ' 人已完成</span></div>' +
+      '<div style="border:1px solid var(--line);border-radius:11px;overflow:hidden">' + rows + '</div>';
+
+    /* 任务生命周期动作：在线时走服务端，离线只提示（不假装成功） */
+    var acts = '<button class="btn" data-act="close-drawer">关闭</button>';
+    if (t.status !== 'finished') {
+      acts += '<button class="btn" data-act="task-status" data-tid="' + t.id + '" data-to="finished">结束任务</button>';
+    } else {
+      acts += '<button class="btn" data-act="task-status" data-tid="' + t.id + '" data-to="running">重新开启</button>';
+    }
+    if (t.status !== 'draft') {
+      acts += '<button class="btn" data-act="task-status" data-tid="' + t.id + '" data-to="draft">收回</button>';
+    }
+    acts += '<button class="btn ghost" data-act="task-delete" data-tid="' + t.id + '">删除任务</button>';
+    if (canSrvWrite()) acts += '<button class="btn pri" data-act="export">导出名单</button>';
+
+    openDrawer(t.title, head + stats + detail, acts);
+  }
+
+  /* ---- 任务生命周期：服务端优先 ---- */
+  function changeTaskStatus(tid, status) {
+    if (!canSrvWrite()) { toast('服务端未连接：任务状态暂不可改（离线仅支持本地浏览）'); return; }
+    ADMIN_SYNC.taskStatus(tid, status).then(function (r) {
+      if (!r.ok) { srvFail(r, '操作失败'); return; }
+      var label = { running: '已重新开启', finished: '已结束', draft: '已收回' }[status] || '已更新';
+      closeDrawer();
+      hydrateFromServer();
+      toast('任务' + label);
+    });
+  }
+
+  function removeTask(tid) {
+    var t = T.tasks.filter(function (x) { return x.id === tid; })[0];
+    if (!confirm('删除任务「' + ((t && t.title) || tid) + '」？\n该任务的指派关系会一并删除，已产生的练习成绩会保留。此操作不可撤销。')) return;
+    if (!canSrvWrite()) { toast('服务端未连接：无法删除服务端任务'); return; }
+    ADMIN_SYNC.removeTask(tid).then(function (r) {
+      if (!r.ok) { srvFail(r, '删除失败'); return; }
+      closeDrawer();
+      hydrateFromServer();
+      toast('任务已删除');
+    });
+  }
+
+  /* ================================================================== *
+   * ④ 学员报告
+   * ================================================================== */
+  function renderReport() {
+    $('repDept').innerHTML = '<option value="all">全部部门</option>' +
+      depts().map(function (d) { return '<option value="' + esc(d) + '">' + esc(d) + '</option>'; }).join('');
+    $('repDept').value = REP_F.dept;
+    $('repQ').value = REP_F.q;
+    [].forEach.call($('riskSeg').children, function (b) {
+      b.classList.toggle('on', b.getAttribute('data-r') === REP_F.risk);
+    });
+    renderRepRows();
+  }
+
+  function renderRepRows() {
+    var q = REP_F.q.trim().toLowerCase();
+    var list = LEARNERS.filter(function (l) {
+      if (REP_F.dept !== 'all' && l.dept !== REP_F.dept) return false;
+      if (REP_F.risk !== 'all' && H.riskOf(l.id) !== REP_F.risk) return false;
+      if (q) {
+        var hay = (l.name + ' ' + l.position + ' ' + l.mentor + ' ' + l.dept).toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+    $('repCount').textContent = '共 ' + list.length + ' 人';
+    if (!list.length) {
+      $('repRows').innerHTML = '<tr><td colspan="9"><div class="empty"><div class="ic">□</div>没有符合条件的学员</div></td></tr>';
+      return;
+    }
+    $('repRows').innerHTML = list.map(function (l) {
+      var st = H.statsOf(l.id);
+      var rk = H.riskOf(l.id);
+      var meta = RISK_META[rk];
+      var last = st.last ? st.last.score : null;
+      var lastTag = st.last
+        ? (st.last.passed ? '<span class="tag g">达标</span>' : '<span class="tag r">未达标</span>')
+        : '<span class="tag">无记录</span>';
+      return '<tr class="clickable" data-act="rep-row" data-lid="' + l.id + '">' +
+        '<td><div class="who-cell"><span class="ava-rd" style="background:' + l.color + '">' + esc(l.avatarText) + '</span>' +
+          '<span class="nm">' + esc(l.name) + '</span></div></td>' +
+        '<td class="muted nowrap">' + esc(l.dept) + '</td>' +
+        '<td>' + esc(l.position) + '</td>' +
+        '<td class="muted">' + esc(l.mentor) + '</td>' +
+        '<td class="num">' + st.count + ' 次</td>' +
+        '<td class="num"><b>' + (st.count ? st.avg : '—') + '</b></td>' +
+        '<td class="num">' + (last === null ? '—' : last) + ' ' + lastTag + '</td>' +
+        '<td><span class="tag ' + meta.tag + '"><span class="dot ' + meta.dot + '"></span>' + meta.label + '</span></td>' +
+        '<td><button class="btn sm" data-act="rep-row" data-lid="' + l.id + '">查看报告</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  /* 成绩趋势：手写内联 SVG 折线图 */
+  function trendChart(records, passLine) {
+    var W = 680, Hh = 250, pl = 44, pr = 24, pt = 24, pb = 34;
+    var pw = W - pl - pr, ph = Hh - pt - pb;
+    var n = records.length;
+    var X = function (i) { return n === 1 ? pl + pw / 2 : pl + i * (pw / (n - 1)); };
+    var Y = function (v) { return pt + (1 - v / 100) * ph; };
+    var g = '';
+
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      var y = Y(v);
+      g += '<line x1="' + pl + '" y1="' + y + '" x2="' + (W - pr) + '" y2="' + y + '" style="stroke:var(--line)" stroke-width="1"/>';
+      g += '<text x="' + (pl - 9) + '" y="' + (y + 4) + '" text-anchor="end" style="fill:var(--txt3)" font-size="11">' + v + '</text>';
+    });
+
+    /* 达标线：虚线，具体数值在卡片标题里说明，避免与数据点分数标签重叠 */
+    var py = Y(passLine);
+    g += '<line x1="' + pl + '" y1="' + py + '" x2="' + (W - pr) + '" y2="' + py + '" style="stroke:var(--amber)" stroke-width="1.4" stroke-dasharray="6 4"/>';
+
+    if (n > 1) {
+      g += '<polyline points="' + records.map(function (r, i) { return X(i) + ',' + Y(r.score); }).join(' ') +
+        '" fill="none" style="stroke:var(--blue)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    }
+
+    records.forEach(function (r, i) {
+      var c = r.passed ? 'var(--acc)' : 'var(--red)';
+      var lx = X(i), ly = Y(r.score);
+      /* 分数标签：靠近左右边界时改为靠边对齐，避免被裁掉 */
+      var anchor = 'middle', tx = lx;
+      if (lx > W - pr - 14) { anchor = 'end'; tx = lx + 10; }
+      else if (lx < pl + 14) { anchor = 'start'; tx = lx - 10; }
+      g += '<circle cx="' + lx + '" cy="' + ly + '" r="4.5" style="fill:' + c + '"/>';
+      g += '<text x="' + tx + '" y="' + (ly - 11) + '" text-anchor="' + anchor + '" style="fill:' + c +
+        '" font-size="11.5" font-weight="600">' + r.score + '</text>';
+      g += '<text x="' + lx + '" y="' + (Hh - 12) + '" text-anchor="middle" style="fill:var(--txt3)" font-size="10.5">' +
+        mmdd(r.finishedAt) + '</text>';
+    });
+
+    return '<svg viewBox="0 0 ' + W + ' ' + Hh + '" width="100%" height="250" preserveAspectRatio="xMidYMid meet" role="img" aria-label="成绩趋势折线图">' + g + '</svg>';
+  }
+
+  function suggestScene(dimId, learnerId) {
+    var best = null, bestN = -1;
+    SCENES.forEach(function (s) {
+      var c = s.objectives.filter(function (o) { return o.dim === dimId; }).length;
+      if (c > bestN) { bestN = c; best = s; }
+    });
+    if (bestN <= 0) {
+      /* 没有直接映射时，退化到该学员得分最低的记录所在场景 */
+      var rs = H.recordsOf(learnerId);
+      if (rs.length) return sceneById2(rs[0].sceneId);
+      return SCENES[0];
+    }
+    return best;
+  }
+
+  function openLearnerDrawer(lid) {
+    var l = T.learnerById(lid);
+    var st = H.statsOf(lid);
+    var rk = H.riskOf(lid);
+    var meta = RISK_META[rk];
+    var recs = H.recordsOf(lid);
+    var last = st.last;
+
+    /* 头部 */
+    var head = '<div class="flex" style="gap:14px;align-items:flex-start;margin-bottom:16px">' +
+      '<span class="ava-sq" style="width:52px;height:52px;flex:0 0 52px;font-size:20px;border-radius:12px;background:' + l.color + '">' + esc(l.avatarText) + '</span>' +
+      '<div class="grow">' +
+        '<div style="font-size:18px;font-weight:600;display:flex;align-items:center;gap:10px">' + esc(l.name) +
+          '<span class="tag ' + meta.tag + '"><span class="dot ' + meta.dot + '"></span>' + meta.label + '</span></div>' +
+        '<div class="muted" style="font-size:13px;margin-top:4px">' + esc(l.dept) + ' · ' + esc(l.position) +
+          ' · 导师 ' + esc(l.mentor) + ' · 入职 ' + esc(l.joinDate) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="grid g4">' +
+      '<div class="kpi" style="padding:11px 13px"><div class="lab">练习次数</div><div class="val" style="font-size:20px">' + st.count + '<small>次</small></div></div>' +
+      '<div class="kpi" style="padding:11px 13px"><div class="lab">平均分</div><div class="val" style="font-size:20px">' + (st.count ? st.avg : '—') + '</div></div>' +
+      '<div class="kpi" style="padding:11px 13px"><div class="lab">最高分</div><div class="val" style="font-size:20px">' + (st.count ? st.best : '—') + '</div></div>' +
+      '<div class="kpi" style="padding:11px 13px"><div class="lab">达标 / 未达标</div><div class="val" style="font-size:20px">' +
+        st.passCount + '<small>/' + st.failCount + '</small></div></div>' +
+    '</div>';
+
+    /* 成绩趋势 */
+    var trend = '';
+    if (recs.length) {
+      var pl = recs[recs.length - 1].passLine;
+      trend = '<div class="card-h mt20"><h2>成绩趋势</h2><span class="sub">绿点=达标 / 红点=未达标 · 橙色虚线为达标线 ' + pl + ' 分</span></div>' +
+        '<div class="chart-box">' + trendChart(recs, pl) + '</div>';
+    } else {
+      trend = '<div class="card-h mt20"><h2>成绩趋势</h2></div><div class="empty">暂无练习记录</div>';
+    }
+
+    /* 五维得分 */
+    var dimsHtml;
+    var weakestId = null;
+    if (last) {
+      var pairs = DIMS.map(function (d) { return { id: d.id, name: d.name, v: last.dimScores[d.id] }; });
+      pairs.sort(function (a, b) { return a.v - b.v; });
+      weakestId = pairs[0].id;
+      dimsHtml = DIMS.map(function (d) {
+        var v = last.dimScores[d.id];
+        var lv = H.level(v);
+        return '<div class="dim"><div class="top"><span>' + esc(d.name) +
+          (d.id === weakestId ? '<span class="wtag">最弱</span>' : '') + '</span><span>' + v +
+          ' <span class="muted" style="font-weight:400">' + esc(lv.label) + '</span></span></div>' +
+          '<div class="bar"><i class="' + lvCls(v) + '" style="width:' + v + '%"></i></div>' +
+          '<div class="hint" style="margin-top:5px">' + esc(d.desc) + '</div></div>';
+      }).join('');
+    } else {
+      dimsHtml = '<div class="empty">暂无维度得分</div>';
+    }
+    var dimBlock = '<div class="card-h mt20"><h2>五维得分</h2><span class="sub">' +
+      (last ? '取自最近一次练习 ' + esc(last.finishedAt) : '—') + '</span></div>' + dimsHtml;
+
+    /* 练习记录 */
+    var recBlock = '<div class="card-h mt20"><h2>练习记录</h2><span class="sub">共 ' + recs.length + ' 条</span></div>';
+    if (!recs.length) {
+      recBlock += '<div class="empty">暂无练习记录</div>';
+    } else {
+      recBlock += recs.slice().reverse().map(function (r) {
+        var task = T.taskById(r.taskId);
+        var scene = sceneById2(r.sceneId);
+        return '<div class="rec-item">' +
+          '<div class="mid">' +
+            '<div class="t1">' + esc(task ? task.title : r.taskId) +
+              (r.passed ? '<span class="tag g"><span class="dot g"></span>达标</span>' : '<span class="tag r"><span class="dot r"></span>未达标</span>') +
+              '<span class="muted code">' + esc(scene ? scene.code : '') + '</span></div>' +
+            '<div class="t2">' + esc(r.finishedAt) + ' · ' + esc(scene ? scene.name : '') +
+              (r.minutes > 0 ? ' · 用时 ' + r.minutes + ' 分钟' : '') +
+              (r.turns > 0 ? ' · ' + r.turns + ' 轮' : '') +
+              ' · 达标线 ' + r.passLine + ' 分' +
+              (r.source && String(r.source).indexOf('llm') >= 0 ? ' · <span class="tag">AI 评分</span>' : '') + '</div>' +
+          '</div>' +
+          '<div class="sc"><div class="v" style="color:' + (r.passed ? 'var(--acc)' : 'var(--red)') + '">' + r.score + '</div>' +
+            '<div class="muted" style="font-size:11.5px">分</div></div>' +
+          // P7：逐轮对话按需展开。只有真点开才请求，列表本身不背对话正文
+          '<button class="btn sm ghost" data-act="turns" data-rid="' + r.id + '">看逐轮对话</button>' +
+        '</div>' +
+        '<div class="turnwrap" id="turns-' + esc(r.id) + '" hidden></div>';
+      }).join('');
+    }
+
+    /* AI 带教建议 */
+    var adviceBlock;
+    if (last && weakestId) {
+      var wd = DIMS.filter(function (d) { return d.id === weakestId; })[0];
+      var sug = suggestScene(weakestId, lid);
+      var covered = sug.objectives.filter(function (o) { return o.dim === weakestId; });
+      adviceBlock = '<div class="card-h mt20"><h2>AI 带教建议</h2><span class="sub">基于最近一次练习的最弱维度生成</span></div>' +
+        '<div style="font-size:13.5px;line-height:1.85;color:var(--txt2)">' +
+          '本期训练中，<b>' + esc(l.name) + '</b> 的薄弱环节是「<b>' + esc(wd.name) + '（' + last.dimScores[weakestId] + ' 分）</b>」。' +
+          esc(ADVICE[weakestId] || '') +
+          '<br><br>建议在下一次下发时优先安排复训场景：' +
+          '<b>' + esc(sug.code + ' · ' + sug.name + '（' + sug.taskName + '）') + '</b>。' +
+          '该场景有 ' + covered.length + ' 项训练目标直接对应「' + esc(wd.name) + '」，' +
+          (covered.length ? '分别是：' + covered.map(function (o) { return '「' + esc(o.text) + '」'; }).join('、') + '。' : '需要带教主管在讲解环节额外补充该维度的动作要点。') +
+          '<br><br>带教动作：建议由导师 <b>' + esc(l.mentor) + '</b> 在 24 小时内安排一次 15 分钟一对一复盘，重点回放本次未达标的关键轮次。' +
+        '</div>' +
+        '<div class="btn-row mt14">' +
+          '<button class="btn pri" data-act="assign-scene" data-sid="' + sug.id + '">下发该场景</button>' +
+          '<button class="btn" data-act="export">导出个人报告</button>' +
+        '</div>';
+    } else {
+      adviceBlock = '<div class="card-h mt20"><h2>AI 带教建议</h2></div>' +
+        '<div class="empty">该学员尚无练习记录，建议先下发一次基础场景做能力摸底。</div>';
+    }
+
+    openDrawer('学员报告 · ' + l.name,
+      head + trend + dimBlock + recBlock + adviceBlock,
+      '<button class="btn" data-act="close-drawer">关闭</button>');
+  }
+
+  /* ================================================================== *
+   * 逐轮对话（P7）：报告抽屉里按需展开
+   *
+   * 以前管理端只有一个总分 + 五维条形，「学员当时到底答了什么」无从查证；
+   * 而运营判断"要不要更新剧本 / 统一话术"恰恰要看这个。
+   * 正文不走列表接口（演示库 28 条 × 5~6 轮 ≈ 150 段文本，列表页一个字不渲染），
+   * 点开哪条取哪条；取不到时明确说明，绝不假装那是学员的作答。
+   * ================================================================== */
+  var TURN_CACHE = {};
+
+  /** 一条成绩的逐轮卡片。turns 为服务端数据；sc 用于补目标/参考表达 */
+  function turnsHtml(turns, sc) {
+    if (!turns || !turns.length) return '';
+    return turns.map(function (t, i) {
+      var obj = (sc.objectives || [])[i] || null;
+      var dimName = obj ? ((DIMS[H.dimIndex(obj.dim)] || {}).name || '—') : '—';
+      var pool = (sc.voicePool || [])[Math.min(i, (sc.voicePool || []).length - 1)] || [];
+      var refLine = pool[0] || '';
+      var cls = t.score >= 60 ? '' : 'bad';
+      var dimLine = Object.keys(t.dimScores || {}).map(function (id) {
+        var d = DIMS[H.dimIndex(id)];
+        return (d ? d.name : id) + ' ' + t.dimScores[id];
+      }).join('　·　');
+      return '<div class="turnrow">' +
+        '<div class="th"><span>第 ' + (t.idx || i + 1) + ' 轮</span>' +
+        '<span class="tag ' + (t.score >= 75 ? 'g' : (t.score >= 60 ? 'a' : 'r')) + '">本轮 ' + t.score + ' 分</span>' +
+        (obj ? '<span class="tag b">目标：' + esc(obj.text) + '</span>' : '') + '</div>' +
+        '<div class="tq">客户：' + esc(t.customerReply || '—') +
+        (t.emotion ? ' <span class="meta">（情绪：' + esc(t.emotion) + '）</span>' : '') + '</div>' +
+        '<div class="ta ' + cls + '">学员：' + esc(t.learnerText || '（本轮无作答）') +
+        '<div class="meta">考察维度：' + esc(dimName) + (dimLine ? '　·　本轮维度分：' + esc(dimLine) : '') + '</div></div>' +
+        (refLine ? '<details class="refd"><summary>参考表达</summary><div class="refb">' + esc(refLine) + '</div></details>' : '') +
+        '</div>';
+    }).join('');
+  }
+
+  /** 点「看逐轮对话」：展开 / 收起；首次展开才发请求 */
+  function toggleTurns(rid) {
+    var box = $('turns-' + rid);
+    if (!box) return;
+    if (!box.hidden) { box.hidden = true; return; }
+    box.hidden = false;
+    if (TURN_CACHE[rid]) { box.innerHTML = TURN_CACHE[rid]; return; }
+
+    var rec = T.records.filter(function (r) { return r.id === rid; })[0];
+    var sc = rec ? sceneById2(rec.sceneId) : null;
+    var note = function (cls, text) { return '<div class="dnote' + (cls ? ' ' + cls : '') + '">' + text + '</div>'; };
+    if (!sc) { box.innerHTML = note('warn', '找不到该成绩对应的场景，无法还原对话。'); return; }
+    if (!srvOnline() || !ADMIN_SYNC.turns) {
+      box.innerHTML = note('', '未连接服务端，无法读取逐轮对话。请启动服务端（<code class="code">node server/index.js</code>）后重试。');
+      return;
+    }
+    box.innerHTML = '<div class="muted" style="font-size:12px;padding:6px 0">加载中…</div>';
+    ADMIN_SYNC.turns(rid).then(function (list) {
+      var b = $('turns-' + rid);
+      if (!b) return;                                   // 期间关了抽屉
+      if (list === null) {
+        b.innerHTML = note('warn', '未取到逐轮明细（未登录、超出数据范围或服务不可用）。');
+        return;
+      }
+      if (!list.length) {
+        b.innerHTML = note('warn', '这条成绩没有保存逐轮对话（P7 之前的练习未留存逐轮明细）。');
+        return;
+      }
+      TURN_CACHE[rid] = note('', '以下为学员本次练习的<b>真实作答</b>，逐轮得分由 5 维评分给出。') + turnsHtml(list, sc);
+      b.innerHTML = TURN_CACHE[rid];
+    }).catch(function () {
+      var b = $('turns-' + rid);
+      if (b) b.innerHTML = note('warn', '读取逐轮对话失败。');
+    });
+  }
+
+  /* ================================================================== *
+   * ⑤ 场景库
+   * ================================================================== */
+  var sceneOpen = {};
+
+  function renderScenes() {
+    $('sceneCount').textContent = SCENES.length;
+    $('sceneBox').innerHTML = SCENES.map(function (s) {
+      var open = !!sceneOpen[s.id];
+      var dm = function (dimId) {
+        var d = DIMS.filter(function (x) { return x.id === dimId; })[0];
+        return d ? d.name : dimId;
+      };
+      return '<div class="card">' +
+        '<div class="ph flex-b" style="align-items:flex-start;margin-bottom:10px">' +
+          '<div>' +
+            '<div class="code" style="margin-bottom:5px">' + esc(s.code) + ' · ' + esc(s.channel) + '</div>' +
+            '<div class="nm" style="font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px">' + esc(s.name) +
+              statusChip(s.id) +
+              '<span class="tag g"><span class="dot g"></span>' + (s.status === 'active' ? '启用中' : '已停用') + '</span></div>' +
+            '<div class="muted" style="font-size:12.5px;margin-top:3px">' + esc(s.subtitle) + '</div>' +
+          '</div>' +
+          '<div class="btn-row">' +
+            '<button class="btn sm ghost" data-act="scene-edit" data-sid="' + s.id + '">编辑</button>' +
+            '<button class="btn sm pri" data-act="assign-scene" data-sid="' + s.id + '"' +
+              (canAssign(s.id) ? '' : ' disabled style="opacity:.45;cursor:not-allowed" title="仅已发布场景可下发"') +
+              '>下发该场景</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pick" style="cursor:default;background:var(--panel)">' +
+          '<div class="meta" style="margin-bottom:9px">' +
+            '<span>难度 <b>' + esc(s.difficulty) + '</b></span>' +
+            '<span>分类 <b>' + esc(s.category) + '</b></span>' +
+            '<span>达标线 <b>' + s.passLine + ' 分</b></span>' +
+            '<span>时长 <b>' + s.duration + ' 分钟</b></span>' +
+          '</div>' +
+          '<div style="font-size:13px;color:var(--txt2);line-height:1.75">' + esc(s.brief) + '</div>' +
+        '</div>' +
+        '<div class="btn-row mt14"><button class="btn sm ghost" data-act="scene-expand" data-sid="' + s.id + '">' +
+          (open ? '收起详情 ▲' : '展开训练目标与剧本 ▼') + '</button>' +
+          '<span class="muted" style="font-size:12px">目标 ' + s.objectives.length + ' 项 · 剧本 ' + s.script.length +
+          ' 轮 · 语音 ' + (s.voicePool || []).length + ' 组 · 负责人 ' + esc(s.owner || '—') + '</span></div>' +
+        (open ?
+          '<div class="exp">' +
+            '<div>' +
+              '<h4>训练目标清单</h4>' +
+              '<ul class="objlist">' + s.objectives.map(function (o) {
+                return '<li><span class="dot b"></span><span class="tx">' + esc(o.text) +
+                  ' <span class="tag">对应：' + esc(dm(o.dim)) + '</span></span></li>';
+              }).join('') + '</ul>' +
+            '</div>' +
+            '<div>' +
+              '<h4>剧本轮次</h4>' +
+              '<ul class="scriptlist">' + s.script.map(function (x, i) {
+                return '<li><span class="idx">' + (i + 1) + '</span><span class="tx">' + esc(x.t) + '</span>' +
+                  '<span class="vd">' + x.v + '″</span></li>';
+              }).join('') + '</ul>' +
+            '</div>' +
+          '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  /* ================================================================== *
+   * ⑥ 场景剧本编辑器
+   * ================================================================== */
+
+  /* 校验：返回问题清单（bad 阻断保存 / warn 提示 / good 通过项） */
+  function validateScene(s) {
+    var out = [];
+    var push = function (lv, msg) { out.push({ lv: lv, msg: msg }); };
+
+    // 基础字段
+    if (!s.name || !s.name.trim()) { push('bad', '场景名称不能为空'); }
+    if (!s.brief || s.brief.trim().length < 10) { push('warn', '场景简介过短（建议 ≥ 10 字），学员看不到上下文'); }
+
+    // 达标线
+    if (!(s.passLine >= 0 && s.passLine <= 100)) { push('bad', '达标线需在 0–100 之间'); }
+    var wsum = DIMS.reduce(function (a, d) { return a + (d.weight || 0); }, 0);
+    if (wsum !== 100) { push('bad', '维度权重合计为 ' + wsum + '，必须等于 100'); }
+    else { push('good', '维度权重合计 100，达标线 ' + s.passLine + ' 分'); }
+
+    // 目标清单
+    if (!s.objectives || !s.objectives.length) { push('bad', '至少需要 1 条训练目标'); }
+    else {
+      var emptyObj = s.objectives.filter(function (o) { return !o.text || !o.text.trim(); }).length;
+      if (emptyObj) { push('bad', '有 ' + emptyObj + ' 条训练目标内容为空'); }
+      var badDim = s.objectives.filter(function (o) { return !DIMS.some(function (d) { return d.id === o.dim; }); }).length;
+      if (badDim) { push('bad', '有 ' + badDim + ' 条目标未绑定到有效能力维度'); }
+    }
+
+    // 剧本轮次
+    if (!s.script || !s.script.length) { push('bad', '至少需要 1 轮客户台词'); }
+    else {
+      var emptyLine = s.script.filter(function (x) { return !x.t || !x.t.trim(); }).length;
+      if (emptyLine) { push('bad', '有 ' + emptyLine + ' 轮客户台词为空'); }
+    }
+
+    // 目标与剧本轮数对齐（引擎按轮次逐一考察目标）
+    if (s.objectives && s.script && s.objectives.length !== s.script.length) {
+      push('warn', '训练目标 ' + s.objectives.length + ' 条，剧本 ' + s.script.length +
+        ' 轮——两者不等时，多出的目标不会被考察到，建议对齐');
+    } else if (s.objectives && s.script && s.objectives.length === s.script.length) {
+      push('good', '训练目标与剧本轮次一一对齐（' + s.script.length + ' 轮）');
+    }
+
+    // 语音条脚本池
+    if (!s.voicePool || !s.voicePool.length) { push('warn', '未配置语音条脚本池，学员端「按住说话」将无候选话术'); }
+    else if (s.script && s.voicePool.length < s.script.length) {
+      push('warn', '语音脚本池 ' + s.voicePool.length + ' 组 < 剧本 ' + s.script.length +
+        ' 轮，后几轮将回退到最后一组');
+    } else { push('good', '语音脚本池 ' + s.voicePool.length + ' 组，覆盖全部轮次'); }
+
+    // 关键词覆盖：每个维度都要有词，否则该维度无法被命中
+    var kwMiss = DIMS.filter(function (d) { return !kwOf(d.id).length; });
+    if (kwMiss.length) {
+      push('bad', '以下维度没有评分关键词，学员永远无法得分：' + kwMiss.map(function (d) { return d.name; }).join('、'));
+    } else {
+      push('good', '5 个维度均有关键词，合计 ' + DIMS.reduce(function (a, d) { return a + kwOf(d.id).length; }, 0) + ' 条');
+    }
+
+    // 目标维度覆盖：所有目标覆盖的维度数
+    if (s.objectives && s.objectives.length) {
+      var covered = {};
+      s.objectives.forEach(function (o) { covered[o.dim] = true; });
+      var n = Object.keys(covered).length;
+      push(n >= 3 ? 'good' : 'warn', '训练目标覆盖了 ' + n + '/5 个能力维度' + (n < 3 ? '，覆盖偏少，建议补足' : ''));
+    }
+
+    return out;
+  }
+
+  function renderEditor() {
+    /* 左侧列表 */
+    $('edSideCount').textContent = SCENES.length + ' 个';
+    $('edList').innerHTML = SCENES.map(function (s) {
+      return '<div class="ed-item' + (s.id === ED.curId ? ' on' : '') + '" data-act="ed-pick" data-sid="' + s.id + '">' +
+        '<div class="ic2" style="background:' + esc(s.color || '#5B8FF9') + '">' + esc(s.avatarText || s.name.slice(0, 1)) + '</div>' +
+        '<div class="mtx"><div class="t1">' + esc(s.name) + '</div>' +
+          '<div class="t2">' + esc(s.code) + ' · 达标 ' + s.passLine + ' · ' + s.objectives.length + ' 目标</div></div>' +
+        statusChip(s.id) +
+      '</div>';
+    }).join('');
+    $('edDirtyTip').style.display = ED.dirty ? 'block' : 'none';
+
+    var s = sceneById2(ED.curId);
+    if (!s) { $('edMain').innerHTML = '<div class="card"><div class="empty"><div class="ic">▤</div>左侧选择一个场景开始编辑</div></div>'; return; }
+
+    var v = validateScene(s);
+    var badN = v.filter(function (x) { return x.lv === 'bad'; }).length;
+    var warnN = v.filter(function (x) { return x.lv === 'warn'; }).length;
+    var au = auditOf(s.id);
+    var vN = versionCount(s.id);
+
+    var html = '';
+
+    /* --- 发布状态条 --- */
+    html += '<div class="card ed-sec pubbar">' +
+      '<div class="pb-l">' +
+        '<span class="pb-lab">发布状态</span>' + statusChip(s.id) +
+        '<span class="muted" style="font-size:12px">· 已保存 ' + vN + ' 版' +
+          (au.submitAt ? ' · 提交于 ' + esc(au.submitAt) : '') + '</span>' +
+      '</div>' +
+      '<div class="pb-r">' +
+        '<button class="btn sm ghost" data-act="ed-versions">版本历史</button>' +
+        (au.status === 'draft' || au.status === 'offline'
+          ? '<button class="btn sm pri" data-act="ed-submit">提交审核</button>'
+          : '') +
+        (au.status === 'review'
+          ? '<button class="btn sm ghost" data-act="ed-reject">驳回</button>' +
+            '<button class="btn sm pri" data-act="ed-approve">审核通过并发布</button>'
+          : '') +
+        (au.status === 'published'
+          ? '<button class="btn sm ghost" data-act="ed-offline">下线</button>'
+          : '') +
+      '</div>' +
+    '</div>';
+    if (au.rejectReason && au.status === 'draft') {
+      html += '<div class="card ed-sec" style="border-color:var(--red);margin-top:-6px">' +
+        '<div class="vrow bad"><span class="vi">✕</span><span>上次审核被驳回：' +
+        esc(au.rejectReason) + '（修改后重新提交）</span></div></div>';
+    }
+
+    /* --- ① 元信息 --- */
+    html += '<div class="card ed-sec">' +
+      '<h3><span class="n">1</span>场景元信息<span class="hint-in">' + esc(s.code) + '</span></h3>' +
+      '<div class="grid g2">' +
+        fld('场景名称', '<input class="inp" data-act="ed-f" data-k="name" value="' + esc(s.name) + '">') +
+        fld('客户头像文字', '<input class="inp" data-act="ed-f" data-k="avatarText" maxlength="2" value="' + esc(s.avatarText || '') + '">') +
+        fld('副标题', '<input class="inp" data-act="ed-f" data-k="subtitle" value="' + esc(s.subtitle) + '">') +
+        fld('任务名（学员端显示）', '<input class="inp" data-act="ed-f" data-k="taskName" value="' + esc(s.taskName || '') + '">') +
+      '</div>' +
+      '<div class="grid g4">' +
+        fld('分类', selInp('category', s.category, ['价格异议', '客诉安抚', '破冰挖掘', '服务承诺', '成交推进'])) +
+        fld('难度', selInp('difficulty', s.difficulty, ['入门', '进阶', '挑战'])) +
+        fld('渠道', selInp('channel', s.channel, ['微信文字', '微信语音', '电话'])) +
+        fld('状态', selInp('status', s.status, ['active', 'draft'], { active: '启用中', draft: '已停用' })) +
+      '</div>' +
+      '<div class="grid g3">' +
+        fld('达标线（分）', '<input class="inp" type="number" min="0" max="100" data-act="ed-f" data-k="passLine" data-num="1" value="' + s.passLine + '">') +
+        fld('建议时长（分钟）', '<input class="inp" type="number" min="1" data-act="ed-f" data-k="duration" data-num="1" value="' + s.duration + '">') +
+        fld('负责人', '<input class="inp" data-act="ed-f" data-k="owner" value="' + esc(s.owner || '') + '">') +
+      '</div>' +
+      fld('场景简介（给学员的上下文）', '<textarea class="txa" data-act="ed-f" data-k="brief">' + esc(s.brief) + '</textarea>') +
+    '</div>';
+
+    /* --- ② 训练目标 --- */
+    html += '<div class="card ed-sec">' +
+      '<h3><span class="n">2</span>训练目标清单<span class="hint-in">共 ' + s.objectives.length +
+        ' 条 · 每条绑定一个能力维度，决定该轮考察什么</span></h3>' +
+      '<div id="edObjRows">' + s.objectives.map(function (o, i) { return objRow(o, i); }).join('') + '</div>' +
+      '<div class="btn-row mt14"><button class="btn sm ghost" data-act="ed-obj-add">＋ 添加训练目标</button></div>' +
+    '</div>';
+
+    /* --- ③ 剧本轮次 --- */
+    html += '<div class="card ed-sec">' +
+      '<h3><span class="n">3</span>剧本轮次<span class="hint-in">共 ' + s.script.length +
+        ' 轮 · 客户台词按顺序出现，v = 朗读秒数（影响语音条宽度）</span></h3>' +
+      '<div id="edScriptRows">' + s.script.map(function (x, i) { return scriptRow(x, i); }).join('') + '</div>' +
+      '<div class="btn-row mt14"><button class="btn sm ghost" data-act="ed-line-add">＋ 添加一轮客户台词</button></div>' +
+    '</div>';
+
+    /* --- ④ 语音条脚本池 --- */
+    var vp = s.voicePool || [];
+    html += '<div class="card ed-sec">' +
+      '<h3><span class="n">4</span>语音条脚本池<span class="hint-in">共 ' + vp.length +
+        ' 组 · 学员点「按住说话」时按轮次取候选话术</span></h3>' +
+      (vp.length ? vp.map(function (group, gi) {
+        return '<div class="ed-kwgroup"><div class="kh">' +
+          '<div class="t">第 ' + (gi + 1) + ' 轮候选（' + group.length + ' 条）</div>' +
+          '<button class="iconbtn add" title="加一条候选" data-act="vp-add" data-gi="' + gi + '">＋</button>' +
+        '</div>' +
+        group.map(function (t, ti) {
+          return '<div class="ed-row"><span class="num">' + (ti + 1) + '</span>' +
+            '<div class="flds"><input class="inp" data-act="vp-t" data-gi="' + gi + '" data-ti="' + ti + '" value="' + esc(t) + '"></div>' +
+            '<button class="iconbtn" title="删除" data-act="vp-del" data-gi="' + gi + '" data-ti="' + ti + '">×</button>' +
+          '</div>';
+        }).join('') + '</div>';
+      }).join('') : '<div class="empty" style="padding:26px"><div class="ic">◌</div>尚未配置语音脚本，学员端将无候选话术</div>') +
+      '<div class="btn-row mt14"><button class="btn sm ghost" data-act="vp-addgroup">＋ 添加一组（对应新一轮）</button></div>' +
+    '</div>';
+
+    /* --- ⑤ 评分关键词（全局口径，按维度巡检） --- */
+    html += '<div class="card ed-sec">' +
+      '<h3><span class="n">5</span>评分关键词<span class="hint-in">全局口径 · 所有场景共用，按维度巡检</span></h3>' +
+      '<div class="hint" style="margin:-4px 0 12px">关键词表 <code class="code">TRAIN.kw</code> 是原型阶段打分依据：命中某维度任一关键词，该维度 +13。这里可增删词，用于快速验证新场景的话术覆盖。</div>' +
+      DIMS.map(function (d) { return kwGroup(d); }).join('') +
+    '</div>';
+
+    /* --- ⑥ 校验 + 保存 --- */
+    html += '<div class="card ed-sec">' +
+      '<h3><span class="n">6</span>保存前校验<span class="hint-in">' +
+        (badN ? badN + ' 项阻断' : '无阻断项') + ' · ' + warnN + ' 项提醒</span></h3>' +
+      '<div class="ed-validate">' + v.map(function (x) {
+        var ic = x.lv === 'bad' ? '✕' : x.lv === 'warn' ? '!' : '✓';
+        return '<div class="vrow ' + x.lv + '"><span class="vi">' + ic + '</span><span>' + esc(x.msg) + '</span></div>';
+      }).join('') + '</div>' +
+    '</div>';
+
+    html += '<div class="ed-savebar">' +
+      '<div class="st">' + (ED.dirty ? '有未保存的修改' : '当前无修改') +
+        (badN ? ' · <b style="color:var(--red)">存在 ' + badN + ' 项阻断，无法保存</b>' : '') + '</div>' +
+      '<button class="btn sm ghost" data-act="ed-versions">版本历史</button>' +
+      '<button class="btn sm ghost" data-act="ed-revert">放弃修改</button>' +
+      '<button class="btn sm ghost" data-act="editor-export">导出 JSON</button>' +
+      '<button class="btn sm pri" data-act="ed-save"' + (badN ? ' disabled style="opacity:.45;cursor:not-allowed"' : '') +
+        '>保存场景</button>' +
+    '</div>';
+
+    $('edMain').innerHTML = html;
+    $('edDupBtn').style.display = '';
+  }
+
+  function fld(label, inner) {
+    return '<div class="field"><label>' + esc(label) + '</label>' + inner + '</div>';
+  }
+  function selInp(k, cur, opts, labels) {
+    return '<select class="sel" data-act="ed-f" data-k="' + k + '">' + opts.map(function (o) {
+      var lab = labels && labels[o] ? labels[o] : o;
+      return '<option value="' + esc(o) + '"' + (String(cur) === String(o) ? ' selected' : '') + '>' + esc(lab) + '</option>';
+    }).join('') + '</select>';
+  }
+  function objRow(o, i) {
+    return '<div class="ed-row"><span class="num">' + (i + 1) + '</span>' +
+      '<div class="flds">' +
+        '<input class="inp" data-act="ed-obj-t" data-i="' + i + '" value="' + esc(o.text) + '" placeholder="这条训练目标要考察什么？">' +
+        '<div class="inline"><select class="sel" data-act="ed-obj-d" data-i="' + i + '">' +
+          DIMS.map(function (d) {
+            return '<option value="' + d.id + '"' + (d.id === o.dim ? ' selected' : '') + '>' + esc(d.name) + '</option>';
+          }).join('') + '</select>' +
+          '<span class="muted" style="font-size:11.5px">命中该维度即判定目标达成</span></div>' +
+      '</div>' +
+      '<button class="iconbtn" title="删除" data-act="ed-obj-del" data-i="' + i + '">×</button>' +
+    '</div>';
+  }
+  function scriptRow(x, i) {
+    return '<div class="ed-row"><span class="num">' + (i + 1) + '</span>' +
+      '<div class="flds">' +
+        '<input class="inp" data-act="ed-line-t" data-i="' + i + '" value="' + esc(x.t) + '" placeholder="客户这一轮说什么？">' +
+        '<div class="inline"><span class="muted" style="font-size:11.5px">朗读秒数</span>' +
+          '<input class="inp" type="number" min="1" max="60" style="flex:0 0 90px" data-act="ed-line-v" data-i="' + i + '" value="' + (x.v || 6) + '">' +
+          '<span class="muted" style="font-size:11.5px">秒（决定语音条宽度）</span></div>' +
+      '</div>' +
+      '<button class="iconbtn" title="删除" data-act="ed-line-del" data-i="' + i + '">×</button>' +
+    '</div>';
+  }
+  function kwGroup(d) {
+    var words = kwOf(d.id);
+    var draft = ED.kwDraft[d.id] || '';
+    return '<div class="ed-kwgroup">' +
+      '<div class="kh"><div class="t">' + esc(d.name) + ' <span class="muted" style="font-weight:400">· 权重 ' + d.weight + '%</span></div>' +
+        '<div class="w">' + words.length + ' 条</div></div>' +
+      '<div class="kwchips">' + words.map(function (w) {
+        return '<span class="kwchip">' + esc(w) + '<span class="x2" data-act="kw-del" data-d="' + d.id + '" data-w="' + esc(w) + '">×</span></span>';
+      }).join('') + '</div>' +
+      '<div class="ed-addkw">' +
+        '<select class="sel" style="flex:0 0 130px" data-act="kw-owner" data-d="' + d.id + '">' +
+          DIMS.map(function (x) {
+            return '<option value="' + x.id + '"' + (x.id === d.id ? ' selected' : '') + '>' + esc(x.name) + '</option>';
+          }).join('') + '</select>' +
+        '<input class="inp" data-act="kw-draft" data-d="' + d.id + '" value="' + esc(draft) + '" placeholder="输入一个关键词，回车添加">' +
+        '<button class="btn sm ghost" data-act="kw-add" data-d="' + d.id + '">添加</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  /* --- 服务端优先：写操作统一走这两个闸门 --- */
+  function srvOnline() { return !!(window.ADMIN_SYNC && ADMIN_SYNC.status === 'online'); }
+  /* enforce 模式下必须已登录；open 模式允许服务端回落演示身份 */
+  function canSrvWrite() {
+    if (!srvOnline()) return false;
+    if (ADMIN_SYNC.authMode === 'enforce') return ADMIN_SYNC.loggedIn;
+    return true;
+  }
+  /* 把服务端场景对象合并进本地工作副本（含审批状态），保持全部既有渲染逻辑可用 */
+  function applyServerScene(ss, noPersist) {
+    if (!ss || !ss.id) return null;
+    var merged = Object.assign({}, ss, {
+      task: ss.taskName, scene: ss.channel, pass: ss.passLine, ava: ss.avatarText,
+      obj: (ss.objectives || []).map(function (o) { return o.text; }),
+      objDim: (ss.objectives || []).map(function (o) { return dimIndexOf(o.dim); }),
+      _audit: ss.audit, _versions: ss.versions || 0
+    });
+    var idx = -1;
+    for (var i = 0; i < SCENES.length; i++) if (SCENES[i].id === ss.id) { idx = i; break; }
+    if (idx >= 0) SCENES[idx] = merged; else SCENES.push(merged);
+    if (ss.audit) {
+      STORE.audit[ss.id] = {
+        status: ss.audit.status,
+        submitBy: ss.audit.submitBy || '', submitAt: ss.audit.submitAt || '',
+        reviewBy: ss.audit.reviewBy || '', reviewAt: ss.audit.reviewAt || '',
+        rejectReason: ss.audit.rejectReason || ''
+      };
+    }
+    if (!noPersist) persist();
+    return merged;
+  }
+  function dimIndexOf(dimId) {
+    for (var i = 0; i < DIMS.length; i++) if (DIMS[i].id === dimId) return i;
+    return 0;
+  }
+  /* 服务端写失败时的统一提示（403/401 语义要说明白，别让用户以为是自己操作错了） */
+  function srvFail(r, fallbackMsg) {
+    if (r && r.status === 401) { requireLogin('登录状态已失效，请重新登录'); return; }
+    if (r && r.status === 403) { toast('服务端拒绝：' + r.error); return; }
+    toast(fallbackMsg + '：' + ((r && r.error) || '未知错误'));
+  }
+
+  /* --- 保存（服务端在线 → 写服务端；离线 → 落 localStorage） --- */
+  function saveScene() {
+    var s = sceneById2(ED.curId);
+    if (!s) return;
+    var v = validateScene(s);
+    var badN = v.filter(function (x) { return x.lv === 'bad'; }).length;
+    if (badN) { toast('存在 ' + badN + ' 项阻断问题，无法保存'); return; }
+    var note = '保存修改';
+    /* 首版或已发布场景的再次保存，语义上是一次内容变更 */
+    if (!versionCount(s.id)) note = '首次保存';
+    else if (auditOf(s.id).status === 'published') { note = '变更已发布场景'; }
+    s.updatedAt = today();
+    pushVersion(s, note);
+    /* 内容变更后，已发布场景自动回到待审核（需重新审核才能下发） */
+    if (auditOf(s.id).status === 'published') {
+      setAudit(s.id, { status: 'review', submitBy: actor(), submitAt: nowStamp(), rejectReason: '' });
+    }
+    ED.dirty = false;
+    persist();
+    var localV = versionCount(s.id);
+    var payload = deepClone(s);
+    var nm = s.name;
+
+    if (!canSrvWrite()) {
+      renderEditor();
+      toast('场景「' + nm + '」已保存到本地（v' + localV + '）· 服务端未连接，改动暂存本机');
+      return;
+    }
+    ADMIN_SYNC.save(payload).then(function (r) {
+      if (r.ok) {
+        applyServerScene(r.scene);
+        renderEditor();
+        toast('场景「' + nm + '」已写入服务端（v' + (r.scene.versions || localV) + '）');
+      } else {
+        renderEditor();
+        srvFail(r, '服务端保存失败（本地已留存）');
+      }
+    });
+  }
+
+  /* 标记脏状态；needRerender 时重渲染以刷新校验结果 */
+  function markDirty(needRerender) {
+    ED.dirty = true;
+    var tip = $('edDirtyTip');
+    if (tip) tip.style.display = 'block';
+    if (needRerender) renderEditor();
+  }
+
+  /* 基于第一个场景造一个结构合法的空白场景 */
+  function blankScene() {
+    var tpl = SCENES[0] || {};
+    return {
+      id: nextSceneId(),
+      code: 'SC-' + nextSceneId(),
+      name: '未命名场景',
+      subtitle: '请填写客户画像与场景说明',
+      avatarText: '新',
+      color: '#5B8FF9',
+      last: '刚刚',
+      time: '刚刚',
+      unread: 0,
+      taskName: '新场景训练',
+      channel: '微信文字',
+      category: '破冰挖掘',
+      difficulty: '进阶',
+      passLine: 60,
+      duration: 10,
+      status: 'draft',
+      publish: 'draft',
+      owner: (T.meta && T.meta.owner) || '培训运营组',
+      updatedAt: today(),
+      brief: '',
+      script: [{ t: '', v: 8 }],
+      tips: ['先想清楚这一轮客户在表达什么情绪，再回应。'],
+      objectives: [{ text: '', dim: DIMS[0].id }],
+      voicePool: [['您好，我这边先自我介绍一下。']]
+    };
+  }
+
+  /* 关键词增删（写 KWCOPY 工作副本并落库） */
+  function kwAdd(dimId) {
+    var box = document.querySelector('[data-act="kw-draft"][data-d="' + dimId + '"]');
+    var val = ((box && box.value) || ED.kwDraft[dimId] || '').trim();
+    if (!val) { toast('请输入关键词'); return; }
+    var owner = document.querySelector('[data-act="kw-owner"][data-d="' + dimId + '"]');
+    var target = (owner && owner.value) || dimId;
+    if (!KWCOPY[target]) KWCOPY[target] = [];
+    if (KWCOPY[target].indexOf(val) !== -1) { toast('该维度已存在这个关键词'); return; }
+    // 若同一词已在别的维度存在，提示（避免一个词命中多维）
+    var dup = DIMS.filter(function (d) { return d.id !== target && kwOf(d.id).indexOf(val) !== -1; });
+    KWCOPY[target].push(val);
+    ED.kwDraft[dimId] = '';
+    ED.dirty = true;
+    persist();
+    renderEditor();
+    toast('已加入「' + dimName(target) + '」' + (dup.length ? '（注意：该词已存在于 ' + dup.map(function (d) { return d.name; }).join('、') + '）' : ''));
+  }
+  function kwDel(dimId, word) {
+    if (!KWCOPY[dimId]) return;
+    var i = KWCOPY[dimId].indexOf(word);
+    if (i === -1) return;
+    KWCOPY[dimId].splice(i, 1);
+    ED.dirty = true;
+    persist();
+    renderEditor();
+    toast('已从「' + dimName(dimId) + '」移除关键词');
+  }
+
+  /* 导出当前场景为 JSON（原型环境用弹窗展示，方便复制） */
+  function exportScene() {
+    var s = sceneById2(ED.curId);
+    if (!s) return;
+    var json = JSON.stringify(s, null, 2);
+    openDrawer('导出场景 JSON · ' + s.name,
+      '<div class="hint" style="margin-bottom:10px">此内容可直接交回研发入库；本原型已同步写入 localStorage，刷新不丢。</div>' +
+      '<pre class="code" style="white-space:pre-wrap;word-break:break-all;max-height:60vh;overflow:auto">' + esc(json) + '</pre>',
+      '<button class="btn sm ghost" data-act="close-drawer">关闭</button>');
+  }
+
+  /* --- 版本历史抽屉（服务端在线时以服务端版本为准） --- */
+  function renderVersions(s, list, fromServer) {
+    ED.vlist = list;
+    var body;
+    if (!list.length) {
+      body = '<div class="empty" style="padding:40px"><div class="ic">◷</div>还没有保存记录<br><span class="muted" style="font-size:12px">保存一次场景后即产生 v1 快照</span></div>';
+    } else {
+      body = '<div class="hint" style="margin-bottom:12px">共 ' + list.length +
+        ' 个版本 · ' + (fromServer ? '数据来自服务端，全部门可见' : '仅本机记录') +
+        (srvOnline() ? ' · 每次保存自动归档，可回滚' : ' · 每次保存自动归档，可回滚。仅保留最近 20 版。') + '</div>' +
+        '<div class="vlist">' + list.map(function (it, i) {
+          var isCur = i === 0;
+          var snap = it.snapshot || {};
+          var objs = (snap.objectives || []).length, scrs = (snap.script || []).length;
+          return '<div class="vrow2' + (isCur ? ' on' : '') + '">' +
+            '<div class="vbadge">v' + it.v + '</div>' +
+            '<div class="vmain"><div class="vt">' + esc(it.note) + (isCur ? ' <span class="vchip ok">当前</span>' : '') + '</div>' +
+              '<div class="vs">' + esc(it.at) + (it.by ? ' · ' + esc(it.by) : '') +
+              ' · ' + objs + ' 目标 / ' + scrs + ' 轮 · 达标 ' + (snap.passLine != null ? snap.passLine : '—') + '</div></div>' +
+            (isCur ? '' : '<button class="btn sm ghost" data-act="ed-vrollback" data-v="' + it.v + '">回滚</button>') +
+            (snap.script ? '<button class="btn sm ghost" data-act="ed-vdiff" data-v="' + it.v + '">对比</button>' : '') +
+          '</div>';
+        }).join('') + '</div>';
+    }
+    openDrawer('版本历史 · ' + s.name, body,
+      '<button class="btn sm ghost" data-act="close-drawer">关闭</button>');
+  }
+
+  function openVersions() {
+    var s = sceneById2(ED.curId);
+    if (!s) return;
+    if (srvOnline()) {
+      ADMIN_SYNC.versions(s.id).then(function (d) {
+        var list = (d && d.items) || [];
+        if (list.length) return renderVersions(s, list, true);
+        renderVersions(s, versionsOf(s.id), false);
+      });
+      return;
+    }
+    renderVersions(s, versionsOf(s.id), false);
+  }
+
+  /* 历史版本 vs 当前版本的字段差异 */
+  function diffAgainstCurrent(v) {
+    var s = sceneById2(ED.curId);
+    /* 优先用抽屉里当前展示的版本列表（在线时来自服务端） */
+    var list = (ED.vlist && ED.vlist.length) ? ED.vlist : versionsOf(s.id);
+    var it = list.filter(function (x) { return x.v === v; })[0];
+    if (!it) return null;
+    var old = it.snapshot, cur = s;
+    var fields = [
+      ['name', '场景名称'], ['subtitle', '副标题'], ['avatarText', '头像文字'],
+      ['taskName', '任务名'], ['category', '分类'], ['difficulty', '难度'],
+      ['channel', '渠道'], ['passLine', '达标线'], ['duration', '建议时长'],
+      ['owner', '负责人'], ['brief', '场景简介']
+    ];
+    var rows = [];
+    fields.forEach(function (f) {
+      var a = old[f[0]], b = cur[f[0]];
+      if (String(a) !== String(b)) rows.push({ k: f[1], a: a, b: b });
+    });
+    var oo = (old.objectives || []), co = (cur.objectives || []);
+    var os = (old.script || []), cs = (cur.script || []);
+    if (oo.length !== co.length)
+      rows.push({ k: '训练目标条数', a: oo.length + ' 条', b: co.length + ' 条' });
+    if (os.length !== cs.length)
+      rows.push({ k: '剧本轮数', a: os.length + ' 轮', b: cs.length + ' 轮' });
+    var ov = (old.voicePool || []).length, cv = (cur.voicePool || []).length;
+    if (ov !== cv) rows.push({ k: '语音脚本池', a: ov + ' 组', b: cv + ' 组' });
+    return { it: it, rows: rows };
+  }
+  function openDiff(v) {
+    var d = diffAgainstCurrent(v);
+    if (!d) return;
+    var body = '<div class="hint" style="margin-bottom:12px">对比 <b>v' + d.it.v + '</b>（' +
+      esc(d.it.at) + '）与 <b>当前编辑态</b>。</div>';
+    if (!d.rows.length) {
+      body += '<div class="empty" style="padding:32px"><div class="ic">＝</div>两者内容一致，无字段差异</div>';
+    } else {
+      body += '<table class="vtable"><thead><tr><th>字段</th><th>v' + d.it.v + '</th><th>当前</th></tr></thead><tbody>' +
+        d.rows.map(function (r) {
+          return '<tr><td>' + esc(r.k) + '</td>' +
+            '<td class="old">' + esc(String(r.a)) + '</td>' +
+            '<td class="new">' + esc(String(r.b)) + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    }
+    openDrawer('版本对比 · ' + sceneById2(ED.curId).name, body,
+      '<button class="btn sm ghost" data-act="close-drawer">关闭</button>');
+  }
+  /* 回滚：把历史快照内容覆盖回当前场景，并作为一次新保存归档 */
+  function rollback(v) {
+    var s = sceneById2(ED.curId);
+    var list = (ED.vlist && ED.vlist.length) ? ED.vlist : versionsOf(s.id);
+    var it = list.filter(function (x) { return x.v === v; })[0];
+    if (!it) { toast('未找到 v' + v + ' 的快照'); return; }
+    var snap = deepClone(it.snapshot);
+    var idx = SCENES.indexOf(s);
+    snap.id = s.id; snap.code = s.code;
+    snap.updatedAt = today();
+    snap.publish = 'draft';   /* 回滚视为新草稿，需重新提交审核 */
+    SCENES[idx] = snap;
+    pushVersion(snap, '回滚到 v' + v);
+    setAudit(snap.id, { status: 'draft', submitBy: '', submitAt: '', rejectReason: '' });
+    ED.dirty = false;
+    persist();
+    closeDrawer();
+    renderEditor();
+
+    if (!canSrvWrite()) {
+      toast('已回滚到 v' + v + '（本地），并生成新版本 v' + versionsOf(snap.id).length);
+      return;
+    }
+    ADMIN_SYNC.act(s.id, 'rollback', { v: v }).then(function (r) {
+      if (r.ok) {
+        applyServerScene(r.data);
+        renderEditor();
+        toast('已回滚到 v' + v + '，服务端已生成新版本并置为草稿');
+      } else {
+        srvFail(r, '服务端回滚失败（本地已回滚）');
+      }
+    });
+  }
+
+  /* --- 审批流动作（服务端在线时以服务端裁决为准，本地仅作离线兜底） --- */
+  function serverActOk(kind, r, okMsg) {
+    if (r.ok) {
+      applyServerScene(r.data);
+      renderEditor();
+      toast(okMsg);
+      return;
+    }
+    /* 服务端拒绝：把本地乐观改动回滚到服务端真实状态，避免界面撒谎 */
+    if (r.status === 403 || r.status === 400 || r.status === 401) {
+      ADMIN_SYNC.pull().then(function (lib) {
+        if (lib && lib.ok) refreshFromServer();
+      });
+      srvFail(r, '服务端操作失败，界面已回滚为服务端状态');
+      return;
+    }
+    srvFail(r, '服务端操作失败');
+  }
+
+  function submitReview() {
+    var s = sceneById2(ED.curId); if (!s) return;
+    var badN = validateScene(s).filter(function (x) { return x.lv === 'bad'; }).length;
+    if (badN) { toast('存在 ' + badN + ' 项阻断问题，无法提交审核'); return; }
+    if (ED.dirty) { toast('请先保存修改，再提交审核'); return; }
+    s.publish = 'review';
+    setAudit(s.id, { status: 'review', submitBy: actor(), submitAt: nowStamp(), rejectReason: '' });
+    persist(); renderEditor();
+    if (!canSrvWrite()) { toast('「' + s.name + '」已提交审核（本地），等待带教主管复核'); return; }
+    ADMIN_SYNC.act(s.id, 'submit').then(function (r) {
+      serverActOk('submit', r, '「' + s.name + '」已提交审核，等待带教主管复核');
+    });
+  }
+
+  function approveScene() {
+    var s = sceneById2(ED.curId); if (!s) return;
+    s.publish = 'published';
+    setAudit(s.id, { status: 'published', reviewBy: actor(), reviewAt: nowStamp(), rejectReason: '' });
+    persist(); renderEditor();
+    if (!canSrvWrite()) { toast('「' + s.name + '」审核通过（本地），已发布'); return; }
+    ADMIN_SYNC.act(s.id, 'approve').then(function (r) {
+      serverActOk('approve', r, '「' + s.name + '」审核通过，已发布，可下发学员');
+    });
+  }
+
+  function rejectScene() {
+    var s = sceneById2(ED.curId); if (!s) return;
+    var reason = window.prompt('请填写驳回原因（学员端不会看到）', '目标与轮次未对齐，请补充第 6 轮客户台词');
+    if (reason === null) return;
+    var rs = (reason || '').trim() || '未填写原因';
+    s.publish = 'draft';
+    setAudit(s.id, { status: 'draft', rejectReason: rs });
+    persist(); renderEditor();
+    if (!canSrvWrite()) { toast('已驳回「' + s.name + '」（本地），退回草稿'); return; }
+    ADMIN_SYNC.act(s.id, 'reject', { reason: rs }).then(function (r) {
+      serverActOk('reject', r, '已驳回「' + s.name + '」，退回草稿');
+    });
+  }
+
+  function offlineScene() {
+    var s = sceneById2(ED.curId); if (!s) return;
+    s.publish = 'offline';
+    setAudit(s.id, { status: 'offline' });
+    persist(); renderEditor();
+    if (!canSrvWrite()) { toast('「' + s.name + '」已下线（本地），不可再下发'); return; }
+    ADMIN_SYNC.act(s.id, 'offline').then(function (r) {
+      serverActOk('offline', r, '「' + s.name + '」已下线，不可再下发');
+    });
+  }
+
+  /* ================================================================== *
+   * ⑦ 服务端 / AI
+   * ================================================================== */
+  var SRV = { online: false, info: null, calib: null, audit: null };
+
+  var SRV = { online: false, info: null, calib: null, audit: null, accounts: null, backups: null };
+
+  /* ---- 登录态 ---- */
+  function requireLogin(msg) {
+    if (!window.ADMIN_SYNC) { toast('同步层未加载，无法登录'); return; }
+    $('authMask').classList.add('on');
+    $('authBox').classList.add('on');
+    if (msg) showAuthErr(msg); else { $('authErr').style.display = 'none'; }
+    loadDemoAccounts();
+    setTimeout(function () { var a = $('authAcc'); if (a) a.focus(); }, 80);
+  }
+  function hideLogin() {
+    $('authMask').classList.remove('on');
+    $('authBox').classList.remove('on');
+    $('authErr').style.display = 'none';
+  }
+  function showAuthErr(m) {
+    var e = $('authErr'); e.textContent = m; e.style.display = 'block';
+  }
+  function loadDemoAccounts() {
+    var box = $('authAccList');
+    if (!box || (box.dataset.loaded === '1' && SRV.accounts)) return;
+    ADMIN_SYNC.accounts().then(function (d) {
+      SRV.accounts = (d && d.items) || [];
+      if (!SRV.accounts.length) {
+        box.innerHTML = '<p class="hint" style="margin:9px 0 0">未能读取账号列表（需要服务端在线）。</p>';
+        return;
+      }
+      var pwHint = { admin: 'admin123', wangqian: 'op123456', limeng: 'op123456', zhangtao: 'rev123456', chenxi: 'coach123' };
+      box.innerHTML = '<table class="acctbl"><thead><tr><th>账号</th><th>口令</th><th>角色</th><th>权限</th></tr></thead><tbody>'
+        + SRV.accounts.map(function (u) {
+            var p = pwHint[u.account] || '（已改密）';
+            var perm = (u.canEdit ? '编辑' : '') + (u.canReview ? (u.canEdit ? ' + ' : '') + '审核' : '');
+            return '<tr data-act="auth-fill" data-acc="' + esc(u.account) + '" data-pwd="' + esc(p) + '" style="cursor:pointer">'
+              + '<td>' + esc(u.account) + '</td><td class="mono">' + esc(p) + '</td>'
+              + '<td>' + esc(u.role) + '</td><td>' + esc(perm || '只读') + '</td></tr>';
+          }).join('') + '</tbody></table>'
+        + '<p class="hint" style="margin:8px 0 0">点任意一行即可填入。这些是初始化口令，正式使用请登录后修改。</p>';
+      box.dataset.loaded = '1';
+    });
+  }
+  function renderWho() {
+    var u = window.ADMIN_SYNC && ADMIN_SYNC.authUser;
+    var av = $('whoAv'), tx = $('whoTxt'), btn = $('authBtn');
+    if (!av || !tx || !btn) return;
+    function shortName(n) { return String(n || '').replace(/^.*·\s*/, ''); }
+    if (u) {
+      av.textContent = shortName(u.name).slice(0, 1) || '?';
+      tx.textContent = (u.dept ? u.dept + ' · ' : '') + shortName(u.name);
+      btn.textContent = '退出';
+      $('whoChip').title = '已登录 ' + u.account + '（' + u.role + '）· 点击退出';
+    } else {
+      av.textContent = '未';
+      tx.textContent = window.ADMIN_SYNC
+        ? (ADMIN_SYNC.authMode === 'enforce' ? '未登录 · 强制登录模式' : '未登录 · 走演示身份')
+        : '离线模式';
+      btn.textContent = '登录';
+      $('whoChip').title = '点击登录';
+    }
+  }
+  function doLogin() {
+    var acc = ($('authAcc').value || '').trim();
+    var pwd = $('authPwd').value || '';
+    if (!acc || !pwd) { showAuthErr('请输入账号与口令'); return; }
+    var btn = $('authDo');
+    btn.disabled = true; btn.textContent = '登录中…';
+    ADMIN_SYNC.login(acc, pwd).then(function (r) {
+      btn.disabled = false; btn.textContent = '登录';
+      if (!r.ok) { showAuthErr(r.error || '登录失败'); return; }
+      $('authPwd').value = '';
+      hideLogin();
+      renderWho();
+      toast('已登录：' + r.user.name + '（' + r.user.role + '）· 数据范围 ' + (r.user.scopeLabel || '全部数据'));
+      /* 换身份 = 换数据范围，必须重新拉一遍场景与快照 */
+      refreshFromServer()
+        .then(function () { return hydrateFromServer(); })
+        .then(function () { renderEditor(); renderServer(); });
+    });
+  }
+  function logout() {
+    if (!window.ADMIN_SYNC) return;
+    ADMIN_SYNC.logout();
+    renderWho();
+    toast('已退出登录');
+    /* 退出后回到演示身份（open 模式）→ 数据范围可能不同，重新水合 */
+    refreshFromServer()
+      .then(function () { return hydrateFromServer(); })
+      .then(function () { renderSection(CUR_SEC); });
+    if (ADMIN_SYNC.authMode === 'enforce') requireLogin('已退出登录，强制登录模式下需重新登录才能改动场景');
+  }
+  function onWhoClick() {
+    var u = window.ADMIN_SYNC && ADMIN_SYNC.authUser;
+    if (u) { if (confirm('退出登录？')) logout(); return; }
+    if (!srvOnline()) { toast('服务端未连接：当前为离线模式，无需登录'); return; }
+    requireLogin();
+  }
+
+  /* ---- 服务端快照水合：学员 / 任务 / 成绩 ----
+     服务端已按登录身份过滤数据范围，拉回来的就是"当前账号该看到的"。
+     原地替换到 T.learners / T.tasks / T.records —— helpers 的全部统计口径
+     （看板 KPI、任务进度、风险分层、学员报告）随之一起变，不需要各写一套。 */
+  function normLearner(l) {
+    return {
+      id: l.id, name: l.name, avatarText: l.avatarText, color: l.color, dept: l.dept,
+      position: l.title || l.position || '',
+      mentor: l.mentor || l.coach || '',
+      joinDate: l.onboardAt || l.joinDate || ''
+    };
+  }
+  function normRecord(r) {
+    var task = T.taskById(r.taskId);
+    var scene = T.sceneById(r.sceneId);
+    return {
+      id: r.id, taskId: r.taskId, learnerId: r.learnerId, sceneId: r.sceneId,
+      score: r.score, dimScores: r.dimScores || {},
+      passLine: (task && task.passLine) || (scene && scene.passLine) || 60,
+      passed: !!r.passed, finishedAt: r.at,
+      minutes: r.minutes || 0, turns: r.turns || 0,
+      channel: r.channel === 'voice' ? '微信语音' : '微信沟通',
+      source: r.source || '', confidence: r.confidence
+    };
+  }
+
+  function hydrateFromServer() {
+    if (!srvOnline() || !T.helpers || !T.helpers.replaceInPlace) return Promise.resolve(null);
+    return Promise.all([
+      ADMIN_SYNC.learners(), ADMIN_SYNC.tasks(), ADMIN_SYNC.records()
+    ]).then(function (res) {
+      var ls = res[0], ts = res[1], rs = res[2];
+      if (ls === null && ts === null && rs === null) return null;
+      var changed = T.helpers.replaceInPlace({
+        learners: ls === null ? null : ls.map(normLearner),
+        tasks: ts,
+        records: rs === null ? null : rs.map(normRecord)
+      });
+      renderSection(CUR_SEC);
+      return changed;
+    }).catch(function () { return null; });
+  }
+
+  /* 按分区重绘（与 goto 的派发保持一致，避免新增分区时漏刷） */
+  function renderSection(sec) {
+    var R = {
+      dash: renderDash, assign: renderWizard, tasks: renderTasks,
+      report: renderReport, scenes: renderScenes, editor: renderEditor, server: renderServer
+    };
+    var fn = R[sec];
+    if (fn) { try { fn(); } catch (e) { /* 单个分区渲染失败不影响其它 */ } }
+  }
+
+  /* ---- 从服务端拉场景库并合并进本地工作副本 ---- */
+  function refreshFromServer() {
+    if (!srvOnline()) return Promise.resolve(false);
+    return ADMIN_SYNC.pull().then(function (r) {
+      if (!r || !r.ok) return false;
+      var curId = ED.curId;
+      r.scenes.forEach(function (ss) {
+        /* 有未保存改动且正是当前场景时，不覆盖用户正在编辑的内容 */
+        if (ED.dirty && ss.id === curId) return;
+        applyServerScene(ss, true);
+      });
+      persist();
+      if (CUR_SEC === 'scenes') renderScenes();
+      if (CUR_SEC === 'editor') renderEditor();
+      if (CUR_SEC === 'assign') renderWizard();
+      return true;
+    });
+  }
+
+  /* ---- 手工从服务端刷新场景库（连带学员/任务/成绩快照） ---- */
+  function reloadScenes() {
+    if (!srvOnline()) { toast('服务端未连接：当前使用本地数据'); return; }
+    ADMIN_SYNC.pull().then(function (r) {
+      if (!r || !r.ok) { toast('拉取失败：' + ((r && r.error) || '未知错误')); return; }
+      var n = 0;
+      r.scenes.forEach(function (ss) { if (applyServerScene(ss, true)) n++; });
+      persist();
+      renderScenes(); renderEditor();
+      return hydrateFromServer().then(function (c) {
+        var extra = c ? '，另同步 ' + (c.learners || 0) + ' 名学员 / ' + (c.tasks || 0) + ' 个任务 / ' + (c.records || 0) + ' 条成绩' : '';
+        toast('已从服务端同步 ' + n + ' 个场景（含审批状态与版本号）' + extra);
+      });
+    });
+  }
+
+  function renderServer() {
+    var K = $('srvKpis'), Tt = $('srvStatusTag'), B = $('srvStatusBody'), A = $('srvAuditBody');
+    if (!window.ADMIN_SYNC) {
+      Tt.textContent = '同步层未加载'; Tt.className = 'tag';
+      B.innerHTML = '<p class="hint">未找到 <code class="code">assets/admin-server-sync.js</code>，本页无法探测服务端。管理后台其余功能不受影响。</p>';
+      K.innerHTML = ''; return;
+    }
+    Tt.textContent = '检测中…';
+    B.innerHTML = '<p class="hint">正在探测 ' + esc(ADMIN_SYNC.base) + ' …</p>';
+
+    ADMIN_SYNC.probe(true).then(function (ok) {
+      SRV.online = ok; SRV.info = ADMIN_SYNC.info;
+      renderServerStatus();
+      renderAuthCard();
+      renderWho();
+      if (ok) {
+        loadServerAudit();
+        loadBackups();
+        /* 强制登录模式下未登录 → 直接弹登录门 */
+        if (ADMIN_SYNC.authMode === 'enforce' && !ADMIN_SYNC.loggedIn) {
+          requireLogin('该服务端已开启强制登录（AUTH_MODE=enforce），请先登录。');
+        }
+      } else {
+        A.innerHTML = '<p class="hint" style="padding:14px 16px">服务端未连接（' + esc(ADMIN_SYNC.base) +
+          '）。启动命令：<code class="code">node server/index.js</code>。未连接时场景库仍走浏览器本地存储，可正常演示。</p>';
+      }
+    });
+  }
+
+  /* ---- 身份与权限卡片 ---- */
+  function renderAuthCard() {
+    var tag = $('srvAuthTag'), B = $('srvAuthBody');
+    if (!B) return;
+    if (!srvOnline()) {
+      tag.textContent = '离线'; tag.className = 'tag';
+      B.innerHTML = '<p class="hint">服务端未连接，当前为纯前端离线模式，无身份校验（演示用）。启动后端并登录后，场景改动将按角色强制校验并留痕。</p>';
+      return;
+    }
+    var info = ADMIN_SYNC.authInfo || {};
+    var u = ADMIN_SYNC.authUser;
+    tag.textContent = info.enforced ? '强制登录' : '演示模式';
+    tag.className = 'tag ' + (info.enforced ? 'g' : 'a');
+
+    var head = u
+      ? '<div class="kv"><span>当前身份</span><b>' + esc(u.name) + '（' + esc(u.account) + '）</b></div>' +
+        '<div class="kv"><span>角色 / 部门</span><b>' + esc(u.role) + ' · ' + esc(u.dept || '-') + '</b></div>' +
+        '<div class="kv"><span>权限</span><b>' + ((u.canEdit ? '可编辑场景' : '不可编辑') + ' / ' + (u.canReview ? '可审核' : '不可审核')) + '</b></div>'
+      : '<div class="kv"><span>当前身份</span><b>' + (info.enforced ? '未登录' : '演示身份（等同管理员）') + '</b></div>';
+
+    B.innerHTML = head +
+      '<div class="kv"><span>鉴权模式</span><b>' + esc(info.mode || '-') + ' · token 有效期 ' + (info.ttlHours || '-') + 'h</b></div>' +
+      '<p class="hint" style="margin:10px 0 0">' + esc(info.note || '') + '</p>' +
+      '<div class="btn-row" style="margin-top:12px">' +
+        (u ? '<button class="btn sm ghost" data-act="auth-logout">退出登录</button>'
+           : '<button class="btn sm" data-act="auth">登录</button>') +
+        '<button class="btn sm ghost" data-act="show-accounts">账号与权限</button>' +
+      '</div>' +
+      '<div id="srvAcctBox" style="margin-top:12px"></div>';
+  }
+  function showAccounts() {
+    var box = $('srvAcctBox');
+    if (!box) return;
+    box.innerHTML = '<p class="hint">加载中…</p>';
+    ADMIN_SYNC.accounts().then(function (d) {
+      var items = (d && d.items) || [];
+      if (!items.length) { box.innerHTML = '<p class="hint">读取失败。</p>'; return; }
+      box.innerHTML = '<table class="tbl"><thead><tr><th>账号</th><th>姓名</th><th>角色</th><th>部门</th><th>权限</th><th>已设口令</th></tr></thead><tbody>'
+        + items.map(function (x) {
+            return '<tr><td class="mono">' + esc(x.account || '—') + '</td><td>' + esc(x.name) + '</td>'
+              + '<td>' + esc(x.role) + '</td><td>' + esc(x.dept || '-') + '</td>'
+              + '<td>' + ((x.canEdit ? '编辑' : '—') + ' / ' + (x.canReview ? '审核' : '—')) + '</td>'
+              + '<td>' + (x.hasPassword ? '<span class="tag g">已设</span>' : '<span class="tag r">未设</span>') + '</td></tr>';
+          }).join('') + '</tbody></table>';
+    });
+  }
+
+  /* ---- 备份 ---- */
+  function loadBackups() {
+    var B = $('srvBackupBody');
+    if (!B) return;
+    ADMIN_SYNC.backupList().then(function (d) {
+      var items = (d && d.items) || [];
+      B.innerHTML =
+        '<div class="kv"><span>备份目录</span><b class="mono" style="font-size:11.5px">' + esc((d && d.dir) || '-') + '</b></div>' +
+        '<div class="kv"><span>保留份数</span><b>' + ((d && d.keep) || '-') + '</b></div>' +
+        (items.length
+          ? '<div class="hint" style="margin-top:10px">最近备份</div><table class="tbl" style="margin-top:6px"><tbody>'
+            + items.slice(0, 5).map(function (x) {
+                return '<tr><td class="mono" style="font-size:11.5px">' + esc(x.name) + '</td>'
+                  + '<td class="num" style="text-align:right">' + Math.round(x.size / 1024) + ' KB</td>'
+                  + '<td class="mono" style="font-size:11.5px;color:var(--txt3)">' + esc(String(x.at).slice(0, 19).replace('T', ' ')) + '</td></tr>';
+              }).join('') + '</tbody></table>'
+          : '<p class="hint" style="margin-top:10px">还没有备份记录。点右上角「立即备份」生成第一份。</p>');
+    });
+  }
+  function doBackup() {
+    toast('正在生成一致性快照…');
+    ADMIN_SYNC.backup().then(function (r) {
+      if (!r.ok) { toast('备份失败：' + r.error); return; }
+      toast('备份完成：' + String(r.data.file).split(/[\\/]/).pop());
+      loadBackups();
+    });
+  }
+
+  /* ---- 金标集导入 ---- */
+  function goldSample() {
+    var ta = $('goldText');
+    if (!ta) return;
+    ta.value = JSON.stringify([
+      { id: 'G101', sceneId: 's1', turnIndex: 1, customerText: '你们又来了，我忙着呢，说重点。', learnerText: '王总您好，我是XX食品的小李，今天想跟您聊聊门店动销，方便占用您五分钟吗？', humanScores: { d1: 85, d2: 78, d3: 70, d4: 62, d5: 60 }, annotator: '双盲均值', note: '示例：开场规范' },
+      { id: 'G102', sceneId: 's1', turnIndex: 2, customerText: '价格太贵了，隔壁那家比你们便宜。', learnerText: '您说的便宜是单价还是整体成本？我先帮您算一下单店月用量对应的实际支出。', humanScores: { d1: 70, d2: 88, d3: 82, d4: 75, d5: 66 }, annotator: '双盲均值', note: '示例：异议处理' }
+    ], null, 2);
+    $('goldMsg').textContent = '已填入 2 条示例，可直接点「导入」。humanTotal 不填会按 5 维加权自动算。';
+  }
+  function doGoldImport() {
+    var ta = $('goldText'), msg = $('goldMsg');
+    var raw = (ta && ta.value || '').trim();
+    if (!raw) { msg.textContent = '请先粘贴 JSON 数组'; return; }
+    var items;
+    try { items = JSON.parse(raw); }
+    catch (e) { msg.textContent = 'JSON 解析失败：' + e.message; return; }
+    if (!Array.isArray(items)) { msg.textContent = '顶层必须是数组'; return; }
+    if (!items.length) { msg.textContent = '数组为空'; return; }
+    var bad = items.filter(function (x) { return !x || !x.id || !x.humanScores; });
+    if (bad.length) { msg.textContent = '有 ' + bad.length + ' 条缺少 id 或 humanScores'; return; }
+    msg.textContent = '导入中…';
+    ADMIN_SYNC.goldImport(items).then(function (r) {
+      if (!r.ok) { msg.textContent = '导入失败：' + r.error; return; }
+      msg.textContent = '导入成功：新增 ' + ((r.data && r.data.inserted) || 0) + ' 条 / 更新 ' + ((r.data && r.data.updated) || 0) + ' 条，当前金标集共 ' + ((r.data && r.data.total) || 0) + ' 条。';
+      toast('金标集已更新');
+    });
+  }
+
+  function renderServerStatus() {
+    var Tt = $('srvStatusTag'), B = $('srvStatusBody'), K = $('srvKpis');
+    var i = SRV.info || {};
+    if (!SRV.online) {
+      Tt.textContent = '未连接'; Tt.className = 'tag a';
+      B.innerHTML = '<p class="hint">服务端未启动。当前为<b>纯前端离线模式</b>：场景库读写浏览器 <code class="code">localStorage</code>，'
+        + '学员端走本地关键词引擎。启动后端即可启用真实模型评分与服务端落库。</p>'
+        + '<div class="code" style="margin-top:10px">node server/index.js        # 启动后端（端口 8848）</div>';
+      K.innerHTML = '';
+      return;
+    }
+    Tt.textContent = '已连接'; Tt.className = 'tag g';
+    var llm = i.llm || {};
+    var live = (i.live || {});
+    var mode = llm.configured
+      ? '<span style="color:var(--acc-txt)">真实大模型评分</span>'
+      : '<span style="color:var(--amber)">关键词引擎降级（未配置 Key）</span>';
+    B.innerHTML =
+      '<div class="kv"><span>接口地址</span><b>' + esc(ADMIN_SYNC.base) + '</b></div>' +
+      '<div class="kv"><span>服务版本</span><b>' + esc(i.version || '-') + '</b></div>' +
+      '<div class="kv"><span>模型</span><b>' + esc(llm.model || '-') + '</b></div>' +
+      '<div class="kv"><span>上游</span><b>' + esc(llm.baseUrl || '-') + '</b></div>' +
+      '<div class="kv"><span>评分模式</span><b>' + mode + '</b></div>' +
+      '<div class="kv"><span>鉴权模式</span><b>' + esc((i.auth && i.auth.mode) || '-') + '</b></div>' +
+      '<div class="kv"><span>监听地址</span><b>' + (i.host === '0.0.0.0' ? '0.0.0.0（内网可访问）' : '127.0.0.1（仅本机）') + '</b></div>' +
+      '<div class="kv"><span>Rubric 版本</span><b>' + esc(i.rubricVersion || '-') + '</b></div>' +
+      '<div class="kv"><span>在线探活</span><b>' + (live.ok ? '正常 · ' + (live.latencyMs || 0) + 'ms' : '异常') + '</b></div>';
+
+    // KPI 卡：直接用 /status 里的 stats（不额外发请求）
+    var st = i.stats || {};
+    if (Object.keys(st).length) {
+      K.innerHTML = [
+        card('场景（已发布）', (st.scenes || 0) + ' / ' + (st.published || 0), '个'),
+        card('学员 / 任务', (st.learners || 0) + ' / ' + (st.tasks || 0), ''),
+        card('成绩记录', (st.records || 0) + '', '条'),
+        card('模型评分记录', (st.recordsFromLLM || 0) + '', '条')
+      ].join('');
+    } else {
+      K.innerHTML = '';
+    }
+  }
+  function card(lab, val, unit) {
+    return '<div class="kpi"><div class="lab">' + esc(lab) + '</div>' +
+      '<div class="val">' + esc(val) + (unit ? '<small>' + esc(unit) + '</small>' : '') + '</div></div>';
+  }
+
+  function loadServerAudit() {
+    var A = $('srvAuditBody');
+    A.innerHTML = '<p class="hint" style="padding:14px 16px">加载中…</p>';
+    ADMIN_SYNC.auditLog(40).then(function (items) {
+      if (!items) { A.innerHTML = '<p class="hint" style="padding:14px 16px">读取失败。</p>'; return; }
+      if (!items.length) { A.innerHTML = '<p class="hint" style="padding:14px 16px">暂无操作记录。</p>'; return; }
+      A.innerHTML = '<table class="tbl"><thead><tr><th>时间</th><th>操作人</th><th>动作</th><th>对象</th><th>详情</th></tr></thead><tbody>'
+        + items.map(function (r) {
+            return '<tr><td class="mono">' + esc(r.at) + '</td><td>' + esc(r.userId || '-') + '</td>'
+              + '<td><span class="tag' + (r.action.indexOf('approve') >= 0 ? ' g' : r.action.indexOf('reject') >= 0 ? ' r' : '') + '">'
+              + esc(r.action) + '</span></td><td class="mono">' + esc(r.target || '-') + '</td><td>' + esc(r.detail || '-') + '</td></tr>';
+          }).join('') + '</tbody></table>';
+    });
+  }
+
+  function runCalibration() {
+    var B = $('srvCalibBody');
+    B.innerHTML = '<p class="hint">正在用金标集校准，请稍候…（约 10 条样本逐条过模型）</p>';
+    ADMIN_SYNC.calibrate('auto').then(function (d) {
+      if (!d || d.ok === false) { B.innerHTML = '<p class="hint">校准失败：' + esc((d && d.error) || '未知错误') + '</p>'; return; }
+      SRV.calib = d;
+      var p = d.pass || {};
+      B.innerHTML =
+        '<div class="kv"><span>评分通道</span><b>' + esc(d.channel === 'llm' ? '真实模型（' + (d.mode || 'auto') + '）' : '关键词引擎（降级）') + '</b></div>' +
+        '<div class="kv"><span>样本数</span><b>' + (d.n || 0) + '</b></div>' +
+        '<div class="kv"><span>Pearson 相关系数</span><b style="color:' + (p.pearson ? 'var(--acc-txt)' : 'var(--red)') + '">' +
+          (d.pearson == null ? '—' : d.pearson) + ' <small style="opacity:.6">目标 ≥ 0.8</small></b></div>' +
+        '<div class="kv"><span>MAE 平均绝对误差</span><b style="color:' + (p.mae ? 'var(--acc-txt)' : 'var(--red)') + '">' +
+          (d.mae == null ? '—' : d.mae) + ' <small style="opacity:.6">目标 ≤ 8</small></b></div>' +
+        (d.pearsonNote ? '<p class="hint" style="color:var(--amber)">' + esc(d.pearsonNote) + '</p>' : '') +
+        (d.meaningful === false ? '<p class="hint">关键词引擎的分数无区分度，本次结果<b>不具备校准意义</b>，仅证明链路可通。配置真实 Key 后重跑才有意义。</p>' : '') +
+        '<div class="hint" style="margin-top:8px">分维一致性：' + (d.perDim || []).map(function (x) {
+            var dn = (T.dims.filter(function (z) { return z.id === x.dim; })[0] || {}).name || x.dim;
+            return esc(dn) + ' ' + (x.pearson == null ? '—' : x.pearson);
+          }).join(' · ') + '</div>';
+      toast('校准完成：Pearson ' + (d.pearson == null ? '—' : d.pearson) + ' / MAE ' + (d.mae == null ? '—' : d.mae));
+    });
+  }
+
+  /* ================================================================== *
+   * 主题
+   * ================================================================== */
+  function applyTheme(t) {
+    document.documentElement.dataset.theme = (t === 'light' ? 'light' : '');
+    $('themeBtn').textContent = (t === 'light' ? '深色模式' : '浅色模式');
+  }
+  function initTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem('train-admin-theme'); } catch (e) {}
+    applyTheme(saved === 'light' ? 'light' : 'dark');
+  }
+
+  /* ================================================================== *
+   * 事件委托
+   * ================================================================== */
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!t) return;
+    var act = t.getAttribute('data-act');
+
+    if (act === 'go') { e.preventDefault(); goto(t.getAttribute('data-sec')); return; }
+
+    if (act === 'run-calib') { runCalibration(); return; }
+    if (act === 'reload-scenes') { reloadScenes(); return; }
+    if (act === 'reload-audit') { loadServerAudit(); return; }
+    if (act === 'do-backup') { doBackup(); return; }
+    if (act === 'gold-sample') { goldSample(); return; }
+    if (act === 'do-gold-import') { doGoldImport(); return; }
+    if (act === 'show-accounts') { showAccounts(); return; }
+
+    /* 登录门 */
+    if (act === 'auth') { onWhoClick(); return; }
+    if (act === 'auth-close') { hideLogin(); return; }
+    if (act === 'auth-do') { doLogin(); return; }
+    if (act === 'auth-logout') { if (confirm('退出登录？')) logout(); return; }
+    if (act === 'auth-fill') {
+      e.preventDefault();
+      $('authAcc').value = t.getAttribute('data-acc') || '';
+      $('authPwd').value = t.getAttribute('data-pwd') || '';
+      $('authErr').style.display = 'none';
+      return;
+    }
+
+    if (act === 'theme') {
+      var next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      applyTheme(next);
+      try { localStorage.setItem('train-admin-theme', next); } catch (err) {}
+      return;
+    }
+
+    if (act === 'close-drawer') { closeDrawer(); return; }
+    if (act === 'export') { toast('原型环境：已模拟导出 CSV'); return; }
+
+    /* 看板 */
+    if (act === 'risk-jump') {
+      REP_F.risk = t.getAttribute('data-risk');
+      goto('report');
+      return;
+    }
+
+    /* 任务列表 */
+    if (act === 'task-filter') { TASK_F = t.getAttribute('data-f'); renderTasks(); return; }
+    if (act === 'task-status') { changeTaskStatus(t.getAttribute('data-tid'), t.getAttribute('data-to')); return; }
+    if (act === 'task-delete') { removeTask(t.getAttribute('data-tid')); return; }
+    if (act === 'task-row') { openTaskDrawer(t.getAttribute('data-tid')); return; }
+
+    /* 学员报告 */
+    if (act === 'rep-risk') { REP_F.risk = t.getAttribute('data-r'); renderReport(); return; }
+    if (act === 'rep-row') { openLearnerDrawer(t.getAttribute('data-lid')); return; }
+    if (act === 'turns') { toggleTurns(t.getAttribute('data-rid')); return; }
+
+    /* 场景库 */
+    if (act === 'scene-expand') { var sid = t.getAttribute('data-sid'); sceneOpen[sid] = !sceneOpen[sid]; renderScenes(); return; }
+    if (act === 'scene-edit') { ED.curId = t.getAttribute('data-sid'); ED.dirty = false; goto('editor'); return; }
+    if (act === 'assign-scene') {
+      var asid = t.getAttribute('data-sid');
+      if (!canAssign(asid)) {
+        toast('场景「' + sceneById2(asid).name + '」尚未发布（' + V_STATUS[auditOf(asid).status] + '），不能下发学员');
+        return;
+      }
+      WIZ.sceneId = asid;
+      WIZ.step = 1;
+      WIZ.passLine = sceneById2(WIZ.sceneId).passLine;
+      goto('assign');
+      toast('已预选场景「' + sceneById2(WIZ.sceneId).name + '」，请继续选择学员');
+      return;
+    }
+
+    /* ============ 场景编辑器 ============ */
+    if (act === 'editor-new') {
+      var ns = blankScene();
+      SCENES.push(ns);
+      setAudit(ns.id, { status: 'draft', submitBy: '', submitAt: '', rejectReason: '' });
+      STORE.versions[ns.id] = [];
+      ED.curId = ns.id; ED.dirty = true;
+      persist();
+      goto('editor');
+      toast('已新建场景「' + ns.name + '」，请补全元信息与剧本');
+      return;
+    }
+    if (act === 'editor-duplicate') {
+      var src = sceneById2(ED.curId);
+      if (!src) return;
+      var cp = JSON.parse(JSON.stringify(src));
+      cp.id = nextSceneId();
+      cp.code = 'SC-' + cp.id;
+      cp.name = src.name + '（副本）';
+      cp.status = 'draft';
+      cp.publish = 'draft';
+      SCENES.push(cp);
+      setAudit(cp.id, { status: 'draft', submitBy: '', submitAt: '', rejectReason: '' });
+      STORE.versions[cp.id] = [];
+      ED.curId = cp.id; ED.dirty = true;
+      persist();
+      renderEditor();
+      toast('已复制为新场景「' + cp.name + '」（草稿，需提交审核后下发）');
+      return;
+    }
+    if (act === 'ed-pick') {
+      if (ED.dirty && !confirm('当前场景有未保存的修改，切换将丢失，确定继续？')) return;
+      ED.curId = t.getAttribute('data-sid'); ED.dirty = false; ED.kwDraft = {};
+      renderEditor();
+      return;
+    }
+    if (act === 'ed-revert') {
+      var cur = sceneById2(ED.curId);
+      if (cur) {
+        /* 放弃未保存修改：回到最近一个已保存版本；若无版本则回到初始数据源 */
+        var vs = versionsOf(cur.id);
+        var base = vs.length ? deepClone(vs[0].snapshot)
+                             : deepClone((T.scenes.filter(function (x) { return x.id === cur.id; })[0] || cur));
+        base.id = cur.id; base.code = cur.code;
+        var idx = SCENES.indexOf(cur);
+        SCENES[idx] = base;
+      }
+      ED.dirty = false; ED.kwDraft = {};
+      persist(); renderEditor();
+      toast('已放弃修改，恢复为上次保存的内容');
+      return;
+    }
+    if (act === 'ed-save') { saveScene(); return; }
+    if (act === 'ed-obj-add') {
+      var sco = sceneById2(ED.curId);
+      sco.objectives.push({ text: '', dim: DIMS[0].id });
+      ED.dirty = true; renderEditor(); return;
+    }
+    if (act === 'ed-obj-del') {
+      var sod = sceneById2(ED.curId);
+      sod.objectives.splice(parseInt(t.getAttribute('data-i'), 10), 1);
+      ED.dirty = true; renderEditor(); return;
+    }
+    if (act === 'ed-line-add') {
+      var scl = sceneById2(ED.curId);
+      scl.script.push({ t: '', v: 6 });
+      ED.dirty = true; renderEditor(); return;
+    }
+    if (act === 'ed-line-del') {
+      var sln = sceneById2(ED.curId);
+      sln.script.splice(parseInt(t.getAttribute('data-i'), 10), 1);
+      ED.dirty = true; renderEditor(); return;
+    }
+    if (act === 'vp-addgroup') {
+      var svp = sceneById2(ED.curId);
+      if (!svp.voicePool) svp.voicePool = [];
+      svp.voicePool.push(['']);
+      ED.dirty = true; renderEditor(); return;
+    }
+    if (act === 'vp-add') {
+      var svpa = sceneById2(ED.curId);
+      svpa.voicePool[parseInt(t.getAttribute('data-gi'), 10)].push('');
+      ED.dirty = true; renderEditor(); return;
+    }
+    if (act === 'vp-del') {
+      var svpd = sceneById2(ED.curId);
+      var g = parseInt(t.getAttribute('data-gi'), 10), ti = parseInt(t.getAttribute('data-ti'), 10);
+      svpd.voicePool[g].splice(ti, 1);
+      if (!svpd.voicePool[g].length) svpd.voicePool.splice(g, 1);
+      ED.dirty = true; renderEditor(); return;
+    }
+    if (act === 'kw-add') { kwAdd(t.getAttribute('data-d')); return; }
+    if (act === 'kw-del') { kwDel(t.getAttribute('data-d'), t.getAttribute('data-w')); return; }
+    if (act === 'editor-export') { exportScene(); return; }
+    if (act === 'ed-versions') { openVersions(); return; }
+    if (act === 'ed-vdiff') { openDiff(parseInt(t.getAttribute('data-v'), 10)); return; }
+    if (act === 'ed-vrollback') {
+      var rv = parseInt(t.getAttribute('data-v'), 10);
+      if (confirm('确定回滚到 v' + rv + '？当前内容将被该版本覆盖（会生成一个新版本记录）。')) rollback(rv);
+      return;
+    }
+    if (act === 'ed-submit') { submitReview(); return; }
+    if (act === 'ed-approve') { approveScene(); return; }
+    if (act === 'ed-reject') { rejectScene(); return; }
+    if (act === 'ed-offline') {
+      if (confirm('确定下线该场景？下线后不可再下发学员。')) offlineScene();
+      return;
+    }
+    if (act === 'editor-reset') {
+      if (confirm('确定重置？这将清空本地所有编辑改动与版本记录，恢复为 app-data.js 的初始场景。')) {
+        resetStore(); renderEditor();
+        toast('已重置为初始数据（本地改动与版本记录已清空）');
+      }
+      return;
+    }
+
+    /* 向导 */
+    if (act === 'wiz-scene') {
+      var wsid = t.getAttribute('data-sid');
+      if (!canAssign(wsid)) {
+        toast('该场景未发布（' + V_STATUS[auditOf(wsid).status] + '），不能选中下发');
+        return;
+      }
+      WIZ.sceneId = wsid;
+      WIZ.passLine = sceneById2(WIZ.sceneId).passLine;
+      renderWizard();
+      return;
+    }
+    if (act === 'wiz-chk') {
+      var lid = t.getAttribute('data-lid');
+      if (WIZ.sel[lid]) delete WIZ.sel[lid]; else WIZ.sel[lid] = true;
+      renderWizard();
+      return;
+    }
+    if (act === 'wiz-selall') { LEARNERS.forEach(function (l) { WIZ.sel[l.id] = true; }); renderWizard(); return; }
+    if (act === 'wiz-selnone') { WIZ.sel = {}; renderWizard(); return; }
+    if (act === 'wiz-seldept') {
+      var dp = t.getAttribute('data-dept');
+      var list = LEARNERS.filter(function (l) { return l.dept === dp; });
+      var allOn = list.every(function (l) { return !!WIZ.sel[l.id]; });
+      list.forEach(function (l) { if (allOn) delete WIZ.sel[l.id]; else WIZ.sel[l.id] = true; });
+      renderWizard();
+      return;
+    }
+    if (act === 'wiz-prev') { WIZ.step = Math.max(1, WIZ.step - 1); renderWizard(); return; }
+    if (act === 'wiz-next') { wizNext(); return; }
+    if (act === 'wiz-submit') { submitWizard(); return; }
+  });
+
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t || !t.getAttribute) return;
+    var act = t.getAttribute('data-act');
+    if (act === 'wiz-pass') { WIZ.passLine = t.value; return; }
+    if (act === 'wiz-note') { WIZ.note = t.value; return; }
+    if (act === 'rep-q') { REP_F.q = t.value; renderRepRows(); return; }
+
+    /* 场景编辑器：标量字段即时写入（不重渲染，避免输入框失焦） */
+    if (act === 'ed-f') {
+      var s = sceneById2(ED.curId); if (!s) return;
+      var k = t.getAttribute('data-k');
+      var nv = t.getAttribute('data-num') ? (parseInt(t.value, 10) || 0) : t.value;
+      if (String(s[k]) === String(nv)) return;
+      s[k] = nv;
+      markDirty();
+      return;
+    }
+    if (act === 'ed-obj-t') {
+      var so = sceneById2(ED.curId);
+      so.objectives[parseInt(t.getAttribute('data-i'), 10)].text = t.value;
+      markDirty(); return;
+    }
+    if (act === 'ed-line-t') {
+      var sl = sceneById2(ED.curId);
+      sl.script[parseInt(t.getAttribute('data-i'), 10)].t = t.value;
+      markDirty(); return;
+    }
+    if (act === 'ed-line-v') {
+      var slv = sceneById2(ED.curId);
+      slv.script[parseInt(t.getAttribute('data-i'), 10)].v = parseInt(t.value, 10) || 0;
+      markDirty(); return;
+    }
+    if (act === 'vp-t') {
+      var sv = sceneById2(ED.curId);
+      sv.voicePool[parseInt(t.getAttribute('data-gi'), 10)][parseInt(t.getAttribute('data-ti'), 10)] = t.value;
+      markDirty(); return;
+    }
+    if (act === 'kw-draft') { ED.kwDraft[t.getAttribute('data-d')] = t.value; return; }
+  });
+
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (!t || !t.getAttribute) return;
+    var act = t.getAttribute('data-act');
+    if (act === 'wiz-due') { WIZ.dueAt = t.value; return; }
+    if (act === 'rep-dept') {
+      REP_F.dept = t.value;
+      [].forEach.call($('riskSeg').children, function (b) {
+        b.classList.toggle('on', b.getAttribute('data-r') === REP_F.risk);
+      });
+      renderRepRows();
+      return;
+    }
+    /* 下拉类：改了要重渲染（校验结果会变） */
+    if (act === 'ed-f' || act === 'ed-obj-d') {
+      var s2 = sceneById2(ED.curId); if (!s2) return;
+      var kk = t.getAttribute('data-k');
+      var changed;
+      if (act === 'ed-f') { changed = String(s2[kk]) !== String(t.value); s2[kk] = t.value; }
+      else {
+        var oi = parseInt(t.getAttribute('data-i'), 10);
+        changed = s2.objectives[oi].dim !== t.value;
+        s2.objectives[oi].dim = t.value;
+      }
+      if (!changed) return;                  /* 值没变就不标脏（重渲染会触发一次 change） */
+      markDirty(true);
+      return;
+    }
+    if (act === 'kw-owner') { ED.kwDraft[t.getAttribute('data-d')] = ED.kwDraft[t.getAttribute('data-d')] || ''; return; }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    /* 登录框：回车提交 / Esc 关闭 */
+    if (e.key === 'Enter' && (e.target.id === 'authAcc' || e.target.id === 'authPwd')) {
+      e.preventDefault(); doLogin(); return;
+    }
+    /* 关键词输入框回车即添加 */
+    if (e.key === 'Enter') {
+      var el = e.target;
+      if (el && el.getAttribute && el.getAttribute('data-act') === 'kw-draft') {
+        e.preventDefault();
+        kwAdd(el.getAttribute('data-d'));
+        return;
+      }
+    }
+    if (e.key === 'Escape') {
+      if ($('authBox').classList.contains('on')) { hideLogin(); return; }
+      closeDrawer();
+    }
+  });
+
+  window.addEventListener('hashchange', function () {
+    var h = location.hash.slice(1);
+    if (h && h !== CUR_SEC && SECS[h]) goto(h);
+  });
+
+  /* ================================================================== *
+   * 启动
+   * ================================================================== */
+  function boot() {
+    initTheme();
+    $('orgLine').textContent = T.meta.org;
+    /* 向导默认值：默认截止时间 = 5 天后 18:00 */
+    var d = new Date();
+    d.setDate(d.getDate() + 5);
+    d.setHours(18, 0, 0, 0);
+    WIZ.dueAt = toLocalInput(d);
+    var h = location.hash.slice(1);
+    goto(SECS[h] ? h : 'dash');
+
+    /* 身份与同步层接线 */
+    if (window.ADMIN_SYNC) {
+      ADMIN_SYNC.onAuthLost = function () {
+        renderWho(); renderAuthCard();
+        requireLogin('登录状态已失效，请重新登录');
+      };
+      renderWho();
+      /* 服务端在线则以服务端为准拉一次场景库（失败静默，保持本地可用） */
+      ADMIN_SYNC.probe(true).then(function (ok) {
+        renderWho();
+        if (!ok) return;
+        refreshFromServer().then(function () {
+          renderWho();
+          if (ADMIN_SYNC.authMode === 'enforce' && !ADMIN_SYNC.loggedIn) {
+            requireLogin('该服务端已开启强制登录（AUTH_MODE=enforce），请先登录后再编辑场景。');
+          }
+          /* 场景就绪后再水合学员/任务/成绩（口径与服务端一致） */
+          return hydrateFromServer();
+        }).then(function () { renderWho(); });
+      });
+    } else {
+      renderWho();
+    }
+
+    /* 无头验证探针 */
+    window.__probe = function () {
+      var cur = sceneById2(ED.curId);
+      var au = cur ? auditOf(cur.id) : null;
+      return {
+        sec: CUR_SEC,
+        sceneCount: SCENES.length,
+        sourceCount: (T.scenes || []).length,
+        curId: ED.curId,
+        curName: cur ? cur.name : null,
+        curPass: cur ? cur.passLine : null,
+        curObj: cur ? cur.objectives.length : null,
+        curScript: cur ? cur.script.length : null,
+        dirty: ED.dirty,
+        validate: cur ? validateScene(cur).map(function (x) { return x.lv + ':' + x.msg; }) : [],
+        kwTotal: DIMS.reduce(function (a, dd) { return a + kwOf(dd.id).length; }, 0),
+        sourceKwTotal: DIMS.reduce(function (a, dd) { return a + ((T.kw[dd.id] || []).length); }, 0),
+        publish: au ? au.status : null,
+        versions: cur ? versionCount(cur.id) : 0,
+        canAssign: cur ? canAssign(cur.id) : false,
+        versionList: cur ? versionsOf(cur.id).map(function (x) { return 'v' + x.v + ':' + x.note; }) : [],
+        auditAll: SCENES.reduce(function (a, s) { a[s.id] = auditOf(s.id).status; return a; }, {}),
+        assignable: SCENES.filter(function (s) { return canAssign(s.id); }).map(function (s) { return s.id; }),
+        /* P3：服务端与身份状态 */
+        srvOnline: srvOnline(),
+        srvBase: window.ADMIN_SYNC ? ADMIN_SYNC.base : null,
+        authMode: window.ADMIN_SYNC ? ADMIN_SYNC.authMode : null,
+        loggedIn: window.ADMIN_SYNC ? ADMIN_SYNC.loggedIn : false,
+        authUser: (window.ADMIN_SYNC && ADMIN_SYNC.authUser) ? ADMIN_SYNC.authUser.id : null,
+        canSrvWrite: canSrvWrite(),
+        loginBoxOpen: $('authBox').classList.contains('on'),
+        /* P4：水合后的口径（应等于服务端按范围过滤后的结果） */
+        authScope: (window.ADMIN_SYNC && ADMIN_SYNC.authUser) ? ADMIN_SYNC.authUser.scope : null,
+        authScopeLabel: (window.ADMIN_SYNC && ADMIN_SYNC.authUser) ? ADMIN_SYNC.authUser.scopeLabel : null,
+        learnerCount: T.learners.length,
+        taskCount: T.tasks.length,
+        recordCount: T.records.length
+      };
+    };
+  }
+  boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+{
+    "title": "Difficult Customer Interaction",
+    "description": "Handle an upset customer with a billing dispute professionally",
+    "type": "customer_service",
+    "objectives": [
+        "De-escalate emotional situations",
+        "Listen actively and show empathy",
+        "Gather facts while managing emotions",
+        "Find mutually acceptable solutions",
+        "End interactions on a positive note"
+    ],
+    "simulationSettings": {
+        "icon": "🎧",
+        "title": "Customer Service Excellence",
+        "subtitle": "Handle challenging customer situations",
+        "userRole": "Customer Service Representative",
+        "aiRole": "Upset Customer"
+    },
+    "phases": [
+        {
+            "id": "de_escalation",
+            "title": "Phase 1: Initial Contact & De-escalation",
+            "objective": "Calm the customer and understand their concern",
+            "maxResponses": 4,
+            "aiPrompt": "You are an angry customer who received a bill that's $200 higher than expected. You've been a loyal customer for 5 years and feel like you're being taken advantage of. Start upset and demanding, but calm down if the representative shows genuine concern and professionalism. Don't reveal all details immediately - you're emotional and focused on the high bill.",
+            "successCriteria": [
+                "Acknowledged customer's frustration",
+                "Used calming language and tone",
+                "Asked open-ended questions",
+                "Avoided defensive responses"
+            ],
+            "startingMessage": "I just got my bill and it's $200 more than usual! This is ridiculous! I've been with your company for 5 years and this is how you treat loyal customers?"
+        },
+        {
+            "id": "fact_gathering",
+            "title": "Phase 2: Information Collection",
+            "objective": "Gather details while maintaining rapport",
+            "maxResponses": 4,
+            "aiPrompt": "You're still concerned but appreciate being heard. You can provide your account details (Account #12345). The extra charges are for 'premium support services' that you don't remember signing up for. You did call last month about internet speed issues and talked to someone, but you thought it was just troubleshooting.",
+            "successCriteria": [
+                "Collected relevant account information",
+                "Asked clarifying questions about the charges",
+                "Maintained empathetic tone while gathering facts",
+                "Summarized understanding back to customer"
+            ],
+            "startingMessage": "Thank you for listening. I just don't understand these extra charges. Can you help me figure out what happened?"
+        },
+        {
+            "id": "solution_development",
+            "title": "Phase 3: Problem Resolution",
+            "objective": "Find and present solution options",
+            "maxResponses": 4,
+            "aiPrompt": "You want a fair resolution. You're willing to pay for services you actually use, but you feel the premium support was added without clear consent. You'd be satisfied if the charges were removed and you could get better communication about any future service changes. You appreciate the representative's help and professionalism.",
+            "successCriteria": [
+                "Presented clear solution options",
+                "Explained what can be done to resolve the issue",
+                "Confirmed customer understanding and agreement",
+                "Set appropriate expectations"
+            ],
+            "startingMessage": "So what can we do about these charges? I just want to be treated fairly here."
+        },
+        {
+            "id": "resolution_confirmation",
+            "title": "Phase 4: Closing & Follow-up",
+            "objective": "Confirm resolution and ensure satisfaction",
+            "maxResponses": 3,
+            "aiPrompt": "You're satisfied with the solution and grateful for the help. You appreciate that the representative took time to understand the situation and worked to resolve it fairly. You want confirmation of what will happen next and when you'll see the credit on your account.",
+            "successCriteria": [
+                "Confirmed all resolution details",
+                "Provided timeline for resolution",
+                "Ensured customer satisfaction",
+                "Offered additional assistance"
+            ],
+            "startingMessage": "That sounds fair. Can you confirm what will happen next and when I'll see this resolved on my account?"
+        }
+    ],
+    "nodes": {
+        "pre_assessment": {
+            "text": "<strong>Difficult Customer Interaction</strong><br><br><strong>Pre-assessment</strong><br><br>You're about to handle a customer service call with an upset customer who has a billing dispute. The customer is angry about a $200 increase in their bill and feels they're being taken advantage of. Choose your approach:<br><br><strong>Approach A: Empathy First</strong> Start by acknowledging their frustration and showing genuine concern before gathering details.<br><br><strong>Approach B: Information Gathering</strong> Focus on quickly collecting account details and understanding the specific charges.<br><br><strong>Approach C: Solution-Oriented</strong> Immediately work toward finding a resolution while managing their emotions.",
+            "choices": [
+                { "text": "Choose Approach A: Empathy First", "next": "ai_mode", "choiceId": "empathy_approach" },
+                { "text": "Choose Approach B: Information Gathering", "next": "ai_mode", "choiceId": "information_approach" },
+                { "text": "Choose Approach C: Solution-Oriented", "next": "ai_mode", "choiceId": "solution_approach" }
+            ]
+        },
+        "ai_mode": {
+            "text": "Perfect! You've chosen your customer service approach. Now let's start handling the customer's billing dispute.",
+            "aiConversation": true,
+            "choices": []
+        }
+    }
+}
