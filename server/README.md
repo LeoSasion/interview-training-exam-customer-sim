@@ -244,9 +244,10 @@ LLM_API_KEY=mock-key LLM_BASE_URL=http://127.0.0.1:8999/v1 LLM_MODEL=mock-scorer
 | POST | `/session/:id/turn` | practice | 一轮对话：AI 评分 + NPC 回复（允许匿名） |
 | POST | `/session/:id/finish` | practice | 结束会话，写一条成绩记录（允许匿名） |
 | GET | `/records` `/learners` `/users` | staff | 培训数据（**按登录身份的数据范围过滤**；`/records` 每条带 `qc` 质检状态、`turnCount` 与 `mode` 来源（`task`=任务考核 / `free`=自主练习，由 `task_id` 推导），**刻意不带逐轮对话正文**，见下方「逐轮对话」；支持 `?mode=task|free` 筛选，可与 `?learnerId=` 组合） |
+| GET | `/records` `/learners` `/tasks` `/coach-notes` `/audit` | — | **列表分页统一口径（P9）**：`?limit=&offset=`（`limit∈[1,500]`、`offset≥0`，非法 400），返回 `{ items, total, limit, offset, hasMore }`，`total` 是筛选后总数；**不带分页参数仍是全量**（三端水合依赖，audit 例外：无参默认最近 100 条）。翻页配**稳定排序**（主键次级定序），不重不漏 |
 | GET | `/records/:id/turns` | staff | **一条成绩的逐轮对话（P7）**。只卡**数据可见范围**（不卡 `can_edit`/`can_review` —— 看自己名下学员的对话是带教本职）。越范围 / 无归属成绩一律 403，不存在 404 |
 | DELETE | `/records/:id` | staff（需编辑权） | 删除一条成绩（**连带删掉它的质检结论**，避免留下无主结论） |
-| GET | `/coach-notes` | staff | 辅导记录（按数据范围过滤；`?learnerId=` 收窄到某学员） |
+| GET | `/coach-notes` | staff | 辅导记录（按数据范围过滤；`?learnerId=` 收窄到某学员，**`?q=` 全文包含检索（P9）**——LIKE 通配符 `%`/`_`/`\` 已转义，用户输入按字面匹配） |
 | POST | `/coach-notes` | staff | 写一条辅导记录（`learnerId` / `text` / 可选 `recordId` `type`） |
 | DELETE | `/coach-notes/:id` | staff | 删除辅导记录（**仅限本人写的**，admin 例外） |
 | GET | `/qc` | staff | 质检结论列表（按数据范围过滤） |
@@ -258,7 +259,7 @@ LLM_API_KEY=mock-key LLM_BASE_URL=http://127.0.0.1:8999/v1 LLM_MODEL=mock-scorer
 | PUT | `/tasks/:id` | staff | 更新任务（路径 `id` 优先于请求体） |
 | POST | `/tasks/:id/status` | staff | 改状态（`running` / `finished` / `draft`） |
 | DELETE | `/tasks/:id` | staff | 删除任务（连带清掉指派人关联） |
-| GET | `/audit` | staff | 操作审计日志（**按数据范围过滤**） |
+| GET | `/audit` | staff | 操作审计日志（**按数据范围过滤**；P9 起 SQL 化范围过滤 + 分页——旧实现「先 LIMIT 再 JS 过滤」会让带范围账号看到**少于 limit** 的行且没有 total，已修正；管理端服务端页的审计卡片带翻页，逐页浏览全量留痕） |
 | GET | `/goldset` | staff | 金标集 |
 | POST | `/goldset/import` | staff | 导入金标样本（同 id 覆盖更新） |
 | POST | `/goldset/calibrate` | staff | 运行校准（`mode`: auto/llm/keyword） |
@@ -552,9 +553,9 @@ DB_SYNC=FULL node server/index.js
 | 进程守护 | 脚本只是前台运行；生产建议用 systemd / pm2 / Windows 服务包装 |
 | 数据库 | 当前 SQLite 单文件 + **单进程同步 API**（写入天然串行）：实测写吞吐 ~470 req/s（`DB_SYNC=NORMAL`），够数百人同时练；并发写压力再大时迁 PostgreSQL |
 | 统一身份 | `server/auth.js` 接口不变，可整体换成企业 SSO / 企业微信扫码 |
-| 接口分页 | `/records` `/learners` `/tasks` 目前一次返回全部（演示数据量小）；数据量大时要补 `limit/offset`。**P7 已先还掉一部分**：逐轮对话正文撤出 `/records` 列表，改为 `GET /records/:id/turns` 按需取 |
+| 接口分页 | **P9 已统一补齐**：五个列表接口都支持 `?limit=&offset=`（校验 + `total`/`hasMore` + 稳定排序）。三端页面的「一次拉全量 + 本地统计」是**刻意架构**（离线兜底依赖本地全量），分页面向导出 / 对接 / 未来轻客户端 |
 | 逐轮对话留存 | 逐轮明细存在 `records.evidence` 这一列 JSON 里；它有按需接口与权限，但**没有独立的检索/统计**（比如"全校最常出现的敷衍话术"），要另做 |
-| 辅导记录检索 | `/coach-notes` 只能按学员收窄，没有全文检索与分页；带教记录攒多了要补 |
+| 辅导记录检索 | **P9 已补 `?q=` 全文包含检索**（服务端能力，LIKE 通配符已转义）；UI 侧暂无搜索入口，检索面向对接与导出脚本 |
 | 学员端场景热更新 | **P8 已补 60s 轻轮询**：页面开着（且可见）就会同步新发布场景与新下发任务，不必刷新；仅页面不可见时暂停（后台标签页不耗流量）。轮询间隔为编译期常量，需调优时改学员端 `setInterval` 处 |
 
 ---

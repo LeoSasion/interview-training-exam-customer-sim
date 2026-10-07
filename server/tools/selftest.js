@@ -350,6 +350,78 @@ async function login(account, password) {
       l01free.some((r) => r.id === anonRecId) && l01free.every((r) => r.mode === 'free' && r.learnerId === 'L01'));
   }
 
+  /* ---- 4d. P9：列表分页统一口径 + 辅导记录检索 ----
+   * 这一段存在的理由：列表接口（records/learners/tasks/coach-notes）一次返回全量，
+   * 数据量大时会拖垮调用方；audit 老实现还是「先 LIMIT 再 JS 过滤」，带范围的账号
+   * 看到的行数比 limit 还少且没有 total —— 分页语义是错的。 */
+  console.log('  ─────────────────────────────────────────');
+  console.log('  P9：列表分页与检索');
+  {
+    // 向后兼容：无参必须仍是全量，且形状统一（items/total/limit/offset/hasMore 五件套）
+    const all9 = data(await call('GET', '/records', undefined, { token: adm.token })) || {};
+    ok('records 无参仍回全量（三端水合依赖，向后兼容）',
+      (all9.items || []).length === all9.total && all9.hasMore === false,
+      (all9.items || []).length + '/' + all9.total);
+    // 翻页不重不漏 + meta 正确（稳定排序：at 相同按 id 定序）
+    const p9a = data(await call('GET', '/records?limit=10&offset=0', undefined, { token: adm.token })) || {};
+    const p9b = data(await call('GET', '/records?limit=10&offset=10', undefined, { token: adm.token })) || {};
+    const ids9 = (x) => (x.items || []).map((r) => r.id);
+    const i9a = ids9(p9a), i9b = ids9(p9b), i9all = ids9(all9);
+    ok('翻页两页行数正确（10/' + Math.min(10, all9.total - 10) + '）',
+      i9a.length === 10 && i9b.length === Math.min(10, all9.total - 10));
+    ok('翻页两页无重叠且都在全量里（稳定排序）',
+      i9a.length > 0 && i9a.every((x) => i9b.indexOf(x) < 0) && i9a.concat(i9b).every((x) => i9all.indexOf(x) >= 0));
+    ok('翻页 meta 正确（total===全量、首页 hasMore）',
+      p9a.total === all9.total && p9a.hasMore === true && p9a.limit === 10 && p9a.offset === 0);
+    // 分页与筛选组合：total 是「筛选后」的总数，不因分页而变
+    const l01a = data(await call('GET', '/records?learnerId=L01', undefined, { token: adm.token })) || {};
+    const l01p = data(await call('GET', '/records?learnerId=L01&limit=1', undefined, { token: adm.token })) || {};
+    ok('分页与 learnerId 筛选可组合（total 不因分页变）',
+      l01p.total === l01a.total && (l01p.items || []).length === 1);
+    // 非法分页参数一律 400（宁拒不猜：防 limit=0 / 负数 / 小数 / 巨值把库拖垮）
+    for (const bad9 of ['limit=0', 'limit=501', 'limit=abc', 'offset=-1', 'limit=2.5']) {
+      eq('非法分页参数被拒 400（' + bad9 + '）',
+        (await call('GET', '/records?' + bad9, undefined, { token: adm.token })).status, 400);
+    }
+    // 其它列表接口同口径
+    const lr9 = data(await call('GET', '/learners?limit=2', undefined, { token: adm.token })) || {};
+    ok('learners 分页同口径', (lr9.items || []).length === 2 && lr9.total > 2 && lr9.hasMore === true,
+      (lr9.items || []).length + '/' + lr9.total);
+    const tk9 = data(await call('GET', '/tasks?limit=2', undefined, { token: adm.token })) || {};
+    ok('tasks 分页同口径（staff 视角）', (tk9.items || []).length === 2 && tk9.hasMore === true);
+    const tkl9 = data(await call('GET', '/tasks?learnerId=L01&limit=1', undefined)) || {};
+    ok('学员端任务分页同口径（匿名）', (tkl9.items || []).length === 1 && tkl9.total === 2 && tkl9.hasMore === true,
+      (tkl9.items || []).length + '/' + tkl9.total);
+    // 辅导记录检索：演示种子「价格异议」必命中；LIKE 通配符必须转义
+    const nHit = data(await call('GET', '/coach-notes?q=' + encodeURIComponent('价格异议'), undefined, { token: adm.token })) || {};
+    ok('辅导记录按关键字命中且只含命中行',
+      (nHit.items || []).length >= 1 && nHit.items.every((n) => (n.text || '').indexOf('价格异议') >= 0));
+    const nMiss = data(await call('GET', '/coach-notes?q=' + encodeURIComponent('绝不存在的检索串'), undefined, { token: adm.token })) || {};
+    ok('检索不命中返回空（而非全表）', (nMiss.items || []).length === 0 && nMiss.total === 0);
+    const nPct = data(await call('GET', '/coach-notes?q=%25', undefined, { token: adm.token })) || {};
+    ok('检索的 % 被转义（按字面匹配，非全表）', (nPct.items || []).length === 0, '命中 ' + (nPct.items || []).length);
+    const nUnd = data(await call('GET', '/coach-notes?q=_', undefined, { token: adm.token })) || {};
+    ok('检索的 _ 被转义（按字面匹配，非全表）', (nUnd.items || []).length === 0, '命中 ' + (nUnd.items || []).length);
+    // audit：默认 100 条 + total + 翻页无重叠
+    const au1 = data(await call('GET', '/audit', undefined, { token: adm.token })) || {};
+    ok('审计默认最多 100 条且 total/hasMore 如实',
+      (au1.items || []).length <= 100 && au1.total >= (au1.items || []).length &&
+      au1.hasMore === ((au1.items || []).length < au1.total),
+      (au1.items || []).length + '/' + au1.total);
+    const au2 = data(await call('GET', '/audit?limit=50&offset=100', undefined, { token: adm.token })) || {};
+    const a1 = (au1.items || []).map((x) => x.id), a2 = (au2.items || []).map((x) => x.id);
+    ok('审计翻页与首页无重叠（offset=100 起的第二页）',
+      a1.length > 0 && a2.length > 0 && a2.every((x) => a1.indexOf(x) < 0));
+    // 老实现的坑：先 LIMIT 再 JS 过滤 → 带范围账号看到少于 limit 的行且 total 语义缺失。
+    // SQL 化修正后：条数 === total，且范围（dept）账号的 total 不超过全量。
+    const auc = data(await call('GET', '/audit?limit=500', undefined, { token: cch.token })) || {};
+    ok('审计按范围过滤后条数 === total（SQL 化修正）',
+      (auc.items || []).length === auc.total && auc.total <= au1.total,
+      (auc.items || []).length + '/' + auc.total + ' vs 全量 ' + au1.total);
+    ok('范围账号的审计只含本部门与自己', (auc.items || []).length === 0 ||
+      auc.items.every((x) => ['U-COACH1', 'U-COACH3', 'U-REV01'].indexOf(x.userId) >= 0));
+  }
+
   /* ---- 5. 金标校准 ---- */
   const calib = await call('POST', '/goldset/calibrate', { mode: 'auto' }, { token: adm.token });
   const cd = data(calib);

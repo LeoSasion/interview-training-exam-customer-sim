@@ -252,12 +252,26 @@
     return null;
   }
 
-  async function auditLog(limit) {
+  /**
+   * 操作审计日志（P9 起支持翻页）。
+   * @param {object|number} query 传数字按旧口径（只截前 N 条）；传 {limit, offset} 走分页。
+   * @returns {Promise<{ok:true, items:Array, total:number, hasMore:boolean}|{ok:false, error:string, status:number}>}
+   *          失败不抛错，调用方按 ok:false 处理（离线时显示「未连接」而不是白屏）。
+   */
+  async function auditLog(query) {
+    var q = (query && typeof query === 'object') ? query : { limit: query || 50 };
+    var qs = [];
+    if (q.limit != null) qs.push('limit=' + encodeURIComponent(q.limit));
+    if (q.offset != null) qs.push('offset=' + encodeURIComponent(q.offset));
     try {
-      var r = await req('/audit?limit=' + (limit || 50), { method: 'GET' }, 8000);
-      if (r.body && r.body.ok) return r.body.data.items || [];
+      var r = await req('/audit' + (qs.length ? '?' + qs.join('&') : ''), { method: 'GET' }, 8000);
+      if (r.body && r.body.ok) {
+        var d = r.body.data || {};
+        return { ok: true, items: d.items || [], total: d.total | 0, hasMore: !!d.hasMore };
+      }
+      return { ok: false, error: r.error || ('HTTP ' + r.http), status: r.http };
     } catch (e) { /* ignore */ }
-    return null;
+    return { ok: false, error: '服务端不可达', status: 0 };
   }
 
   /* ---- 数据快照：学员 / 成绩（服务端已按登录身份过滤数据范围） ---- */

@@ -233,11 +233,10 @@ on('POST', /^\/api\/v1\/session\/([^/]+)\/finish$/, async (c) =>
 
 /* ---- 任务（P4）：学员端只读自己的；下发/改期/结束/删除需 staff 身份 ---- */
 on('GET', /^\/api\/v1\/tasks$/, async (c) => {
-  const learnerId = c.query.learnerId;
-  // 学员端：允许匿名读自己的任务清单（不登录也要能练）
-  if (learnerId) return { items: svc.listTasks({ learnerId, status: c.query.status }, null, true) };
+  // 学员端：允许匿名读自己的任务清单（不登录也要能能练）
+  if (c.query.learnerId) return svc.listTasks(c.query, null, true);
   if (!c.user) throw Object.assign(new Error('未登录或登录状态已失效'), { status: 401 });
-  return { items: svc.listTasks(c.query, c.user) };
+  return svc.listTasks(c.query, c.user);
 }, 'practice');
 
 on('GET', /^\/api\/v1\/tasks\/([^/]+)$/, async (c) => {
@@ -257,7 +256,7 @@ on('DELETE', /^\/api\/v1\/tasks\/([^/]+)$/, async (c) => svc.deleteTask(c.params
 /* ---- 教练动作（P5）：辅导记录 / 对话质检 ----
  * 这两件事是**带教主管的本职**，所以不卡 can_edit / can_review，
  * 只要求可解析出身份（staff），范围校验在 service 层按数据可见范围做。 */
-on('GET', /^\/api\/v1\/coach-notes$/, async (c) => ({ items: svc.listCoachNotes(c.query.learnerId, c.user) }));
+on('GET', /^\/api\/v1\/coach-notes$/, async (c) => svc.listCoachNotes(c.query, c.user));
 on('POST', /^\/api\/v1\/coach-notes$/, async (c) => svc.saveCoachNote(c.body, c.user.id));
 on('DELETE', /^\/api\/v1\/coach-notes\/([^/]+)$/, async (c) => svc.deleteCoachNote(c.params[0], c.user.id));
 on('GET', /^\/api\/v1\/qc$/, async (c) => ({ items: svc.listQc(c.user) }));
@@ -271,11 +270,13 @@ on('GET', /^\/api\/v1\/records\/([^/]+)\/turns$/, async (c) => svc.listTurns(c.p
 // 必须排在 /records/:id/qc 之后：前者带子路径，先匹配更具体的
 on('DELETE', /^\/api\/v1\/records\/([^/]+)$/, async (c) => svc.deleteRecord(c.params[0], c.user.id));
 
-/* ---- 数据查询（全部按登录身份的数据范围过滤） ---- */
-on('GET', /^\/api\/v1\/records$/, async (c) => ({ items: svc.listRecords(c.query, c.user) }));
-on('GET', /^\/api\/v1\/learners$/, async (c) => ({ items: svc.listLearners(c.user) }));
+/* ---- 数据查询（全部按登录身份的数据范围过滤） ----
+ * 五个列表接口统一分页口径（P9）：不带 limit/offset 返回全量（audit 默认最近 100 条）；
+ * 带则校验 limit∈[1,500] / offset>=0，返回 { items, total, limit, offset, hasMore }。 */
+on('GET', /^\/api\/v1\/records$/, async (c) => svc.listRecords(c.query, c.user));
+on('GET', /^\/api\/v1\/learners$/, async (c) => svc.listLearners(c.query, c.user));
 on('GET', /^\/api\/v1\/users$/, async () => ({ items: svc.listUsers() }));
-on('GET', /^\/api\/v1\/audit$/, async (c) => ({ items: svc.listAuditLog(Number(c.query.limit) || 100, c.user) }));
+on('GET', /^\/api\/v1\/audit$/, async (c) => svc.listAuditLog(c.query, c.user));
 
 /* ---- 金标集与校准 ---- */
 on('GET', /^\/api\/v1\/goldset$/, async () => ({ items: gold.listGold() }));

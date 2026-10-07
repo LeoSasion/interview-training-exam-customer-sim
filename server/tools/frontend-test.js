@@ -482,6 +482,27 @@ const LT = win.TRAIN;
   ok(realHtml.indexOf(demoScene.objectives[0].text) >= 0, '每轮带上该轮训练目标');
 
   /* ------------------------------------------------------------ *
+   * 3f. 审计翻页真接口往返（P9）：同步层 auditLog({limit,offset}) →
+   *     服务端分页 → total/hasMore 如实回读。用相对断言，任何登录
+   *     身份（mentor/dept/all）下都成立。
+   * ------------------------------------------------------------ */
+  sec('3f. 审计翻页往返（P9）');
+  {
+    const auA = await SYNC.auditLog({ limit: 30, offset: 0 });
+    ok(!!auA && auA.ok && Array.isArray(auA.items),
+      'auditLog({limit,offset}) 返回 {ok, items}（不再只是数组）');
+    ok(auA && auA.items.length === Math.min(30, auA.total),
+      '第一页条数 = min(limit, total)（' + (auA ? auA.items.length : 0) + '/' + (auA ? auA.total : 0) + '）');
+    const auB = await SYNC.auditLog({ limit: 30, offset: 30 });
+    const ia = (auA && auA.items || []).map((x) => x.id);
+    const ib = (auB && auB.items || []).map((x) => x.id);
+    ok(ia.length > 0 && ib.every((x) => ia.indexOf(x) < 0),
+      '第二页与第一页无重叠（服务端排序稳定）');
+    ok(!!auA && typeof auA.total === 'number' && auA.hasMore === (auA.items.length < auA.total),
+      'total/hasMore 如实（hasMore=' + (auA ? auA.hasMore : '?') + '）');
+  }
+
+  /* ------------------------------------------------------------ *
    * 4. 关键接线断言（防止改漏）
    * ------------------------------------------------------------ */
   sec('4. 关键接线断言');
@@ -557,6 +578,20 @@ const LT = win.TRAIN;
   check(coachSrcP8, /mode: r\.mode \|\| \(r\.taskId \? 'task' : 'free'\)/,
     '教练台水合保留服务端 mode');
   check(coachSrcP8, /（自主练习）/, '学员动态里标注「（自主练习）」来源');
+
+  /* ---- 列表分页 + 审计翻页（P9） ---- */
+  const syncSrcP9 = fs.readFileSync(path.join(ROOT, 'assets/admin-server-sync.js'), 'utf8');
+  check(syncSrcP9, /async function auditLog\(query\)/, '同步层 auditLog 改收对象参数（{limit, offset}）');
+  check(syncSrcP9, /total: d\.total \| 0, hasMore: !!d\.hasMore/,
+    '同步层把服务端分页 meta（total/hasMore）带给调用方');
+  check(adminSrc, /var AUDIT = \{ no: 1, size: 40, total: 0 \}/, '管理端有审计翻页状态 AUDIT');
+  check(adminSrc, /ADMIN_SYNC\.auditLog\(\{ limit: AUDIT\.size, offset: \(AUDIT\.no - 1\) \* AUDIT\.size \}\)/,
+    '审计卡片按页取数（offset = (页码-1)×页大小）');
+  check(adminSrc, /data-act="audit-prev"/, '审计卡有「上一页」按钮');
+  check(adminSrc, /data-act="audit-next"/, '审计卡有「下一页」按钮');
+  check(adminSrc, /if \(AUDIT\.no < Math\.ceil\(AUDIT\.total \/ AUDIT\.size\)\)/,
+    '下一页在逻辑层再拦一次越界（与按钮 disabled 双保险）');
+  check(adminSrc, /if \(AUDIT\.no > pages\) AUDIT\.no = pages/, '当前页越界时收回最后一页');
 
   /* ---- 逐轮对话（P7） ---- */
   // 这一节要用到三个页面/脚本源码：adminSrc 上面已读，另两个在下面的分节里才声明，

@@ -2655,18 +2655,38 @@ tr.flash td{animation:flashRow 2.2s ease-out}
       '<div class="val">' + esc(val) + (unit ? '<small>' + esc(unit) + '</small>' : '') + '</div></div>';
   }
 
+  /* 审计日志翻页状态（P9）：服务端 /audit 支持 limit/offset/total，
+     卡片一次只取一页，3090+ 条审计不再「只能看最新 40 条」。 */
+  var AUDIT = { no: 1, size: 40, total: 0 };
+
   function loadServerAudit() {
     var A = $('srvAuditBody');
     A.innerHTML = '<p class="hint" style="padding:14px 16px">加载中…</p>';
-    ADMIN_SYNC.auditLog(40).then(function (items) {
-      if (!items) { A.innerHTML = '<p class="hint" style="padding:14px 16px">读取失败。</p>'; return; }
+    ADMIN_SYNC.auditLog({ limit: AUDIT.size, offset: (AUDIT.no - 1) * AUDIT.size }).then(function (r) {
+      if (!r || !r.ok) {
+        A.innerHTML = '<p class="hint" style="padding:14px 16px">读取失败：' + esc((r && r.error) || '未知错误') + '</p>';
+        return;
+      }
+      var items = r.items || [];
+      AUDIT.total = r.total | 0;
       if (!items.length) { A.innerHTML = '<p class="hint" style="padding:14px 16px">暂无操作记录。</p>'; return; }
+      var pages = Math.max(1, Math.ceil(AUDIT.total / AUDIT.size));
+      if (AUDIT.no > pages) AUDIT.no = pages;   // 删除数据后当前页可能越界，收回最后一页
+      var pager =
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;' +
+          'border-top:1px solid var(--line);font-size:12.5px;color:var(--txt3)">' +
+          '<span>共 ' + AUDIT.total + ' 条 · 第 ' + AUDIT.no + ' / ' + pages + ' 页</span>' +
+          '<span style="display:flex;gap:8px">' +
+            '<button class="btn sm ghost" data-act="audit-prev"' + (AUDIT.no <= 1 ? ' disabled' : '') + '>上一页</button>' +
+            '<button class="btn sm ghost" data-act="audit-next"' + (AUDIT.no >= pages ? ' disabled' : '') + '>下一页</button>' +
+          '</span>' +
+        '</div>';
       A.innerHTML = '<table class="tbl"><thead><tr><th>时间</th><th>操作人</th><th>动作</th><th>对象</th><th>详情</th></tr></thead><tbody>'
-        + items.map(function (r) {
-            return '<tr><td class="mono">' + esc(r.at) + '</td><td>' + esc(r.userId || '-') + '</td>'
-              + '<td><span class="tag' + (r.action.indexOf('approve') >= 0 ? ' g' : r.action.indexOf('reject') >= 0 ? ' r' : '') + '">'
-              + esc(r.action) + '</span></td><td class="mono">' + esc(r.target || '-') + '</td><td>' + esc(r.detail || '-') + '</td></tr>';
-          }).join('') + '</tbody></table>';
+        + items.map(function (r2) {
+            return '<tr><td class="mono">' + esc(r2.at) + '</td><td>' + esc(r2.userId || '-') + '</td>'
+              + '<td><span class="tag' + (r2.action.indexOf('approve') >= 0 ? ' g' : r2.action.indexOf('reject') >= 0 ? ' r' : '') + '">'
+              + esc(r2.action) + '</span></td><td class="mono">' + esc(r2.target || '-') + '</td><td>' + esc(r2.detail || '-') + '</td></tr>';
+          }).join('') + '</tbody></table>' + pager;
     });
   }
 
@@ -2720,6 +2740,9 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     if (act === 'run-calib') { runCalibration(); return; }
     if (act === 'reload-scenes') { reloadScenes(); return; }
     if (act === 'reload-audit') { loadServerAudit(); return; }
+    if (act === 'audit-prev') { if (AUDIT.no > 1) { AUDIT.no--; loadServerAudit(); } return; }
+    // 与翻页条上的 disabled 双保险：数据在两次渲染之间变化时也不越界
+    if (act === 'audit-next') { if (AUDIT.no < Math.ceil(AUDIT.total / AUDIT.size)) { AUDIT.no++; loadServerAudit(); } return; }
     if (act === 'do-backup') { doBackup(); return; }
     if (act === 'gold-sample') { goldSample(); return; }
     if (act === 'do-gold-import') { doGoldImport(); return; }

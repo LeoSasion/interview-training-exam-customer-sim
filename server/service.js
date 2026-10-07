@@ -181,6 +181,7 @@ function dueOf(taskId) {
  */
 function listTasks(query, user, mineOnly) {
   query = query || {};
+  const page = pageOf(query);
   let rows = db.prepare('SELECT * FROM tasks ORDER BY created_at DESC, id DESC').all().map(taskRow);
 
   if (query.status) rows = rows.filter((t) => t.status === query.status);
@@ -193,7 +194,7 @@ function listTasks(query, user, mineOnly) {
   }
 
   const scopeIds = user ? scopedLearnerIds(user) : null;
-  return rows.map((t) => {
+  const items = rows.map((t) => {
     let assignees = assigneesOf(t.id);
     if (scopeIds !== null) assignees = assignees.filter((x) => scopeIds.indexOf(x) !== -1);
     return Object.assign(t, {
@@ -203,6 +204,8 @@ function listTasks(query, user, mineOnly) {
       totalAssignees: assigneesOf(t.id).length
     });
   }).filter((t) => scopeIds === null || t.assignees.length > 0 || t.totalAssignees === 0);
+  const sliced = page ? items.slice(page.offset, page.offset + page.limit) : items;
+  return Object.assign({ items: sliced }, pageMeta(items.length, page));
 }
 
 /** 新建 / 更新任务（下发） */
@@ -760,7 +763,35 @@ function finish(payload) {
 
 /* ================================================================== *
  * 查询
- * ================================================================== */
+ * ================================================================== *
+ * 列表分页统一口径（P9）—— 五个列表接口（records/learners/tasks/coach-notes/audit）共用：
+ *   - 不带 limit/offset：返回全量（三端水合与离线兜底都依赖全量，刻意保持向后兼容）。
+ *     唯一例外是 audit：不带参数默认只回最近 100 条（审计只增不减，全量会越滚越大）。
+ *   - 带：limit ∈ [1,500]、offset >= 0，非法一律 400（宁拒不猜，防误拉全库）。
+ *   - 返回统一为 { items, total, limit, offset, hasMore }：
+ *     total 是「筛选后」的总数（不是全库总数）；hasMore 告诉调用方还有没有下一页。
+ *   - data.items 的形状与旧版逐字段一致，只多不删 → 同步层 data.items 解包零改动。
+ * ⚠️ 翻页必须配「稳定排序」（次级键 id），否则同一页在两次请求间可能重/漏行。 */
+function pageOf(query) {
+  const raw = query || {};
+  if (raw.limit === undefined && raw.offset === undefined) return null;
+  const limit = Number(raw.limit);
+  const offset = Number(raw.offset === undefined ? 0 : raw.offset);
+  if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
+    throw Object.assign(new Error('分页参数校验未通过：limit 须为 1~500 的整数'), { status: 400 });
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw Object.assign(new Error('分页参数校验未通过：offset 须为 >= 0 的整数'), { status: 400 });
+  }
+  return { limit, offset };
+}
+
+/** 分页 meta 的唯一形状（铁律 7：items 之外的四个字段只在这里定义一次） */
+function pageMeta(total, page) {
+  if (!page) return { total, limit: total, offset: 0, hasMore: false };
+  return { total, limit: page.limit, offset: page.offset, hasMore: page.offset + page.limit < total };
+}
+
 function listRecords(query, user) {
   query = query || {};
   let sql = 'SELECT * FROM records';
@@ -786,13 +817,24 @@ function listRecords(query, user) {
   }
 
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
-  sql += ' ORDER BY at DESC';
+  // 稳定排序：at 相同的行按 id 定序，翻页才不重不漏（SQLite 对同键顺序无保证）
+  sql += ' ORDER BY at DESC, id';
 
   // 附带质检结论（P5）：教练台要按「已通过 / 待统一话术」直接渲染状态列
   const qcMap = {};
   db.prepare('SELECT record_id, state FROM record_qc').all().forEach((q) => { qcMap[q.record_id] = q.state; });
 
-  return db.prepare(sql).all(...args).map((r) => {
+  // 分页（P9）：total 用同 WHERE 复查（含 scope / 筛选 / mode），不带分页时全量
+  const page = pageOf(query);
+  let total = null;
+  if (page) {
+    const cntSql = 'SELECT COUNT(*) AS n FROM records' + (where.length ? ' WHERE ' + where.join(' AND ') : '');
+    total = db.prepare(cntSql).get(...args).n;
+    sql += ' LIMIT ? OFFSET ?';
+    args.push(page.limit, page.offset);
+  }
+
+  const items = db.prepare(sql).all(...args).map((r) => {
     const pl = P(r.payload, {}) || {};
     return {
       id: r.id, learnerId: r.learner_id, taskId: r.task_id, sceneId: r.scene_id,
@@ -815,6 +857,9 @@ function listRecords(query, user) {
       source: r.source
     };
   });
+
+  // pageOf 之外（不带分页）total 用实际行数，形状统一：调用方永远能读 total/hasMore
+  return Object.assign({ items }, pageMeta(total === null ? items.length : total, page));
 }
 
 /**
@@ -856,15 +901,18 @@ function deleteRecord(id, userId) {
   return { ok: true, id: rid };
 }
 
-function listLearners(user) {
+function listLearners(query, user) {
+  const page = pageOf(query);
   const scopeIds = user ? scopedLearnerIds(user) : null;
   let rows = db.prepare('SELECT * FROM learners ORDER BY id').all();
   if (scopeIds !== null) rows = rows.filter((r) => scopeIds.indexOf(r.id) !== -1);
-  return rows.map((r) => ({
+  const items = rows.map((r) => ({
     id: r.id, name: r.name, avatarText: r.avatar_text, color: r.color,
     dept: r.dept, title: r.title, onboardAt: r.onboard_at,
     coach: r.coach, mentor: r.coach      // app-data.js 用 mentor 命名，两边都给出
   }));
+  const sliced = page ? items.slice(page.offset, page.offset + page.limit) : items;
+  return Object.assign({ items: sliced }, pageMeta(items.length, page));
 }
 
 function listUsers() {
@@ -877,22 +925,47 @@ function listUsers() {
     }));
 }
 
-function listAuditLog(limit, user) {
-  let rows = db.prepare('SELECT * FROM audit_log ORDER BY id DESC LIMIT ?').all(limit || 100);
+function listAuditLog(query, user) {
+  query = query || {};
+  // 审计日志刻意与其它列表不同：不带 limit/offset 时默认只回最近 100 条
+  //（audit_log 只增不减，无参全量会随时间越滚越大）。只带 limit 的老调用
+  //（如 /audit?limit=200）按「第一页」处理，行为不变、只是多了 total/hasMore。
+  if (query.limit === undefined && query.offset === undefined) {
+    query = Object.assign({}, query, { limit: 100, offset: 0 });
+  }
+  const page = pageOf(query);
+
+  const where = [], args = [];
+  // 审计日志按「同范围内的人」过滤：部门范围看本部门账号的操作，带教范围只看自己。
+  // scope=all（管理员）不过滤 —— 与旧版语义一致。
   const scopeIds = user ? scopedLearnerIds(user) : null;
   if (scopeIds !== null) {
-    // 审计日志按「同范围内的人」过滤：部门范围看本部门账号的操作，带教范围只看自己
     const sc = scopeOf(user);
-    const allowed = new Set([user.id]);
+    const allowed = [user.id];
     if (sc.kind === 'dept' && sc.dept) {
-      db.prepare('SELECT id FROM users WHERE dept = ?').all(sc.dept).forEach((u) => allowed.add(u.id));
+      db.prepare('SELECT id FROM users WHERE dept = ?').all(sc.dept).forEach((u) => allowed.push(u.id));
     }
-    rows = rows.filter((r) => allowed.has(r.user_id));
+    where.push(`user_id IN (${allowed.map(() => '?').join(',')})`);
+    args.push(...allowed);
   }
-  return rows.map((r) => ({
+
+  // 旧实现是「先 LIMIT 再 JS 过滤」，带范围的账号会看到**少于 limit** 的行且翻不了页 —— 顺手修正
+  let sql = 'SELECT * FROM audit_log';
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
+  sql += ' ORDER BY id DESC';
+
+  let total = null;
+  if (page) {
+    const cntSql = 'SELECT COUNT(*) AS n FROM audit_log' + (where.length ? ' WHERE ' + where.join(' AND ') : '');
+    total = db.prepare(cntSql).get(...args).n;
+    sql += ' LIMIT ? OFFSET ?';
+    args.push(page.limit, page.offset);
+  }
+  const items = db.prepare(sql).all(...args).map((r) => ({
     id: r.id, at: r.at, userId: r.user_id,
     action: r.action, target: r.target, detail: r.detail
   }));
+  return Object.assign({ items }, pageMeta(total === null ? items.length : total, page));
 }
 
 /* ================================================================== *
@@ -952,19 +1025,36 @@ function qcRow(r) {
 }
 
 /** 辅导记录：按数据范围过滤，可按学员收窄 */
-function listCoachNotes(learnerId, user) {
+function listCoachNotes(query, user) {
+  query = query || {};
   const where = [], args = [];
-  if (learnerId) { where.push('learner_id = ?'); args.push(String(learnerId)); }
+  if (query.learnerId) { where.push('learner_id = ?'); args.push(String(query.learnerId)); }
+  // 全文包含检索（P9）：LIKE 通配符（% _ \）先转义，用户输入的 % 不会变成"匹配任意串"
+  const q = String(query.q || '').trim();
+  if (q) {
+    where.push("text LIKE ? ESCAPE '\\'");
+    args.push('%' + q.replace(/[\\%_]/g, (m) => '\\' + m) + '%');
+  }
   const scopeIds = user ? scopedLearnerIds(user) : null;
   if (scopeIds !== null) {
-    if (!scopeIds.length) return [];
+    if (!scopeIds.length) return { items: [], total: 0, limit: 0, offset: 0, hasMore: false };
     where.push(`learner_id IN (${scopeIds.map(() => '?').join(',')})`);
     args.push(...scopeIds);
   }
   let sql = 'SELECT * FROM coach_notes';
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   sql += ' ORDER BY at DESC, id DESC';
-  return db.prepare(sql).all(...args).map(noteRow);
+
+  const page = pageOf(query);
+  let total = null;
+  if (page) {
+    const cntSql = 'SELECT COUNT(*) AS n FROM coach_notes' + (where.length ? ' WHERE ' + where.join(' AND ') : '');
+    total = db.prepare(cntSql).get(...args).n;
+    sql += ' LIMIT ? OFFSET ?';
+    args.push(page.limit, page.offset);
+  }
+  const items = db.prepare(sql).all(...args).map(noteRow);
+  return Object.assign({ items }, pageMeta(total === null ? items.length : total, page));
 }
 
 /** 新增 / 更新一条辅导记录 */
