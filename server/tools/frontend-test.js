@@ -593,6 +593,40 @@ const LT = win.TRAIN;
     '下一页在逻辑层再拦一次越界（与按钮 disabled 双保险）');
   check(adminSrc, /if \(AUDIT\.no > pages\) AUDIT\.no = pages/, '当前页越界时收回最后一页');
 
+  /* ---- P10：金标扩容 / 守护器 / 辅导记录检索 ---- */
+  // 金标播种源：结构完整（空库首启播 30 条，新库与演示库同一份事实）
+  // ⚠️ ok() 参数顺序是 (cond, msg)——与 selftest.js 相反，传反＝恒真假绿（本轮飞证抓出来的）
+  {
+    const gold = JSON.parse(fs.readFileSync(path.join(ROOT, 'server/store/goldset-seed.json'), 'utf8'));
+    const items = gold.items || [];
+    ok(items.length >= 30, '金标播种源 30 条（P10 扩容）——实际 ' + items.length + ' 条');
+    const badGold = items.filter((g) => !g.id || !g.sceneId || !g.learnerText ||
+      !g.humanScores || Object.keys(g.humanScores).length !== 5 || !g.note).map((g) => g.id || '(无id)');
+    ok(badGold.length === 0, '每条金标带 id/场景/作答/五维分/标注理由（缺失：' + (badGold.join(',') || '无') + '）');
+    const totals = items.map((g) => g.humanTotal).filter((v) => v != null);
+    ok(totals.length === 0, '金标不预置 humanTotal（总分由播种/导入时按权重算，口径只有一处）——预置了 ' + totals.length + ' 条');
+  }
+  // 守护器：崩溃自动重启的几个关键设计点
+  const daemonSrc = fs.readFileSync(path.join(ROOT, 'server/daemon.js'), 'utf8');
+  check(daemonSrc, /taskkill \/PID \$\{pid\} \/T \/F/, '--stop 用进程树终止（不残留孤儿子进程）');
+  check(daemonSrc, /Math\.min\(backoff \* 2, 30000\)/, '重启退避指数增长且封顶 30s（防崩溃风暴）');
+  check(daemonSrc, /if \(code === 0\)/, '子进程正常退出不重启（端口被占的启动失败重启只会死循环）');
+  check(daemonSrc, /env: Object\.assign\(\{\}, process\.env\)/, 'PORT/DB_FILE/AUTH_MODE 等环境变量原样透传给子进程');
+  // 教练台：辅导记录检索（消费 P9 的 ?q=，服务端优先、本地兜底）
+  const coachSrcP10 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  check(coachSrcP10, /function searchCoachNotes\(\)/, '教练台有跨学员辅导记录检索 searchCoachNotes()');
+  check(coachSrcP10, /SYNC\.coachNotes\(\{ q: q \}\)/, '检索走服务端全文接口（P9 能力的真实消费端）');
+  // ⚠️ 必须锚定到 then 分支的两行序列：catch 分支里还有一处一模一样的 localHit 调用，
+  //    窗口式锚定（[\s\S]{0,140}?）也会被它挤进来满足——注入验证连抓两次。
+  check(coachSrcP10, /if \(list\) \{ render\(list, 'server'\); return; \}\s*\n\s*render\(localHit\(\), 'local'\);/,
+    '服务端返回 null 时在 then 分支回退本地缓存且如实标注来源');
+  check(coachSrcP10, /id="noteSearch"/, '质检页有检索输入框');
+  check(coachSrcP10, /if \(e\.key === 'Enter'\) searchCoachNotes\(\)/, '输入框支持回车检索');
+  // 同步层：coachNotes 兼容两种参数形态
+  check(syncSrcP9, /var o = \(query && typeof query === 'object'\) \? query : \{ learnerId: query \};/,
+    'coachNotes 兼容字符串（按学员）与对象（{learnerId,q}）两种参数');
+  check(syncSrcP9, /if \(o\.q\) qs\.push\('q=' \+ encodeURIComponent\(o\.q\)\);/, 'q 参数走 encodeURIComponent 并拼进查询串');
+
   /* ---- 逐轮对话（P7） ---- */
   // 这一节要用到三个页面/脚本源码：adminSrc 上面已读，另两个在下面的分节里才声明，
   // 所以这里单独读一份（同步层的 exportBlock 断言仍在下面用 syncSrc）。

@@ -282,6 +282,19 @@
         </table>
       </div>
     </div>
+
+    <!-- P10：辅导记录跨学员检索（消费 P9 的服务端 ?q= 能力） -->
+    <div class="card mt20" style="padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h3 style="font-size:14.5px;margin:0">辅导记录检索</h3>
+        <span class="muted" style="font-size:12px">跨学员查历史辅导（服务端检索，离线查本地缓存）</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <input class="inp" id="noteSearch" placeholder="按关键字查辅导记录，如「压价」「漏液」「先问后答」" style="flex:1">
+        <button class="btn pri" id="noteSearchBtn">检索</button>
+      </div>
+      <div id="noteSearchBody" style="margin-top:4px"></div>
+    </div>
   </section>
 
 </div>
@@ -1433,12 +1446,53 @@
   };
   $('#stuSearch').oninput = renderStudents;
   $('#stuRisk').onchange = renderStudents;
+  /* ------------------------- 辅导记录检索（P10） -------------------------
+   * 跨学员查历史辅导：主管常要「上次谁在哪个学员身上提过 XX」。走 P9 的
+   * 服务端 ?q= 全文检索（范围过滤在服务端做，只命中自己带教学员的记录）；
+   * 离线时退回本地缓存做包含匹配，并如实标注数据来源，不假装是全量。 */
+  function searchCoachNotes() {
+    var q = String($('#noteSearch').value || '').trim();
+    var box = $('#noteSearchBody');
+    var localHit = function () {
+      return notes.filter(function (n) { return (n.text || '').indexOf(q) >= 0; });
+    };
+    var render = function (list, src) {
+      if (!list || !list.length) {
+        box.innerHTML = '<div class="muted" style="font-size:12.5px">' +
+          (src === 'local' ? '本地缓存中没有匹配「' + esc(q) + '」的辅导记录（服务端未连接，仅检索了本机缓存）。'
+            : '没有匹配「' + esc(q) + '」的辅导记录。') + '</div>';
+        return;
+      }
+      box.innerHTML = '<div class="muted" style="font-size:12px;margin:8px 0">命中 ' + list.length + ' 条' +
+        (src === 'local' ? '（本地缓存，服务端未连接）' : '（服务端检索）') + '</div>' +
+        list.slice(0, 20).map(function (n) {
+          var l = T.learnerById(n.learnerId) || {};
+          return '<div class="note-item"><div class="bd"><div class="bt">' + esc(n.text) + '</div>' +
+            '<div class="bm"><span>' + esc(l.name || n.learnerId) + ' · ' + esc(n.by || '-') + ' · ' + esc(fmtDate(n.at)) + '</span>' +
+            '<span class="tag">' + esc(n.type || '辅导') + '</span></div></div></div>';
+        }).join('') +
+        (list.length > 20 ? '<div class="muted" style="font-size:12px">…共 ' + list.length + ' 条，仅显示前 20 条</div>' : '');
+    };
+    if (!q) { box.innerHTML = '<div class="muted" style="font-size:12.5px">输入关键字后检索，结果只含你带教学员的记录。</div>'; return; }
+    box.innerHTML = '<div class="muted" style="font-size:12.5px">检索中…</div>';
+    if (srvOnline() && SYNC && SYNC.coachNotes) {
+      SYNC.coachNotes({ q: q }).then(function (list) {
+        if (list) { render(list, 'server'); return; }
+        render(localHit(), 'local');            // null = 拿不到（离线/未登录）→ 本地兜底
+      }).catch(function () { render(localHit(), 'local'); });
+    } else {
+      render(localHit(), 'local');
+    }
+  }
+
   $('#qFilter').onclick = function (e) {
     var b = e.target.closest('button'); if (!b) return;
     $$('#qFilter button').forEach(function (x) { x.classList.remove('on'); });
     b.classList.add('on');
     renderQuality();
   };
+  $('#noteSearchBtn').onclick = searchCoachNotes;
+  $('#noteSearch').onkeydown = function (e) { if (e.key === 'Enter') searchCoachNotes(); };
   $('#btnLogin').onclick = showLogin;
   $('#lgGo').onclick = doLogin;
   $('#lgClose').onclick = function () {

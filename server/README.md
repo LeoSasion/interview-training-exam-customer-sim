@@ -421,11 +421,13 @@ node server/tools/selftest.js      # 端到端自测，含越权与 enforce 拦�
 
 ## 七、金标集校准
 
-金标集是 **10 条人工双盲标注**的对话样本（`server/store/goldset-seed.json`，首次启动自动导入）。
+金标集是 **30 条人工双盲标注**的对话样本（`server/store/goldset-seed.json`，首次启动自动导入；
+P10 由 10 条扩到 30 条，覆盖三场景 turn1-4、好中差分布，并刻意加入**分维错位样本**——
+如「破冰与提问都好但还没给方案」，专测模型分维打分是否趋同）。
 校准计算「模型综合分 vs 人工总分」的 **Pearson 相关系数**（目标 ≥ 0.8）与 **MAE**（目标 ≤ 8）。
 
 **扩充样本**：管理后台 →「服务端 / AI」→「金标集导入」，粘贴 JSON 数组即可批量入库
-（同 `id` 覆盖更新）。PRD 目标是 100+ 条；10 条只够证明链路与排序一致性，样本越多结论越可靠。
+（同 `id` 覆盖更新）。PRD 目标是 100+ 条；样本越多结论越可靠。
 
 ```bash
 curl -X POST http://127.0.0.1:8848/api/v1/goldset/calibrate \
@@ -441,13 +443,18 @@ curl -X POST http://127.0.0.1:8848/api/v1/goldset/calibrate \
 
 ### 用 mock 模型的实测参考值
 
-| 通道 | Pearson | MAE | 结论 |
-|---|---|---|---|
-| 真实模型（mock） | **0.885** ✅ | 13.8 ❌ | 排序一致性好，但绝对分偏高，Rubric 需收紧 |
-| 关键词引擎 | null（无区分度） | 22 | 仅证明链路可通 |
+| 通道 | 样本 | Pearson | MAE | 结论 |
+|---|---|---|---|---|
+| 真实模型（mock），10 条 | n=10 | 0.885 ✅ | 13.8 ❌ | 旧基线——**小样本的相关系数本来就不可信** |
+| **真实模型（mock），30 条（P10）** | n=30 | **0.638** ❌ | **14.5** ❌ | 扩容后指标回落——错位样本暴露了 mock 打分趋同；这才是可信的测量 |
+| 关键词引擎 | — | null（无区分度） | ~22 | 仅证明链路可通 |
 
-分维一致性：`d2 需求挖掘 0.918`、`d5 促成推进 0.879` 强；`d4 方案讲解 0.577` 最弱 → 说明
-「方案讲解」维度的 Rubric 描述最需要补充可判定的锚点。
+⚠️ **读数要点**：0.885 → 0.638 不是「退步」，而是**测量变诚实了**——n=10 的 Pearson 置信区间极宽，
+中段样本与错位样本一进来就现出原形。两个通道的结论不变：① mock 的绝对分系统性偏高（MAE ~14），
+Rubric 需收紧；② **换真实 API Key 后必须重新跑校准**，上表所有数字都是 mock 通道的，不能外推。
+
+分维一致性（30 条）：d1 0.42 / d2 0.54 / d3 0.54 / d4 0.52 / d5 0.63 —— 全线一般，
+说明 mock 对「同一句作答的五个维度」打分趋同，分维独立性是真实模型才可能过的一关。
 
 ---
 
@@ -545,12 +552,59 @@ SQLite 出厂默认 `synchronous=FULL`，在 WAL 模式下**每次提交都要 f
 DB_SYNC=FULL node server/index.js
 ```
 
+### 进程守护（P10）：`server/daemon.js`
+
+零 npm 依赖的兜底守护器——试点环境没有 systemd / pm2 时，至少保证后端崩了能自己爬起来：
+
+```bash
+node server/daemon.js          # 守护启动（PORT / DB_FILE / AUTH_MODE 等环境变量原样透传）
+node server/daemon.js --stop   # 按 pid 文件结束整棵进程树（Windows: taskkill /T /F）
+
+# 常驻 + 日志落盘（日志由调用方重定向，守护器不做轮转，避免和日志收集打架）
+node server/daemon.js >> server/store/daemon.log 2>&1
+```
+
+行为（全部真机验证过）：子进程**异常退出**→ 指数退避重启（1s 起步、封顶 30s，防崩溃风暴）；
+**正常退出**（code 0，如端口被占）→ 不重启、守护器随之结束（重启只会死循环）；
+`--stop` 用 `taskkill /T /F` 结束**进程树**（不带 `/T` 会留下孤儿子进程继续占端口）。
+生产更建议 systemd / pm2 / Windows 服务，这个是「没有运维工具时」的下限保障。
+
+### HTTPS / 反向代理（配置样例，未在本机验证）
+
+内网试点可直接 HTTP；跨网段或公网访问必须上 TLS。用 Nginx 反代到 8848 的最小配置：
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name training.example.com;
+
+    ssl_certificate     /etc/nginx/ssl/training.crt;      # 内网可用 openssl 自签 / 内部 CA 签发
+    ssl_certificate_key /etc/nginx/ssl/training.key;
+
+    # 静态页面 + API 都从同一个源走（天然同源，无 CORS）
+    location / {
+        proxy_pass         http://127.0.0.1:8848;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+
+        # 大模型单轮调用 0.5–3s，别让默认 60s 超时截断判分
+        proxy_read_timeout 120s;
+    }
+}
+```
+
+注意两点：① 后端仍监听 `127.0.0.1:8848`（只给反代看，不暴露直连端口）；
+② 服务端 CORS 白名单**无需**加 Nginx 域名——同源反代下浏览器只看到 443 这一个源。
+**本节为配置样例，未在本机验证过**（无域名与证书环境），上线前请在测试环境先跑通。
+
 ### 仍未覆盖（正式上线前需要补）
 
 | 项 | 说明 |
 |---|---|
-| HTTPS / 反向代理 | 内网可先不加；跨网段或公网必须加（Nginx/Caddy 反代到 8848） |
-| 进程守护 | 脚本只是前台运行；生产建议用 systemd / pm2 / Windows 服务包装 |
+| HTTPS / 反向代理 | 内网可先不加；跨网段或公网必须加 —— **配置样例见上节（未在本机验证）** |
+| 进程守护 | **P10 已补 `server/daemon.js`**（零依赖守护器：崩溃退避重启、`--stop` 进程树终止）；生产仍建议 systemd / pm2 / Windows 服务 |
 | 数据库 | 当前 SQLite 单文件 + **单进程同步 API**（写入天然串行）：实测写吞吐 ~470 req/s（`DB_SYNC=NORMAL`），够数百人同时练；并发写压力再大时迁 PostgreSQL |
 | 统一身份 | `server/auth.js` 接口不变，可整体换成企业 SSO / 企业微信扫码 |
 | 接口分页 | **P9 已统一补齐**：五个列表接口都支持 `?limit=&offset=`（校验 + `total`/`hasMore` + 稳定排序）。三端页面的「一次拉全量 + 本地统计」是**刻意架构**（离线兜底依赖本地全量），分页面向导出 / 对接 / 未来轻客户端 |

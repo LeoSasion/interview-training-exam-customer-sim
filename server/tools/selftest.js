@@ -430,6 +430,20 @@ async function login(account, password) {
     console.log('      通道=' + cd.channel + ' 样本=' + cd.n +
       ' Pearson=' + cd.pearson + ' MAE=' + cd.mae + ' meaningful=' + cd.meaningful);
   }
+  /* P10：金标集扩容到 30 条后的口径断言（分数不设阈值——mock 通道的指标值不背书，
+   * 只锁「样本量、覆盖面、逐条打上分、无失败样本」这些结构性事实）。 */
+  {
+    const goldList = (data(await call('GET', '/goldset', undefined, { token: adm.token })) || {}).items || [];
+    ok('金标集 30 条（P10 扩容后）', goldList.length >= 30, '实际 ' + goldList.length + ' 条');
+    const byScene = {};
+    goldList.forEach((g) => { byScene[g.sceneId] = (byScene[g.sceneId] || 0) + 1; });
+    ok('金标覆盖全部三个场景', ['s1', 's2', 's3'].every((s) => (byScene[s] || 0) >= 2),
+      JSON.stringify(byScene));
+    const badDim = goldList.filter((g) => !g.humanScores || Object.keys(g.humanScores).length !== 5).map((g) => g.id);
+    ok('每条金标都带五维人工分（缺失：' + (badDim.join(',') || '无') + '）', badDim.length === 0);
+    ok('校准样本数 === 金标条数（全量过模型，无失败样本）', !!cd && cd.n === goldList.length,
+      '校准 ' + (cd && cd.n) + ' vs 金标 ' + goldList.length);
+  }
 
   /* ---- 6. 备份 ---- */
   const bk = await call('POST', '/admin/backup', {}, { token: adm.token });

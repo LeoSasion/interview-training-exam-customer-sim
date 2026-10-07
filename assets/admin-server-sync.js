@@ -387,9 +387,19 @@
   /* ---- 教练动作（P5）：辅导记录 / 对话质检 ----
    * 服务端已按登录身份的数据范围过滤；范围外的读会被裁掉、写会拿到 403。
    * 读接口失败返回 null（调用方回退本地缓存），写接口失败返回 {ok:false,error}。 */
-  async function coachNotes(learnerId) {
+  /**
+   * 辅导记录列表。
+   * @param {object|string} query 传字符串 = 按学员收窄（旧口径）；
+   *        传 { learnerId, q } 走新口径（P9）：q 为全文包含检索（服务端已转义 LIKE 通配符）。
+   * @returns {Array|null} 失败返回 null（调用方回退本地缓存）
+   */
+  async function coachNotes(query) {
+    var o = (query && typeof query === 'object') ? query : { learnerId: query };
+    var qs = [];
+    if (o.learnerId) qs.push('learnerId=' + encodeURIComponent(o.learnerId));
+    if (o.q) qs.push('q=' + encodeURIComponent(o.q));
     try {
-      var r = await req('/coach-notes' + (learnerId ? '?learnerId=' + encodeURIComponent(learnerId) : ''),
+      var r = await req('/coach-notes' + (qs.length ? '?' + qs.join('&') : ''),
         { method: 'GET' }, 9000);
       if (r.body && r.body.ok) return r.body.data.items || [];
     } catch (e) { /* ignore */ }
