@@ -156,8 +156,34 @@
       Math.random().toString(36).slice(2, 6).toUpperCase();
   }
 
+  /** 语音识别能力（P11）：后端在线 **且** 它报告本地 ASR 在线才可用。
+   *  页面加载 probe() 后即有效；ASR 不在线时学员端回退键盘/话术选择。 */
+  function asrAvail() {
+    return !!(state.status === 'live' && state.info && state.info.voice && state.info.voice.asrOnline);
+  }
+
+  /** 音频二进制 → 文本（P11，本地 FunASR）。
+   *  成功 {ok:true,text,inferMs}；被拒 {ok:false,error}；拿不到服务 null —— 三态都静默，绝不抛错。 */
+  async function asr(blob) {
+    if (!blob || !blob.size) return { ok: false, error: '空音频' };
+    try {
+      var r = await fetch(state.base + '/asr', {
+        method: 'POST',
+        // blob.type 可能带分号参数（audio/webm;codecs=opus），也可能来源异常
+        // （如 octet-stream）——非 audio/* 一律按 webm 声明，交给 Python 侧嗅探
+        headers: { 'Content-Type': (blob.type && /^audio\//.test(blob.type)) ? blob.type : 'audio/webm' },
+        body: blob
+      });
+      var j = await r.json();
+      if (j && j.ok) return { ok: true, text: j.data.text, inferMs: j.data.inferMs };
+      return { ok: false, error: (j && j.error) || ('HTTP ' + r.status) };
+    } catch (e) { /* 静默降级：调用方按 null 处理 */ }
+    return null;
+  }
+
   root.AIBOOT = {
     probe: probe, turn: turn, finish: finish, api: api, tasks: tasks, scenes: scenes,
+    asr: asr, asrAvail: asrAvail,
     newSessionId: newSessionId,
     get status() { return state.status; },
     get info() { return state.info; },

@@ -422,6 +422,72 @@ async function login(account, password) {
       auc.items.every((x) => ['U-COACH1', 'U-COACH3', 'U-REV01'].indexOf(x.userId) >= 0));
   }
 
+  /* ---- 4e. P11：本地语音识别（FunASR · SenseVoiceSmall） ----
+   * 两条硬断言（任何时候都跑）：/status 如实报 voice 状态；ASR 服务不可达时
+   * /asr 一律 503（绝不把「没起」伪装成「识别为空」）。
+   * 一条在线断言：ASR 在线时用项目自带的测试音频走真实识别。
+   * ASR 未启动时该断言显式 SKIP（打印 ⚠，不是静默）——语音是增强能力，
+   * 不强求每个自测环境都起 Python 服务。 */
+  console.log('  ─────────────────────────────────────────');
+  console.log('  P11：本地语音识别');
+  {
+    const st11 = data(await call('GET', '/status'));
+    ok('/status 如实报告语音通道（voice.asrOnline 为布尔）',
+      st11 && typeof st11.voice.asrOnline === 'boolean' && !!st11.voice.asrBase);
+    if (st11 && st11.voice.asrOnline) {
+      const fs11 = require('fs');
+      const path11 = require('path');
+      const wavPath = path.join(__dirname, '..', '..', 'voice', 'asr_example_zh.wav');
+      if (fs11.existsSync(wavPath)) {
+        const buf11 = fs11.readFileSync(wavPath);
+        const r11 = await fetch('http://127.0.0.1:' + (process.env.PORT || '8848') + '/api/v1/asr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'audio/wav' },
+          body: buf11
+        });
+        const j11 = await r11.json();
+        ok('语音识别真实往返（含「达摩院」）',
+          r11.status === 200 && j11 && j11.ok && (j11.data.text || '').indexOf('达摩院') >= 0,
+          'HTTP ' + r11.status + ' → ' + (j11 && j11.data && j11.data.text));
+        ok('识别返回带耗时', j11 && j11.ok && typeof j11.data.inferMs === 'number');
+      } else {
+        console.log('      ⚠ 缺少 voice/asr_example_zh.wav，在线识别断言跳过');
+      }
+    } else {
+      console.log('      ⚠ ASR 服务未启动（voice/asr-server.py），在线识别断言跳过');
+    }
+    // ASR 不可达必须如实 503：起一个 ASR_BASE 指向黑洞的独立实例
+    {
+      const { spawn } = require('child_process');
+      const p11 = spawn(process.execPath, [path.join(__dirname, '..', 'index.js')], {
+        env: Object.assign({}, process.env, {
+          PORT: '8853', HOST: '127.0.0.1', ASR_BASE: 'http://127.0.0.1:9'
+        }),
+        stdio: ['ignore', 'ignore', 'pipe']
+      });
+      await new Promise((r) => setTimeout(r, 1500));
+      try {
+        const r11 = await fetch('http://127.0.0.1:8853/api/v1/asr', {
+          method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: Buffer.from('RIFF-fake')
+        });
+        const j11 = await r11.json();
+        eq('ASR 服务不可达时 /asr 如实 503（不伪装成识别为空）', r11.status, 503);
+        ok('503 的错误信息指向语音服务（' + ((j11 && j11.error) || '').slice(0, 24) + '…）',
+          !!(j11 && j11.error && j11.error.indexOf('语音') >= 0));
+        const s11 = await (await fetch('http://127.0.0.1:8853/api/v1/status')).json();
+        ok('黑洞实例的 /status 如实报 asrOnline=false',
+          s11 && s11.data && s11.data.voice && s11.data.voice.asrOnline === false);
+      } finally {
+        p11.kill();
+      }
+    }
+    // 空音频 → 400（有 ASR 也要拒空体，参数校验不依赖后端服务）
+    const rEmpty = await fetch('http://127.0.0.1:' + (process.env.PORT || '8848') + '/api/v1/asr', {
+      method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: Buffer.alloc(0)
+    });
+    eq('空音频被拒 400', rEmpty.status, 400);
+  }
+
   /* ---- 5. 金标校准 ---- */
   const calib = await call('POST', '/goldset/calibrate', { mode: 'auto' }, { token: adm.token });
   const cd = data(calib);

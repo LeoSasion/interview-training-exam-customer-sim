@@ -49,6 +49,18 @@ const config = {
   backupDir: pick('BACKUP_DIR', path.join(__dirname, 'store', 'backup')),
 
   /**
+   * 本地语音识别（P11）：FunASR · SenseVoice-Small（voice/asr-server.py，端口 8997）。
+   * ASR 服务不在线时学员端自动回退键盘输入，主服务零影响（增强能力，非依赖）。
+   */
+  voice: {
+    asrBase: pick('ASR_BASE', 'http://127.0.0.1:8997'),
+    /** 单条音频上限（与 voice/asr-server.py 的 MAX_BODY 保持一致） */
+    maxBytes: 8 * 1024 * 1024,
+    /** 单次识别超时：本地 CPU 推理一般 <1s，留足余量 */
+    asrTimeoutMs: Number(pick('ASR_TIMEOUT_MS', '30000'))
+  },
+
+  /**
    * SQLite 落盘同步级别（PRAGMA synchronous）
    *
    *   NORMAL（默认）= WAL 模式下的**官方推荐值**：进程崩溃不会损坏库，只可能丢

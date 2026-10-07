@@ -30,6 +30,7 @@ function isLocalLlm() {
 const gold = require('./goldset');
 const ai = require('./ai');
 const rubric = require('./rubric');
+const voice = require('./voice');
 const auth = require('./auth');
 const backup = require('./backup');
 
@@ -40,7 +41,10 @@ const MIME = {
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4'
+  '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4',
+  // P11：浏览器录音/测试样本的音频类型（缺了会以 octet-stream 下发，
+  // 页面 fetch 后 blob.type 丢掉 audio/ 前缀，/asr 上传链路跟着断）
+  '.wav': 'audio/wav', '.webm': 'audio/webm', '.ogg': 'audio/ogg'
 };
 
 /* ------------------------------------------------------------------ *
@@ -56,7 +60,7 @@ function sendJSON(res, code, obj) {
   res.end(body);
 }
 
-function readBody(req) {
+function readBody(req, raw) {
   return new Promise((resolve, reject) => {
     let chunks = [], size = 0;
     req.on('data', (c) => {
@@ -65,9 +69,12 @@ function readBody(req) {
       chunks.push(c);
     });
     req.on('end', () => {
-      const raw = Buffer.concat(chunks).toString('utf8');
-      if (!raw) return resolve({});
-      try { resolve(JSON.parse(raw)); }
+      const buf = Buffer.concat(chunks);
+      // raw 模式（P11 /asr 音频）：原样返回 Buffer，不做 utf8/JSON 解析
+      if (raw) return resolve(buf.length ? buf : Buffer.alloc(0));
+      const s = buf.toString('utf8');
+      if (!s) return resolve({});
+      try { resolve(JSON.parse(s)); }
       catch (e) { reject(Object.assign(new Error('请求体不是合法 JSON'), { status: 400 })); }
     });
     req.on('error', reject);
@@ -138,8 +145,8 @@ function applyCors(req, res) {
  *     staff    —— 管理类接口，必须可解析出身份（enforce 模式下必须带 token）
  * ------------------------------------------------------------------ */
 const routes = [];
-function on(method, pattern, handler, level) {
-  routes.push({ method, pattern, handler, level: level || 'staff' });
+function on(method, pattern, handler, level, opts) {
+  routes.push({ method, pattern, handler, level: level || 'staff', rawBody: !!(opts && opts.rawBody) });
 }
 
 /* ---- 鉴权 ---- */
@@ -164,6 +171,7 @@ on('GET', /^\/api\/v1\/auth\/accounts$/, async () => ({
 /* ---- 状态 ---- */
 on('GET', /^\/api\/v1\/status$/, async () => {
   const aiStat = await ai.aiStatus();
+  const asrOk = await voice.asrOnline();
   return {
     ok: true,
     service: '新员工培训系统 · AI 服务层',
@@ -171,6 +179,15 @@ on('GET', /^\/api\/v1\/status$/, async () => {
     db: path.basename(config.dbFile),
     dbSync: dbm.pragmas(),
     host: config.host,
+    // 语音识别（P11）：本地 SenseVoiceSmall。如实报在线状态——
+    // 不在线时学员端自动回退键盘，别把「没起」说成「可用」。
+    voice: {
+      asrOnline: asrOk,
+      asrBase: config.voice.asrBase,
+      model: 'SenseVoiceSmall',
+      note: asrOk ? '本地 FunASR · SenseVoiceSmall 在线'
+        : '本地 ASR 服务未连接（语音输入不可用，学员端自动回退键盘输入）'
+    },
     llm: {
       configured: config.llm.enabled,
       baseUrl: config.llm.baseUrl,
@@ -194,6 +211,18 @@ on('GET', /^\/api\/v1\/status$/, async () => {
 
 on('GET', /^\/api\/v1\/ai\/status$/, async () => ai.aiStatus(), 'public');
 on('GET', /^\/api\/v1\/rubric$/, async () => rubric.currentRubric(), 'public');
+
+/* ---- 语音识别（P11）：本地 FunASR · SenseVoice-Small ----
+ * 档位刻意与练习通道同为 practice：学员没登录也要能用语音（核心约束）。
+ * 请求体是音频二进制（Content-Type: audio/*），由分发层按 raw 模式读入。 */
+on('POST', /^\/api\/v1\/asr$/, async (c) => {
+  if (!Buffer.isBuffer(c.body) || !c.body.length) {
+    throw Object.assign(new Error('请用 Content-Type: audio/* 上传音频二进制'), { status: 400 });
+  }
+  const out = await voice.transcribe(c.body);
+  if (!out.ok) throw Object.assign(new Error(out.error), { status: out.status || 500 });
+  return { text: out.text, inferMs: out.inferMs };
+}, 'practice', { rawBody: true });
 
 /* ---- 场景库 ---- */
 on('GET', /^\/api\/v1\/scenes$/, async (c) => ({ items: svc.listScenes(c.query) }));
@@ -338,15 +367,19 @@ const server = http.createServer(async (req, res) => {
     const m = pathname.match(r.pattern);
     if (!m) continue;
     try {
-      const body = (req.method === 'GET' || req.method === 'DELETE') ? {} : await readBody(req);
+      // 音频上传按二进制读，不走 JSON 解析（P11 /asr）：
+      // 路由声明 rawBody 优先（/asr 必然收音频），Content-Type 前缀兜底
+      const isAudio = r.rawBody || /^audio\//.test(String(req.headers['content-type'] || ''));
+      const body = (req.method === 'GET' || req.method === 'DELETE') ? {} : await readBody(req, isAudio);
 
       // 身份解析：Authorization: Bearer 优先；open 模式下兼容 X-User-Id / body.userId
-      const idRes = auth.resolve(req, body, parsed.query);
+      const idRes = auth.resolve(req, Buffer.isBuffer(body) ? {} : body, parsed.query);
       const denied = checkLevel(r.level, idRes);
       if (denied) throw denied;
 
       // 以解析结果为准，避免"请求体自称身份"覆盖 token 身份
-      if (idRes.user) {
+      // （音频 body 是 Buffer，不注入 userId —— 内容一个字节都不能动）
+      if (idRes.user && !Buffer.isBuffer(body)) {
         body.userId = idRes.user.id;
         if (!parsed.query.userId) parsed.query.userId = idRes.user.id;
       }
@@ -392,7 +425,7 @@ function start(opts) {
   // 账号初始化：给没有口令的用户分配账号与初始口令（首次启动会打印一份）
   const created = auth.ensureAccounts(!!opts.resetPasswords);
 
-  server.listen(config.port, config.host, () => {
+  server.listen(config.port, config.host, async () => {
     const lan = config.host === '0.0.0.0';
     console.log('');
     console.log('  新员工培训系统 · AI 服务层已启动');
@@ -408,6 +441,9 @@ function start(opts) {
       ? `已配置（${config.llm.model} @ ${config.llm.baseUrl}）` + (isLocalLlm() ? ' ← 指向本机，是内置 Mock 模型，不是真实大模型' : '')
       : '未配置 Key —— 自动降级为关键词引擎 + 剧本'}`);
     console.log(`  Rubric     ${config.rubricVersion}`);
+    const asrOk0 = await voice.asrOnline();
+    console.log(`  语音识别   ${asrOk0 ? '本地 FunASR · SenseVoiceSmall 在线（voice/asr-server.py @ ' + config.voice.asrBase + '）'
+      : '本地 ASR 未连接 —— 语音输入不可用，学员端自动回退键盘（不影响其它功能）'}`);
     console.log(`  鉴权模式   ${config.auth.mode}${config.auth.mode === 'open' ? '（未带 token 时回落演示身份；生产请设 AUTH_MODE=enforce）' : '（管理类接口一律要求登录）'}`);
     console.log('  ─────────────────────────────────────────');
     if (created.length) {

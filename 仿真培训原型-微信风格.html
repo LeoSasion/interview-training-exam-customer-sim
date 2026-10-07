@@ -138,6 +138,11 @@ body{
 .pill{font-size:10px;line-height:15px;padding:0 5px;border-radius:4px;background:var(--wx-pill-bg);color:var(--wx-pill-fg);
   border:.5px solid var(--wx-pill-bd);flex:0 0 auto;margin-left:6px}
 .pill.on-task{background:var(--wx-taskpill-bg);color:var(--wx-taskpill-fg);border-color:transparent;font-weight:500}
+/* 语音链路轻提示（P11）：屏幕中央黑条，微信风格 */
+.vtoast{position:fixed;top:22%;left:50%;transform:translateX(-50%);z-index:99;background:rgba(0,0,0,.78);
+  color:#fff;font-size:12.5px;line-height:1.6;padding:8px 16px;border-radius:9px;max-width:80vw;display:none;
+  text-align:center;pointer-events:none}
+.vtoast.on{display:block}
 
 /* tabbar */
 .tabbar{flex:0 0 54px;display:flex;background:var(--wx-bar);border-top:.5px solid var(--wx-line);z-index:5}
@@ -421,11 +426,11 @@ body{
             <button class="sendbtn" id="btnSend" onclick="sendText()">发送</button>
           </div>
 
-          <!-- 录音浮层 -->
-          <div class="recov" id="recov">
+          <!-- 录音浮层（P11：真语音模式点击结束；模拟模式只播动画） -->
+          <div class="recov" id="recov" onclick="stopRealVoice()">
             <div class="recbox">
               <div class="wave" id="wave"></div>
-              <div style="font-size:13px;color:rgba(255,255,255,.75)">正在录音，松开结束</div>
+              <div style="font-size:13px;color:rgba(255,255,255,.75)" id="recovText">正在录音，松开结束</div>
             </div>
           </div>
 
@@ -969,8 +974,88 @@ function toggleVoiceMode(){
   else $('btnVoice').style.color = '';
 }
 
+/* ====== 真语音识别（P11）：本地 FunASR · SenseVoiceSmall ======
+ * 三重能力门：浏览器有麦克风 API + AIBOOT 在线 + 后端报告 ASR 在线。
+ * 任何一环不满足（file:// 打开、无麦克风、ASR 服务未起）→ 回退原「话术选择」体验，
+ * 原路径一个字不改 —— 已验收交付物的降级语义零破坏。 */
+let rec_ = null, recT0 = 0;
+function voiceCapable(){
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+}
+async function startRealVoice(){
+  let stream;
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    toast2('无法访问麦克风，改用话术选择');
+    openSimSheet();
+    return;
+  }
+  try{
+    rec_ = (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm'))
+      ? new MediaRecorder(stream, {mimeType:'audio/webm'})
+      : new MediaRecorder(stream);
+  }catch(e){
+    stream.getTracks().forEach(t=>t.stop());
+    toast2('录音功能不可用，改用话术选择');
+    openSimSheet();
+    return;
+  }
+  const chunks = [];
+  rec_.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+  rec_.onstop = async () => {
+    stream.getTracks().forEach(t=>t.stop());
+    const sec = Math.max(1, Math.round((Date.now()-recT0)/1000));
+    const blob = new Blob(chunks, {type: rec_.mimeType || 'audio/webm'});
+    if(!blob.size){ toast2('没有录到声音，请重试'); return; }
+    try{
+      const r = await AIBOOT.asr(blob);
+      if(r && r.ok && r.text){
+        /* 识别文本直接作答（与「话术选择」同一语义），语音条显示真实时长 */
+        addMsg('out', r.text, {voice: sec});
+        judge(r.text);
+      }else{
+        toast2('语音识别失败' + (r && r.error ? '：' + r.error : '') + '，可切换键盘输入');
+      }
+    }catch(e){
+      toast2('语音识别异常，可切换键盘输入');
+    }
+  };
+  recT0 = Date.now();
+  $('wave').innerHTML = Array.from({length:9},()=>'<i></i>').join('');
+  Array.from($('wave').children).forEach((el,i)=>{ el.style.animationDelay=(i*0.09)+'s'; });
+  $('recovText').textContent = '正在录音，点击结束';
+  $('recov').classList.add('on');
+  rec_.start();
+}
+function stopRealVoice(){
+  if(rec_ && rec_.state === 'recording') rec_.stop();
+  $('recov').classList.remove('on');
+}
+/* 轻量提示条（语音链路专用，不动已验收的提示区） */
+let vtT = null;
+function toast2(msg){
+  let el = $('vtoast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'vtoast'; el.className = 'vtoast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg; el.classList.add('on');
+  clearTimeout(vtT); vtT = setTimeout(()=>el.classList.remove('on'), 2600);
+}
+
+/* 「按住说话」：真语音优先，模拟话术兜底 */
 function openVoiceSheet(){
   if(!running || ended) return;
+  if(voiceCapable() && window.AIBOOT && AIBOOT.asrAvail && AIBOOT.asrAvail()){
+    startRealVoice();
+    return;
+  }
+  openSimSheet();
+}
+/* 原话术选择（模拟语音识别结果）——降级路径原样保留 */
+function openSimSheet(){
   const idx = Math.min(step, curScene().voicePool.length-1);
   const pool = curScene().voicePool[idx] || [];
   $('sheetBody').innerHTML = pool.map(t=>

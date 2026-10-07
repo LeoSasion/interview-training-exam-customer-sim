@@ -214,7 +214,55 @@ LLM_API_KEY=mock-key LLM_BASE_URL=http://127.0.0.1:8999/v1 LLM_MODEL=mock-scorer
 
 ---
 
-## 五、接口一览
+## 五、语音识别（P11）：本地 FunASR · SenseVoiceSmall
+
+**零云依赖**：语音识别跑在本机 Python 进程上（阿里 FunASR 生态的 SenseVoice-Small，
+轻量级多语言模型，CPU 实时率约 15–20×——本机实测 5.5s 音频识别 0.25–0.3s）。
+
+### 架构（三层，刻意解耦）
+
+```
+学员端(MediaRecorder 录 webm/opus)
+   → Node 主服务 /api/v1/asr（8848，practice 档：学员匿名可用）
+     → voice/asr-server.py（8997，Python，模型常驻；webm 经 ffmpeg 转 16k wav 后识别）
+```
+
+模型加载要 ~15s、内存数百 MB——**独立进程**才能被独立启停：不装语音就完全不起它，
+主服务零影响（增强能力而非依赖）。
+
+### 启动（一次性准备 + 日常启动）
+
+```bash
+# 一次性：建 venv + 装依赖（约 2GB，走 D 盘）
+python -m venv D:\wbproject\_tools\asr-venv
+D:\wbproject\_tools\asr-venv\Scripts\python.exe -m pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+D:\wbproject\_tools\asr-venv\Scripts\python.exe -m pip install funasr numpy modelscope imageio-ffmpeg
+
+# 日常启动（模型缓存在 MODELSCOPE_CACHE=D:\wbproject\_tools\msc，首次自动下载 ~900MB）
+D:\wbproject\_tools\asr-venv\Scripts\python.exe voice/asr-server.py
+# 或者直接双击 start-asr.bat
+```
+
+### 降级链（核心约束：不装语音，一切照常）
+
+| 场景 | 行为 |
+|---|---|
+| ASR 服务在 | 学员端「按住说话」→ 真录音 → 真识别 → 文本直接作答（语音条显示真实时长） |
+| ASR 没起 / 挂了 | 「按住说话」回退**原话术选择**体验（原路径一个字不改） |
+| 麦克风被拒（无设备/权限） | toast 如实提示后回退话术选择 |
+| `file://` 双击打开 | 浏览器禁用 getUserMedia → 回退话术选择 |
+| ASR 服务不可达时打 `/asr` | **503 如实报错**（绝不伪装成「识别为空」），`/status.voice.asrOnline` 同步报状态 |
+
+### 自测断言（`server/tools/selftest.js` P11 段）
+
+`/status` 如实报语音通道；ASR 在线时用项目自带样本（`voice/asr_example_zh.wav`）真实识别
+（断言含「达摩院」）；**黑洞实例**（`ASR_BASE` 指向无人端口）验证 503 降级；空音频 400。
+ASR 未启动时在线断言**显式 SKIP（打印 ⚠）**——不强求每个自测环境都起 Python 服务，但绝不静默。
+TTS（客户侧语音播报）仍未做，见「仍未覆盖」。
+
+---
+
+## 六、接口一览
 
 所有接口前缀 `/api/v1`，成功返回 `{ok:true,data:...}`，失败返回 `{ok:false,error,...}`。
 
@@ -241,6 +289,7 @@ LLM_API_KEY=mock-key LLM_BASE_URL=http://127.0.0.1:8999/v1 LLM_MODEL=mock-scorer
 | POST | `/scenes/:id/reject` | staff | 驳回（需 `reason`） |
 | POST | `/scenes/:id/offline` | staff | 下线 |
 | GET | `/scenes/published` | **practice** | **学员端「已发布场景池」（匿名可读）**。只返回 `publish='published'` 的场景，且只带学员端要用的字段（`script/tips/objectives/voicePool/passLine/…`），**不带 `audit`/`versions`/`owner`/`publish`/`status`/`updatedAt`/`brief`** —— 因为这是匿名端点 |
+| POST | `/asr` | practice | **语音识别（P11，本地 FunASR）**：body 为音频二进制（wav/webm/opus，≤8MB），返回 `{text, inferMs}`；ASR 服务不可达 503 如实报错 |
 | POST | `/session/:id/turn` | practice | 一轮对话：AI 评分 + NPC 回复（允许匿名） |
 | POST | `/session/:id/finish` | practice | 结束会话，写一条成绩记录（允许匿名） |
 | GET | `/records` `/learners` `/users` | staff | 培训数据（**按登录身份的数据范围过滤**；`/records` 每条带 `qc` 质检状态、`turnCount` 与 `mode` 来源（`task`=任务考核 / `free`=自主练习，由 `task_id` 推导），**刻意不带逐轮对话正文**，见下方「逐轮对话」；支持 `?mode=task|free` 筛选，可与 `?learnerId=` 组合） |
@@ -366,7 +415,7 @@ P7 修的是一处**"看起来有、其实没有"**的缺口：
 
 ---
 
-## 六、权限模型（角色分离）
+## 七、权限模型（角色分离）
 
 | 账号 | 角色 | 可编辑场景 | 可审批 |
 |---|---|---|---|
@@ -419,7 +468,7 @@ node server/tools/selftest.js      # 端到端自测，含越权与 enforce 拦�
 
 ---
 
-## 七、金标集校准
+## 八、金标集校准
 
 金标集是 **30 条人工双盲标注**的对话样本（`server/store/goldset-seed.json`，首次启动自动导入；
 P10 由 10 条扩到 30 条，覆盖三场景 turn1-4、好中差分布，并刻意加入**分维错位样本**——
@@ -458,7 +507,7 @@ Rubric 需收紧；② **换真实 API Key 后必须重新跑校准**，上表�
 
 ---
 
-## 八、目录结构
+## 九、目录结构
 
 ```
 server/
@@ -495,7 +544,7 @@ server/
 
 ---
 
-## 九、部署与内网访问
+## 十、部署与内网访问
 
 ### 小范围试点（同一局域网内几台机器）
 
@@ -614,7 +663,7 @@ server {
 
 ---
 
-## 十、备份与恢复
+## 十一、备份与恢复
 
 全部数据在一个 SQLite 文件里，**这是本方案最大的运维风险点**，所以给了现成手段：
 
@@ -646,7 +695,7 @@ node server/tools/reset.js --yes      # 真删（含 -wal / -shm），下次启�
 
 ---
 
-## 十一、故障排查
+## 十二、故障排查
 
 | 现象 | 原因 | 处理 |
 |---|---|---|

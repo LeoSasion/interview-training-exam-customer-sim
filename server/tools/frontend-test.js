@@ -627,6 +627,41 @@ const LT = win.TRAIN;
     'coachNotes 兼容字符串（按学员）与对象（{learnerId,q}）两种参数');
   check(syncSrcP9, /if \(o\.q\) qs\.push\('q=' \+ encodeURIComponent\(o\.q\)\);/, 'q 参数走 encodeURIComponent 并拼进查询串');
 
+  /* ---- P11：本地语音识别（FunASR · SenseVoiceSmall） ---- */
+  const aiBridgeP11 = fs.readFileSync(path.join(ROOT, 'assets/ai-bridge.js'), 'utf8');
+  const voiceJsP11 = fs.readFileSync(path.join(ROOT, 'server/voice.js'), 'utf8');
+  const indexJsP11 = fs.readFileSync(path.join(ROOT, 'server/index.js'), 'utf8');
+  // ai-bridge：能力探测三重门 + 三态契约
+  check(aiBridgeP11, /function asrAvail\(\)[\s\S]{0,140}?state\.info\.voice\.asrOnline/,
+    'ai-bridge 的 asrAvail() 读 /status 缓存的 voice.asrOnline（不是猜的）');
+  check(aiBridgeP11, /async function asr\(blob\)[\s\S]{0,700}?catch \(e\) \{ \/\* 静默降级：调用方按 null 处理 \*\/ \}[\s\S]{0,40}?return null;/,
+    'asr() 失败静默返回 null（绝不向页面抛错——铁律 8）');
+  check(aiBridgeP11, /root\.AIBOOT = \{[\s\S]*?asr: asr, asrAvail: asrAvail,/, 'AIBOOT 导出 asr / asrAvail');
+  // 学员端：真语音优先 + 原话术选择兜底（降级路径一个字不改）
+  check(learnSrc, /function voiceCapable\(\)/, '学员端有浏览器录音能力探测 voiceCapable()');
+  check(learnSrc, /AIBOOT\.asrAvail && AIBOOT\.asrAvail\(\)\)\{[\s\S]{0,60}?startRealVoice\(\);[\s\S]{0,20}?return;[\s\S]{0,30}?openSimSheet\(\)/,
+    '「按住说话」真语音优先、原话术选择兜底（三重能力门）');
+  check(learnSrc, /catch\(e\)\{[\s\S]{0,80}?toast2\('无法访问麦克风，改用话术选择'\);[\s\S]{0,60}?openSimSheet\(\);/,
+    '麦克风被拒时如实提示并回退话术选择');
+  check(learnSrc, /const r = await AIBOOT\.asr\(blob\);[\s\S]{0,200}?addMsg\('out', r\.text, \{voice: sec\}\);[\s\S]{0,60}?judge\(r\.text\);/,
+    '识别成功按「话术选择」同一语义发出（语音条真实时长 + 判分）');
+  check(learnSrc, /toast2\('语音识别失败/, '识别失败如实提示（可切换键盘），不假装成功');
+  check(learnSrc, /function stopRealVoice\(\)/, '有 stopRealVoice()（录音浮层点击结束）');
+  check(learnSrc, /id="recov" onclick="stopRealVoice\(\)"/, '录音浮层挂了结束事件');
+  check(learnSrc, /\.vtoast\{position:fixed/, '语音链路有轻提示样式（不动已验收提示区）');
+  // Node 侧：practice 档（学员匿名可用）+ 音频 raw body + 503 如实
+  const asrRoute = indexJsP11.slice(indexJsP11.indexOf("on('POST', /^\\/api\\/v1\\/asr"));
+  ok(asrRoute.length > 0 && asrRoute.slice(0, 520).indexOf("}, 'practice', { rawBody: true });") >= 0
+    && asrRoute.slice(0, 520).indexOf('voice.transcribe') >= 0,
+    '/asr 路由为 practice 档、声明 rawBody、走 voice.transcribe（学员没登录也能用语音——核心约束）');
+  check(indexJsP11, /const isAudio = r\.rawBody \|\| \/\^audio\\\/\/\.test\(/,
+    '音频请求按二进制读（路由声明 rawBody 优先、Content-Type 兜底——不走 JSON 解析）');
+  check(voiceJsP11, /ok: false, error: '语音识别服务不可达', status: 503/,
+    'ASR 服务不可达如实返回 503（不伪装成「识别为空」）');
+  check(voiceJsP11, /asrOnline/, 'voice.js 有健康探测 asrOnline()');
+  // MIME 表：缺 .webm 时浏览器 fetch 测试样本拿到 octet-stream、blob.type 丢 audio/ 前缀（真机踩过）
+  check(indexJsP11, /'\.webm': 'audio\/webm'/, '静态服务的 MIME 表含 .webm（浏览器录音/测试样本正确下发音频类型）');
+
   /* ---- 逐轮对话（P7） ---- */
   // 这一节要用到三个页面/脚本源码：adminSrc 上面已读，另两个在下面的分节里才声明，
   // 所以这里单独读一份（同步层的 exportBlock 断言仍在下面用 syncSrc）。

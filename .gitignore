@@ -4,6 +4,9 @@ server/store/*.db-wal
 server/store/*.db-shm
 server/store/*.log
 
+# 语音服务运行日志（P11；asr_example_zh.wav/webm 是自测样本，保留入库）
+voice/*.log
+
 # 数据库备份（本地快照，不入库）
 server/store/backup/
 *.bak
