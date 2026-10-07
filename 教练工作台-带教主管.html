@@ -91,6 +91,9 @@
 #toast.on{opacity:1;transform:translate(-50%,0)}
 /* 登录门 */
 #loginBox{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;display:flex;align-items:center;justify-content:center;padding:20px}
+/* hidden 属性会被上面的 display:flex 覆盖（UA 样式特异性更低）——必须显式声明，
+   否则 hideLogin() 是空操作、弹层恒显（真机截图抓出，P11 修复） */
+#loginBox[hidden]{display:none}
 #loginBox .lg-card{width:344px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);
   padding:18px;box-shadow:0 18px 48px rgba(0,0,0,.4)}
 </style>
@@ -1611,7 +1614,8 @@
       'recordCount=' + T.records.length,
       'noteCount=' + notes.length,
       'qcCount=' + Object.keys(qcState).length,
-      'loginBoxOpen=' + !$('#loginBox').hidden
+      // 探针读真实渲染状态而非 hidden 属性：display:flex 会覆盖 hidden（P11 真机踩坑）
+      'loginBoxOpen=' + (getComputedStyle($('#loginBox')).display !== 'none')
     ].join('|');
   };
 })();
