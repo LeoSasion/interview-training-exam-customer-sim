@@ -85,6 +85,8 @@ body{
   --wx-icon:#4B4B4B; --wx-inputbg:#FFFFFF; --wx-time:#A6A6A6;
   /* 会话列表右侧的「陪练」小标签 */
   --wx-pill-bg:#0F2418; --wx-pill-bd:#2F6B45; --wx-pill-fg:#5FCF8C;
+  /* 「任务在身」小标签：品牌绿实底（浅色 #07C160 / 深色 #3EB575，与硬约定一致） */
+  --wx-taskpill-bg:#07C160; --wx-taskpill-fg:#FFFFFF;
 }
 .screen[data-theme="dark"]{
   --wx-bg:#111111; --wx-nav:#1C1C1E; --wx-line:#2A2A2C; --wx-text:#D9D9D9;
@@ -92,6 +94,8 @@ body{
   --wx-icon:#C9C9C9; --wx-inputbg:#2C2C2E; --wx-time:#6A6A6A;
   /* 深色下 #0F2418 压在 #111111 上几乎看不见，换成半透明品牌绿 */
   --wx-pill-bg:rgba(62,181,117,.18); --wx-pill-bd:rgba(62,181,117,.40); --wx-pill-fg:#7FE0A8;
+  /* 深色品牌绿实底配深字（与 .row.out 气泡同构，保证对比度） */
+  --wx-taskpill-bg:#3EB575; --wx-taskpill-fg:#111111;
 }
 
 /* 状态栏 */
@@ -133,6 +137,7 @@ body{
   display:flex;align-items:center;justify-content:center;padding:0 5px;flex:0 0 auto}
 .pill{font-size:10px;line-height:15px;padding:0 5px;border-radius:4px;background:var(--wx-pill-bg);color:var(--wx-pill-fg);
   border:.5px solid var(--wx-pill-bd);flex:0 0 auto;margin-left:6px}
+.pill.on-task{background:var(--wx-taskpill-bg);color:var(--wx-taskpill-fg);border-color:transparent;font-weight:500}
 
 /* tabbar */
 .tabbar{flex:0 0 54px;display:flex;background:var(--wx-bar);border-top:.5px solid var(--wx-line);z-index:5}
@@ -570,9 +575,13 @@ function loadMyTasks(){
   if(!window.AIBOOT || !AIBOOT.tasks) return;
   AIBOOT.tasks(ME).then(list=>{
     if(list){
+      /* 签名变化才打日志：轮询路径下每 60s 一条会把控制台刷成噪音 */
+      const sig = list.map(t=>t.id + ':' + t.status).join('|');
+      const changed = !serverTasks || serverTasks.map(t=>t.id + ':' + t.status).join('|') !== sig;
       serverTasks = list;
       renderTasks();
-      console.log('[任务] 已从服务端同步 ' + list.length + ' 条我的任务');
+      initList();          // 任务到达/状态变化 → 会话列表的「任务在身」标记同步
+      if(changed) console.log('[任务] 已从服务端同步 ' + list.length + ' 条我的任务');
     }
   }).catch(()=>{});
 }
@@ -595,9 +604,14 @@ function loadScenes(){
   }).catch(()=>{});
 }
 
+/* 场景 → 我在这个场景上的进行中任务（唯一查询口径，绑定与列表标记共用） */
+function taskOfScene(sceneId){
+  return taskFeed().filter(t => t.sceneId === sceneId && t.status === 'running')[0] || null;
+}
+
 /* 按场景自动绑定「我的进行中任务」——从会话列表直接开始也能正确归属成绩 */
 function bindTaskForScene(sceneId){
-  const hit = taskFeed().filter(t => t.sceneId === sceneId && t.status === 'running')[0];
+  const hit = taskOfScene(sceneId);
   curTaskId = hit ? hit.id : '';
   curTaskPass = hit && hit.passLine ? hit.passLine : null;
   return hit || null;
@@ -614,14 +628,18 @@ function startTask(taskId){
 
 /* ===================== 初始化 ===================== */
 function initList(){
-  $('convList').innerHTML = SCENES.map((s,i)=>`
+  $('convList').innerHTML = SCENES.map((s,i)=>{
+    /* 场景上有我进行中的任务 → 「任务在身」实底绿标；否则是自主练习的「陪练」标 */
+    const tk = taskOfScene(s.id);
+    return `
     <div class="li" onclick="openChat(${i})">
       <div class="ava" style="background:${s.color}">${s.ava}</div>
       <div class="mid">
-        <div class="r1"><span class="nm">${s.name}<span class="pill">陪练</span></span><span class="tm">${s.time}</span></div>
+        <div class="r1"><span class="nm">${s.name}<span class="pill${tk?' on-task':''}">${tk?'任务在身':'陪练'}</span></span><span class="tm">${s.time}</span></div>
         <div class="r2"><span class="ms">${s.last}</span>${s.unread?`<span class="badge">${s.unread}</span>`:''}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function initDims(){
@@ -1234,6 +1252,12 @@ initList(); renderTasks(); initDims(); tick(); setInterval(tick, 15000);
 loadMyTasks();
 /* 服务端在线时同步「已发布场景池」（运营新发布的场景学员才拿得到）；失败静默走本地种子 */
 loadScenes();
+/* 轻轮询：页面开着也能收到新发布的场景与新下发的任务（不必刷新）。
+   只在页面可见时拉（后台标签页不耗流量也不打服务端）；
+   loadScenes/loadMyTasks 内部都是「有变化才重渲染 + 失败静默」，轮询不会抖动界面。 */
+setInterval(function(){
+  if(document.visibilityState === 'visible'){ loadScenes(); loadMyTasks(); }
+}, 60000);
 
 /* 无头验证探针（只读，不影响页面行为） */
 window.__LRN = () => ({
@@ -1241,6 +1265,7 @@ window.__LRN = () => ({
   meName: myName(),
   serverTasks: serverTasks ? serverTasks.length : null,
   myTasks: taskFeed().map(t => t.id + ':' + t.status),
+  myTaskScenes: taskFeed().filter(t => t.status === 'running').map(t => t.sceneId),
   curTaskId: curTaskId,
   curTaskPass: curTaskPass,
   sceneIds: SCENES.map(s => s.id),

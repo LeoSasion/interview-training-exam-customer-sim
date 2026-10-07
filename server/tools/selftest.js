@@ -322,6 +322,34 @@ async function login(account, password) {
     ok('越范围读逐轮明细被拒（403）', false, '教练可见全部记录，无法构造越范围样本');
   }
 
+  /* ---- 4c. P8：自主练习（free）来源可见 ----
+   * 这一段存在的理由：自由练习（无任务归属）的成绩此前在管理端显示**空白**任务名、
+   * 教练台只写「练习」，主管无法区分「任务考核」与「学员自主学习」。
+   * 上面 4 段的匿名会话（sid2）不带 taskId，它落的成绩就是一条现成的 free 记录。 */
+  console.log('  ─────────────────────────────────────────');
+  console.log('  P8：自主练习来源');
+  {
+    const recAll2 = (data(await call('GET', '/records', undefined, { token: adm.token })) || {}).items || [];
+    const anonRec = recAll2.filter((r) => r.id === anonRecId)[0];
+    ok('自由练习成绩带 mode=free 且 taskId 为空',
+      !!anonRec && anonRec.mode === 'free' && (anonRec.taskId || '') === '',
+      anonRec ? ('mode=' + anonRec.mode + ' taskId=' + JSON.stringify(anonRec.taskId)) : '成绩不存在');
+    ok('成绩列表每条都带 mode（task|free）',
+      recAll2.length > 0 && recAll2.every((r) => r.mode === 'task' || r.mode === 'free'));
+    const freeList = (data(await call('GET', '/records?mode=free', undefined, { token: adm.token })) || {}).items || [];
+    const taskList = (data(await call('GET', '/records?mode=task', undefined, { token: adm.token })) || {}).items || [];
+    ok('?mode=free 筛出的全部是 free 且含刚练的一条',
+      freeList.length > 0 && freeList.every((r) => r.mode === 'free') && freeList.some((r) => r.id === anonRecId));
+    ok('?mode=task 筛出的全部是 task 且不含 free',
+      taskList.length > 0 && taskList.every((r) => r.mode === 'task') && !taskList.some((r) => r.id === anonRecId));
+    ok('free + task 两类合计 === 全量（不重不漏）',
+      freeList.length + taskList.length === recAll2.length,
+      freeList.length + ' + ' + taskList.length + ' vs ' + recAll2.length);
+    const l01free = (data(await call('GET', '/records?learnerId=L01&mode=free', undefined, { token: adm.token })) || {}).items || [];
+    ok('learnerId 与 mode 筛选可组合（教练按学员看自主练习）',
+      l01free.some((r) => r.id === anonRecId) && l01free.every((r) => r.mode === 'free' && r.learnerId === 'L01'));
+  }
+
   /* ---- 5. 金标校准 ---- */
   const calib = await call('POST', '/goldset/calibrate', { mode: 'auto' }, { token: adm.token });
   const cd = data(calib);

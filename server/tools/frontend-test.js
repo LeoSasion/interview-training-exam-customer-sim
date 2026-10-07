@@ -248,6 +248,8 @@ const LT = win.TRAIN;
   ok(zRecs.every((r) => ls3.some((l) => l.id === r.learnerId)),
     '教练可见成绩全部落在范围内（' + zRecs.length + ' 条）');
   ok(zRecs.every((r) => typeof r.qc === 'string'), '成绩记录带 qc 字段（质检状态由服务端一并返回）');
+  ok(zRecs.every((r) => r.mode === 'task' || r.mode === 'free'),
+    '成绩记录带 mode 来源字段（task|free，P8 自主练习可见化）');
 
   const notes0 = await SYNC.coachNotes();
   ok(Array.isArray(notes0), 'coachNotes() 返回数组（' + (notes0 ? notes0.length : null) + ' 条）');
@@ -522,6 +524,40 @@ const LT = win.TRAIN;
   // 换掉数组会让「当前会话」指向别的场景，而 SCENES[cur] 是本页唯一的场景读取路径。
   ok(!/\bSCENES\s*=/.test(learnSrc), '学员端不存在 SCENES 整体赋值（只能由数据源原地合并）');
 
+  /* ---- 自主练习可见化 + 轻轮询（P8） ---- */
+  // 教练台源码此时尚未声明 coachSrc0（P7 段才读），这里自己读一份
+  const coachSrcP8 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  // 任务在身标记：bindTaskForScene（成绩归属）与 initList（列表标记）必须共用同一个
+  // 查询口径 taskOfScene —— 两处各写一遍 filter，迟早一处改了另一处没改（硬约定 7 同源问题）。
+  check(learnSrc, /function taskOfScene\(sceneId\)/, '学员端有「场景→我的任务」唯一查询口径 taskOfScene()');
+  check(learnSrc, /function bindTaskForScene\(sceneId\)\{[\s\S]{0,120}?taskOfScene\(sceneId\)/,
+    '成绩归属绑定复用 taskOfScene（口径不漂移）');
+  check(learnSrc, /class="pill\$\{tk\?' on-task':''\}">\$\{tk\?'任务在身':'陪练'\}/,
+    '会话列表区分「任务在身 / 陪练」标记');
+  check(learnSrc, /--wx-taskpill-bg:#07C160; --wx-taskpill-fg:#FFFFFF;/,
+    '「任务在身」浅色主题用品牌绿令牌（非散落硬编码）');
+  check(learnSrc, /--wx-taskpill-bg:#3EB575; --wx-taskpill-fg:#111111;/,
+    '「任务在身」深色主题用品牌绿深色值（手机双层主题都适配）');
+  // 任务同步后要重建会话列表：否则运营新下发的任务到了，「任务在身」标记却不变
+  check(learnSrc, /function loadMyTasks\(\)[\s\S]{0,500}?initList\(\);/,
+    '任务同步成功后重建会话列表（标记随之更新）');
+  // 60s 轻轮询：页面开着也能收到新发布场景与新任务，不必刷新；后台标签页不拉
+  check(learnSrc, /setInterval\(function\(\)\{[\s\S]{0,160}?visibilityState === 'visible'[\s\S]{0,160}?loadScenes\(\); loadMyTasks\(\);[\s\S]{0,60}?\}, 60000\)/,
+    '60s 轮询场景池与任务（仅页面可见时拉取）');
+  // 管理端：free 成绩的任务名此前显示**空白**（task 查不到、taskId 是空串）
+  check(adminSrc, /esc\(task \? task\.title : '自主练习'\)/,
+    '管理端成绩标题对 free 记录显示「自主练习」（不再是空白）');
+  check(adminSrc, /r\.mode === 'free' \? '<span class="tag">自主练习<\/span>' : ''/,
+    'free 记录带「自主练习」来源 tag');
+  check(adminSrc, /mode: r\.mode \|\| \(r\.taskId \? 'task' : 'free'\)/,
+    '管理端水合保留服务端 mode（离线种子按同一口径推导）');
+  // 教练台：option / 质检表 / 抽屉三处都要能看出这是自主练习
+  check(coachSrcP8, /esc\(tk \? tk\.title : '自主练习'\)/,
+    '教练台对 free 记录显示「自主练习」');
+  check(coachSrcP8, /mode: r\.mode \|\| \(r\.taskId \? 'task' : 'free'\)/,
+    '教练台水合保留服务端 mode');
+  check(coachSrcP8, /（自主练习）/, '学员动态里标注「（自主练习）」来源');
+
   /* ---- 逐轮对话（P7） ---- */
   // 这一节要用到三个页面/脚本源码：adminSrc 上面已读，另两个在下面的分节里才声明，
   // 所以这里单独读一份（同步层的 exportBlock 断言仍在下面用 syncSrc）。
@@ -659,6 +695,18 @@ const LT = win.TRAIN;
   ok(listHtml.indexOf(PAGE_SCENE_NAME) !== -1,
     '会话列表里渲染出了新场景「' + PAGE_SCENE_NAME + '」');
   ok(listHtml.indexOf('张经理') !== -1, '原有种子场景仍在列表里（热更新没有清掉本地种子）');
+
+  /* P8：任务在身标记 —— L01 的进行中任务（T01→s1、T02→s2）对应场景必须渲染出
+   * on-task 实底标记，其余场景保持「陪练」标。断言数关系而不是写死 2，
+   * 演示任务怎么改都不影响这条断言的有效性。 */
+  const taskScenes = lrn ? Array.from(new Set(lrn.myTaskScenes || [])) : [];
+  const onTaskCount = (listHtml.match(/on-task/g) || []).length;
+  const pillCount = (listHtml.match(/class="pill/g) || []).length;
+  ok(taskScenes.length > 0, 'L01 有进行中任务对应的场景（' + taskScenes.length + ' 个，标记可验证）');
+  ok(onTaskCount === taskScenes.length,
+    'on-task 标记数 === 有任务场景数（' + onTaskCount + ' vs ' + taskScenes.length + '）');
+  ok(pillCount === lrn.sceneCount,
+    '每个场景都有来源标记（pill ' + pillCount + ' 个 / 场景 ' + lrn.sceneCount + ' 个）');
 
   // 收尾：下线并删除临时场景，保证自测可重复运行
   // ⚠️ 下线（offline）走 assertCanReview，运营没有审核权 → 必须用审核员身份；

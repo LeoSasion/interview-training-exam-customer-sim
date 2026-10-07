@@ -426,6 +426,8 @@
     var task = T.taskById(r.taskId), scene = T.sceneById(r.sceneId);
     return {
       id: r.id, taskId: r.taskId, learnerId: r.learnerId, sceneId: r.sceneId,
+      /* 来源：task=任务考核 / free=自主练习（服务端推导；离线种子按同一口径兜底） */
+      mode: r.mode || (r.taskId ? 'task' : 'free'),
       score: r.score, dimScores: r.dimScores || {},
       passLine: (task && task.passLine) || (scene && scene.passLine) || 60,
       passed: !!r.passed, finishedAt: r.at,
@@ -788,8 +790,8 @@
       var word = r.score >= 85 ? '表现出色' : (r.passed ? '顺利达标' : '未达标');
       return '<div class="ev ' + cls + '">' +
         '<div class="tm">' + esc(r.finishedAt) + '</div>' +
-        '<div class="tx"><b>' + esc(l.name) + '</b> 完成「' + esc(tk ? tk.title : sc.taskName) + '」，得分 <b>' +
-        r.score + '</b> 分（' + word + '）</div>' +
+        '<div class="tx"><b>' + esc(l.name) + '</b> 完成「' + esc(tk ? tk.title : sc.taskName) + (tk ? '' : '（自主练习）') + '」，得分 <b>' +
+          r.score + '</b> 分（' + word + '）</div>' +
         '</div>';
     }).join('');
   }
@@ -1223,7 +1225,7 @@
     $('#coachRec').innerHTML = rs.length
       ? rs.slice().reverse().map(function (r) {
         var tk = T.taskById(r.taskId);
-        return '<option value="' + r.id + '">' + esc(fmtDate(r.finishedAt)) + ' · ' + esc(tk ? tk.title : '练习') + ' · ' + r.score + ' 分</option>';
+        return '<option value="' + r.id + '">' + esc(fmtDate(r.finishedAt)) + ' · ' + esc(tk ? tk.title : '自主练习') + ' · ' + r.score + ' 分</option>';
       }).join('')
       : '<option value="">暂无练习记录</option>';
     $('#coachRec').onchange = function () { renderCoach(lid); };
@@ -1344,7 +1346,7 @@
       return '<tr>' +
         '<td class="num muted">' + (i + 1) + '</td>' +
         '<td><div style="font-weight:500">' + esc(l.name) + (ids.indexOf(l.id) !== -1 ? ' <span class="tag b" style="font-size:10px">我带的</span>' : '') + '</div>' +
-        '<div style="font-size:11.5px;color:var(--txt3)">' + esc(tk ? tk.title : '练习') + ' · ' + esc(fmtDate(r.finishedAt)) + '</div></td>' +
+        '<div style="font-size:11.5px;color:var(--txt3)">' + esc(tk ? tk.title : '自主练习') + ' · ' + esc(fmtDate(r.finishedAt)) + '</div></td>' +
         '<td>' + esc(sc.name) + ' <span class="muted" style="font-size:11.5px">' + esc(sc.category) + '</span></td>' +
         '<td class="num"><b style="color:' + (r.passed ? 'var(--acc-txt)' : 'var(--red)') + '">' + r.score + '</b></td>' +
         '<td class="num muted">' + r.passLine + '</td>' +
@@ -1378,7 +1380,7 @@
     var summary =
       '<div class="kvline"><span class="k">学员</span><span class="v">' + esc(l.name) + '</span></div>' +
       '<div class="kvline"><span class="k">场景 / 任务</span><span class="v">' + esc(sc.name) + ' · ' +
-        esc(tk ? tk.title : '练习') + '</span></div>' +
+        esc(tk ? tk.title : '自主练习') + '</span></div>' +
       '<div class="kvline"><span class="k">成绩</span><span class="v">' + r.score + ' 分（达标线 ' + r.passLine +
         '）· ' + (r.passed ? '达标' : '未达标') + '</span></div>' +
       '<div class="kvline"><span class="k">用时 / 轮次</span><span class="v">' + r.minutes + ' 分钟 / ' +

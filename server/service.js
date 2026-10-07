@@ -768,6 +768,14 @@ function listRecords(query, user) {
   if (query.learnerId) { where.push('learner_id = ?'); args.push(String(query.learnerId)); }
   if (query.sceneId) { where.push('scene_id = ?'); args.push(String(query.sceneId)); }
   if (query.taskId) { where.push('task_id = ?'); args.push(String(query.taskId)); }
+  // 来源筛选（P8）：free = 自主练习（无任务归属），task = 任务考核。
+  // task_id 理论上恒为非 NULL（startTurn 写库前已归一为 ''），但筛选仍按防 NULL 写法，
+  // 避免手工导入的历史行漏网。
+  if (query.mode === 'free') {
+    where.push("(task_id IS NULL OR task_id = '')");
+  } else if (query.mode === 'task') {
+    where.push("task_id IS NOT NULL AND task_id != ''");
+  }
 
   // 数据范围：非全量账号只看得到自己范围内的学员记录
   const scopeIds = user ? scopedLearnerIds(user) : null;
@@ -788,6 +796,10 @@ function listRecords(query, user) {
     const pl = P(r.payload, {}) || {};
     return {
       id: r.id, learnerId: r.learner_id, taskId: r.task_id, sceneId: r.scene_id,
+      // 来源标记（P8）：task = 任务考核（成绩归因到某条下发任务）；
+      // free = 自主练习（学员从场景池自己挑的，不占任务进度）。
+      // 推导而非落库列：task_id 就是唯一事实，加列只会多一处可能漂移的口径。
+      mode: (r.task_id || '') !== '' ? 'task' : 'free',
       score: r.score, passed: !!r.passed, at: r.at, channel: r.channel,
       rubricVersion: r.rubric_version, confidence: r.confidence,
       // 用时/轮次：播种记录写在 payload 里；练习产生的记录 payload 只带 turns

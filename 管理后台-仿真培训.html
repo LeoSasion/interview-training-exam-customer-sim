@@ -1484,7 +1484,8 @@ tr.flash td{animation:flashRow 2.2s ease-out}
         var scene = sceneById2(r.sceneId);
         return '<div class="rec-item">' +
           '<div class="mid">' +
-            '<div class="t1">' + esc(task ? task.title : r.taskId) +
+            '<div class="t1">' + esc(task ? task.title : '自主练习') +
+              (r.mode === 'free' ? '<span class="tag">自主练习</span>' : '') +
               (r.passed ? '<span class="tag g"><span class="dot g"></span>达标</span>' : '<span class="tag r"><span class="dot r"></span>未达标</span>') +
               '<span class="muted code">' + esc(scene ? scene.code : '') + '</span></div>' +
             '<div class="t2">' + esc(r.finishedAt) + ' · ' + esc(scene ? scene.name : '') +
@@ -2402,6 +2403,8 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     var scene = T.sceneById(r.sceneId);
     return {
       id: r.id, taskId: r.taskId, learnerId: r.learnerId, sceneId: r.sceneId,
+      /* 来源：task=任务考核 / free=自主练习（服务端推导；离线种子按同一口径兜底） */
+      mode: r.mode || (r.taskId ? 'task' : 'free'),
       score: r.score, dimScores: r.dimScores || {},
       passLine: (task && task.passLine) || (scene && scene.passLine) || 60,
       passed: !!r.passed, finishedAt: r.at,

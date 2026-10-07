@@ -243,7 +243,7 @@ LLM_API_KEY=mock-key LLM_BASE_URL=http://127.0.0.1:8999/v1 LLM_MODEL=mock-scorer
 | GET | `/scenes/published` | **practice** | **学员端「已发布场景池」（匿名可读）**。只返回 `publish='published'` 的场景，且只带学员端要用的字段（`script/tips/objectives/voicePool/passLine/…`），**不带 `audit`/`versions`/`owner`/`publish`/`status`/`updatedAt`/`brief`** —— 因为这是匿名端点 |
 | POST | `/session/:id/turn` | practice | 一轮对话：AI 评分 + NPC 回复（允许匿名） |
 | POST | `/session/:id/finish` | practice | 结束会话，写一条成绩记录（允许匿名） |
-| GET | `/records` `/learners` `/users` | staff | 培训数据（**按登录身份的数据范围过滤**；`/records` 每条带 `qc` 质检状态与 `turnCount`，**刻意不带逐轮对话正文**，见下方「逐轮对话」） |
+| GET | `/records` `/learners` `/users` | staff | 培训数据（**按登录身份的数据范围过滤**；`/records` 每条带 `qc` 质检状态、`turnCount` 与 `mode` 来源（`task`=任务考核 / `free`=自主练习，由 `task_id` 推导），**刻意不带逐轮对话正文**，见下方「逐轮对话」；支持 `?mode=task|free` 筛选，可与 `?learnerId=` 组合） |
 | GET | `/records/:id/turns` | staff | **一条成绩的逐轮对话（P7）**。只卡**数据可见范围**（不卡 `can_edit`/`can_review` —— 看自己名下学员的对话是带教本职）。越范围 / 无归属成绩一律 403，不存在 404 |
 | DELETE | `/records/:id` | staff（需编辑权） | 删除一条成绩（**连带删掉它的质检结论**，避免留下无主结论） |
 | GET | `/coach-notes` | staff | 辅导记录（按数据范围过滤；`?learnerId=` 收窄到某学员） |
@@ -555,7 +555,7 @@ DB_SYNC=FULL node server/index.js
 | 接口分页 | `/records` `/learners` `/tasks` 目前一次返回全部（演示数据量小）；数据量大时要补 `limit/offset`。**P7 已先还掉一部分**：逐轮对话正文撤出 `/records` 列表，改为 `GET /records/:id/turns` 按需取 |
 | 逐轮对话留存 | 逐轮明细存在 `records.evidence` 这一列 JSON 里；它有按需接口与权限，但**没有独立的检索/统计**（比如"全校最常出现的敷衍话术"），要另做 |
 | 辅导记录检索 | `/coach-notes` 只能按学员收窄，没有全文检索与分页；带教记录攒多了要补 |
-| 学员端场景热更新 | 学员端场景库读的是页面加载时的场景库，**新发布的场景需刷新页面才可见**（刷新即拉到，见第五节） |
+| 学员端场景热更新 | **P8 已补 60s 轻轮询**：页面开着（且可见）就会同步新发布场景与新下发任务，不必刷新；仅页面不可见时暂停（后台标签页不耗流量）。轮询间隔为编译期常量，需调优时改学员端 `setInterval` 处 |
 
 ---
 
