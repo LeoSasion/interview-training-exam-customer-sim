@@ -276,7 +276,7 @@ TTS（客户侧语音播报）仍未做，见「仍未覆盖」。
 | GET | `/auth/me` | staff | 当前身份 + 鉴权模式 |
 | POST | `/auth/password` | staff | 修改自己的口令（`oldPassword` / `newPassword`） |
 | GET | `/auth/accounts` | staff | 账号与权限矩阵（**不含口令哈希**） |
-| GET | `/status` | public | 服务状态、模型配置、在线探活、鉴权模式、**落盘级别（`dbSync`：journal + synchronous 真值）**、数据统计 |
+| GET | `/status` | public | 服务状态、模型配置、在线探活、鉴权模式、**落盘级别（`dbSync`：journal + synchronous 真值）**、数据统计。⚠️ **`stats` 是「全库口径」，不按登录身份收窄**（public 档、匿名也要读）——教练账号能看到全库规模数字（12 学员/30 成绩），但**看不到范围外明细**（列表/明细接口仍按数据范围过滤）。页面展示的同源统计由前端用「可见集」本地计算，不用这个总数字 |
 | GET | `/ai/status` | public | 仅 AI 通道状态（含探活耗时） |
 | GET | `/rubric` | public | 当前 Rubric（5 维锚点与权重） |
 | GET | `/scenes` | staff | 场景库（支持 `?publish=`、`?assignable=1`） |
@@ -315,6 +315,7 @@ TTS（客户侧语音播报）仍未做，见「仍未覆盖」。
 | GET | `/goldset/runs` | staff | 历史校准结果 |
 | GET | `/admin/backup` | staff | 备份列表 |
 | POST | `/admin/backup` | staff | 立即生成一份一致性快照 |
+| POST | `/admin/cleanup-sessions` | staff(admin) | **清理「无成绩关联」的历史会话**（body `{maxAgeHours}`，默认 24；0=全清无关联的）：学员中途退出的练习、自测/探针调用都会建 session 但永远没有成绩，长期运行会累积。**只删无成绩关联的**，已完成练习无论多老都保留；仅管理员可调（403 闸门） |
 
 ### CORS 策略
 
@@ -658,6 +659,7 @@ server {
 | 统一身份 | `server/auth.js` 接口不变，可整体换成企业 SSO / 企业微信扫码 |
 | 接口分页 | **P9 已统一补齐**：五个列表接口都支持 `?limit=&offset=`（校验 + `total`/`hasMore` + 稳定排序）。三端页面的「一次拉全量 + 本地统计」是**刻意架构**（离线兜底依赖本地全量），分页面向导出 / 对接 / 未来轻客户端 |
 | 逐轮对话留存 | 逐轮明细存在 `records.evidence` 这一列 JSON 里；它有按需接口与权限，但**没有独立的检索/统计**（比如"全校最常出现的敷衍话术"），要另做 |
+| 会话表清理策略 | **P11 巡检已补运维接口**（`/admin/cleanup-sessions` + 管理端按钮 + 自测清场）。仍无**自动**清理（定时/TTL）——当前靠手动一键清；演示环境够用，长期生产建议加定时任务 |
 | 辅导记录检索 | **P9 已补 `?q=` 全文包含检索**（服务端能力，LIKE 通配符已转义）；UI 侧暂无搜索入口，检索面向对接与导出脚本 |
 | 学员端场景热更新 | **P8 已补 60s 轻轮询**：页面开着（且可见）就会同步新发布场景与新下发任务，不必刷新；仅页面不可见时暂停（后台标签页不耗流量）。轮询间隔为编译期常量，需调优时改学员端 `setInterval` 处 |
 

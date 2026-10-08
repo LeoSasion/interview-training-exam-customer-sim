@@ -797,6 +797,20 @@ async function login(account, password) {
   const recGone = await call('DELETE', '/records/' + encodeURIComponent(recId || 'R-NOPE'), undefined, { token: adm.token });
   eq('成绩已不存在（重复删除 404）', recGone.status, 404);
 
+  /* ---- 9c. 清理自测会话（P11 巡检补齐）----
+   * `/session/:id/turn` 每次调用都建 session —— 本自测跑一趟会留下几十个
+   * selfcheck-* 会话，而原清理段只清成绩/任务/场景，导致演示库攒了 264 个脏会话。
+   * 现在用运维接口按「无成绩关联」清理（maxAgeHours=0 连刚建的也清，保幂等）。 */
+  {
+    const cl = await call('POST', '/admin/cleanup-sessions', { maxAgeHours: 0 }, { token: adm.token });
+    ok('清理无成绩关联的自测会话（删 ' + ((data(cl) || {}).removedSessions) + ' 个 / 保留 ' +
+      ((data(cl) || {}).keptSessions) + ' 个）', cl.status === 200 && !!data(cl));
+    ok('清理后不残留无成绩会话（会话数 === 有成绩关联数）',
+      !!data(cl) && data(cl).keptSessions === 0, '保留 ' + (data(cl) || {}).keptSessions + ' 个');
+    const opDenied = await call('POST', '/admin/cleanup-sessions', {}, { token: op.token });
+    eq('运营账号无清理会话权限（403）', opDenied.status, 403);
+  }
+
   /* ---- 10. enforce 模式：独立进程验证无 token 一律 401 ---- */
   await checkEnforce();
 

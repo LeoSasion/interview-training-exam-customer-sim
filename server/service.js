@@ -1143,6 +1143,65 @@ function clearQc(recordId, userId) {
   return { recordId: rid, state: '' };
 }
 
+/**
+ * 清理「无成绩关联」的历史会话（P11 巡检补齐的运维能力）
+ *
+ * 由来：`/session/:id/turn` 每次开练都会建一条 session + 逐轮 session_turns；
+ * 学员中途退出/刷新、自测与探针调用都会留下**永远没有 record 关联**的会话
+ * （实测演示库攒到 268 条会话 vs 30 条成绩）。这些是过程记录，留着只脏不损，
+ * 但演示前/长期运行后需要能一键清干净。**只删无成绩关联的**——已完成的练习
+ * （有 record）无论多老都保留。
+ *
+ * @param {number} maxAgeHours 只清「开始时间早于 N 小时前」的（默认 24；传 0 = 全清无关联的）
+ */
+function cleanupSessions(maxAgeHours, userId) {
+  const user = requireUser(userId);
+  // 清库是运维动作：只允许管理员（运营/教练都不该有删数据的口子）
+  if (user.role !== 'admin') {
+    throw Object.assign(new Error(`角色「${user.role}」无清理会话权限`), { status: 403 });
+  }
+  const hours = maxAgeHours == null ? 24 : Number(maxAgeHours);
+  if (!isFinite(hours) || hours < 0) {
+    throw Object.assign(new Error('maxAgeHours 须为 >= 0 的数字'), { status: 400 });
+  }
+
+  // 有关联成绩的会话 id（payload.sessionId）
+  const linked = new Set();
+  db.prepare('SELECT payload FROM records').all().forEach((r) => {
+    const sid = (P(r.payload, {}) || {}).sessionId;
+    if (sid) linked.add(String(sid));
+  });
+
+  const cutoff = hours > 0 ? new Date(Date.now() - hours * 3600 * 1000) : null;
+  const stamp = (d) => {
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  };
+  const cutoffStr = cutoff ? stamp(cutoff) : '';
+
+  const victims = db.prepare('SELECT id, started_at FROM sessions').all()
+    .filter((s) => !linked.has(String(s.id)))
+    .filter((s) => !cutoff || String(s.started_at || '') < cutoffStr)
+    .map((s) => s.id);
+
+  let turns = 0;
+  const delTurn = db.prepare('DELETE FROM session_turns WHERE session_id = ?');
+  const delSess = db.prepare('DELETE FROM sessions WHERE id = ?');
+  // node:sqlite 没有 better-sqlite3 的 db.transaction()，用显式事务（多表删除要原子）
+  db.exec('BEGIN');
+  try {
+    victims.forEach((id) => { turns += delTurn.run(id).changes; delSess.run(id); });
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+
+  const kept = db.prepare('SELECT COUNT(*) AS n FROM sessions').get().n;
+  log(user.id, 'session.cleanup', '', `清理无成绩关联会话 ${victims.length} 个（逐轮 ${turns} 条，保留 ${kept} 个）`);
+  return { removedSessions: victims.length, removedTurns: turns, keptSessions: kept, maxAgeHours: hours };
+}
+
 function stats() {
   const one = (sql) => { const r = db.prepare(sql).get(); return r ? Object.values(r)[0] : 0; };
   return {
@@ -1169,5 +1228,5 @@ module.exports = {
   // turnRow 一并导出：自测要断言「返回的 turns / 落库的 evidence / 逐轮接口」
   // 三处字段集完全一致，必须能拿到同一个映射函数来比对（铁律 8）
   turnRow, turn, finish, listRecords, listTurns, deleteRecord,
-  listLearners, listTasks, listUsers, listAuditLog, stats
+  listLearners, listTasks, listUsers, listAuditLog, stats, cleanupSessions
 };

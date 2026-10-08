@@ -316,6 +316,10 @@ on('GET', /^\/api\/v1\/goldset\/runs$/, async (c) => ({ items: gold.listRuns(Num
 /* ---- 运维：备份 ---- */
 on('GET', /^\/api\/v1\/admin\/backup$/, async () => ({ items: backup.list(), keep: backup.keep, dir: config.backupDir }));
 on('POST', /^\/api\/v1\/admin\/backup$/, async (c) => backup.create((c.user && c.user.name) || 'manual'));
+/* 清理「无成绩关联」的历史会话（P11 巡检补齐）：学员中途退出的练习、自测/探针调用
+ * 都会建 session 但永远没有 record——长期运行会累积。只删无成绩关联的，已完成练习无论多老都保留。 */
+on('POST', /^\/api\/v1\/admin\/cleanup-sessions$/, async (c) =>
+  svc.cleanupSessions(c.body && c.body.maxAgeHours, c.user && c.user.id));
 
 /* ------------------------------------------------------------------ *
  * 入参校验小工具

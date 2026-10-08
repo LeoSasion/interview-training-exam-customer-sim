@@ -661,6 +661,12 @@ const LT = win.TRAIN;
   check(voiceJsP11, /asrOnline/, 'voice.js 有健康探测 asrOnline()');
   // MIME 表：缺 .webm 时浏览器 fetch 测试样本拿到 octet-stream、blob.type 丢 audio/ 前缀（真机踩过）
   check(indexJsP11, /'\.webm': 'audio\/webm'/, '静态服务的 MIME 表含 .webm（浏览器录音/测试样本正确下发音频类型）');
+  /* ---- P11 巡检补齐：无成绩关联历史会话的清理（自测清场 + 管理端按钮） ---- */
+  check(syncSrcP9, /async function cleanupSessions\(maxAgeHours\)/, '同步层 cleanupSessions（清理无成绩关联的历史会话）');
+  const adminSrcP11 = adminSrc;
+  check(adminSrcP11, /data-act="cleanup-sessions"/, '管理端服务端页有「清理历史会话」入口');
+  check(adminSrcP11, /if \(act === 'cleanup-sessions'\) \{[\s\S]{0,220}?ADMIN_SYNC\.cleanupSessions\(24\)/,
+    '按钮走 cleanupSessions(24)（只清 24h 前的无成绩会话，默认保守）');
 
   /* ---- 逐轮对话（P7） ---- */
   // 这一节要用到三个页面/脚本源码：adminSrc 上面已读，另两个在下面的分节里才声明，

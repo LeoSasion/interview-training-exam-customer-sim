@@ -472,6 +472,24 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
+  /**
+   * 清理「无成绩关联」的历史会话（P11 巡检补齐）。
+   * 学员中途退出的练习、自测/探针调用都会建 session 但永远没有成绩——
+   * 长期运行会累积（实测演示库攒到 268 个会话 vs 30 条成绩）。只删无成绩关联的。
+   * @param {number} maxAgeHours 只清早于 N 小时前的（0 = 全清无关联的；默认 24）
+   */
+  async function cleanupSessions(maxAgeHours) {
+    try {
+      var r = await req('/admin/cleanup-sessions', {
+        method: 'POST',
+        body: JSON.stringify({ maxAgeHours: maxAgeHours == null ? 24 : maxAgeHours })
+      }, 20000);
+      if (r.body && r.body.ok) return r.body.data;
+      return { ok: false, error: (r.body && r.body.error) || ('HTTP ' + r.http) };
+    } catch (e) { /* ignore */ }
+    return { ok: false, error: '服务端不可达' };
+  }
+
   async function calibrate(mode) {
     try {
       var r = await req('/goldset/calibrate', { method: 'POST', body: JSON.stringify({ mode: mode || 'auto' }) }, 60000);
@@ -517,7 +535,7 @@
 
   root.ADMIN_SYNC = {
     probe: probe, pull: pull, save: save, act: act, remove: remove,
-    versions: versions, auditLog: auditLog, calibrate: calibrate,
+    versions: versions, auditLog: auditLog, calibrate: calibrate, cleanupSessions: cleanupSessions,
     tasks: tasks, tasksOf: tasksOf, saveTask: saveTask,
     taskStatus: taskStatus, removeTask: removeTask,
     coachNotes: coachNotes, addCoachNote: addCoachNote, removeCoachNote: removeCoachNote,

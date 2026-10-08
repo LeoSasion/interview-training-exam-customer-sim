@@ -492,7 +492,12 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     </div>
 
     <div class="card" style="margin-top:14px">
-      <div class="card-h"><h3>操作审计日志</h3><button class="btn sm ghost" data-act="reload-audit">刷新</button></div>
+      <div class="card-h"><h3>操作审计日志</h3>
+        <span style="display:flex;gap:8px">
+          <button class="btn sm ghost" data-act="cleanup-sessions" title="删除「无成绩关联」的历史会话（学员中途退出的练习/探针留下的过程记录）">清理历史会话</button>
+          <button class="btn sm ghost" data-act="reload-audit">刷新</button>
+        </span>
+      </div>
       <div class="card-b" id="srvAuditBody" style="padding:0">
         <p class="hint" style="padding:14px 16px">连接服务端后可查看「谁在什么时候改了什么」——登录、场景保存、提交审核、审批通过、回滚、备份等操作全程留痕。</p>
       </div>
@@ -2740,6 +2745,16 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     if (act === 'run-calib') { runCalibration(); return; }
     if (act === 'reload-scenes') { reloadScenes(); return; }
     if (act === 'reload-audit') { loadServerAudit(); return; }
+    // P11 巡检补齐：清理无成绩关联的历史会话（学员中途退出/探针留下的过程记录）
+    if (act === 'cleanup-sessions') {
+      toast('正在清理历史会话…');
+      ADMIN_SYNC.cleanupSessions(24).then(function (r) {
+        if (r && r.ok === false) { toast('清理失败：' + (r.error || '未知错误')); return; }
+        toast('已清理 ' + r.removedSessions + ' 个历史会话（逐轮 ' + r.removedTurns + ' 条），保留 ' + r.keptSessions + ' 个有成绩的');
+        loadServerAudit();
+      });
+      return;
+    }
     if (act === 'audit-prev') { if (AUDIT.no > 1) { AUDIT.no--; loadServerAudit(); } return; }
     // 与翻页条上的 disabled 双保险：数据在两次渲染之间变化时也不越界
     if (act === 'audit-next') { if (AUDIT.no < Math.ceil(AUDIT.total / AUDIT.size)) { AUDIT.no++; loadServerAudit(); } return; }
