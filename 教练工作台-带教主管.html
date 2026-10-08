@@ -497,6 +497,12 @@
       $('#scopeNote').textContent = IDENT
         ? '当前身份可见全部数据（' + (IDENT.scopeLabel || '全部数据') + '）。'
         : '未连接服务端，当前为本地演示数据。';
+      // 全范围身份（admin/reviewer）通常不直接带教学员——「我的学员」默认视图会全 0，
+      // 自动落到「全部学员」，别让管理员打开就是一块 0 看板（P11 排版巡检修复）
+      if (IDENT && (SCOPE_KIND === 'all') && myLearners().length === 0) {
+        scope = 'all';
+        $$('#scopeSeg button').forEach(function (x) { x.classList.toggle('on', x.dataset.scope === 'all'); });
+      }
     }
   }
 
@@ -678,7 +684,9 @@
     });
 
     $('#orgName').textContent = T.meta.org;
-    $('#ovSub').textContent = '今天是 ' + fmtDate(T.meta.updatedAt) + ' · 你带教 ' + myLearners().length +
+    // 演示数据的基准日是 2026-10-05（任务截止/剩余天数都相对它算，见 daysLeft），
+    // 写成「今天是」会与真实日期冲突（用户当误会成 bug）——如实叫「数据基准日」
+    $('#ovSub').textContent = '演示数据基准日 ' + fmtDate(T.meta.updatedAt) + ' · 你带教 ' + myLearners().length +
       ' 名学员 · 进行中任务 ' + running.length + ' 个';
 
     $('#kpiRow').innerHTML = [
