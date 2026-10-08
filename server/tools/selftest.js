@@ -290,7 +290,11 @@ async function login(account, password) {
 
   // 口径精确一致：逐轮均分必须等于成绩单总分，每维逐轮均分必须等于该维得分。
   // 否则教练台把两者并排显示时会出现「逐轮均分 72 / 总分 58」这种自相矛盾。
-  const tgt = withTurns.filter((r) => r.turnCount >= 5)[0];
+  // 样本优先取**种子记录**（db.js 播种的固定基线）：早先按「列表第一条」取，
+  // 用户真实练习记录（at 更近、话术是长句）会顶替样本，让下面这条**内容**断言漂移变红
+  // （P11 全流程巡检实测：跑完两轮真机练习后此断言变红）。
+  const tgt = withTurns.filter((r) => r.source === 'seed' && r.turnCount >= 5)[0]
+    || withTurns.filter((r) => r.turnCount >= 5)[0];
   const tgtResp = data(await call('GET', '/records/' + encodeURIComponent(tgt.id) + '/turns', undefined, { token: adm.token }));
   const tts = (tgtResp && tgtResp.turns) || [];
   const tMean = tts.length ? Math.round(tts.reduce((a, t) => a + t.score, 0) / tts.length) : -1;
@@ -305,7 +309,7 @@ async function login(account, password) {
     tts.length === tgt.turns && tgt.turns > 0);
   ok('逐轮顺序 idx 从 1 连续递增',
     tts.every((t, i) => t.idx === i + 1));
-  ok('弱轮次有可复盘的"敷衍话术"（教练能指着说这一轮没接话）',
+  ok('弱轮次有可复盘的"敷衍话术"（教练能指着说这一轮没接话）（样本 ' + tgt.id + '）',
     tts.some((t) => t.score < tgt.score && t.learnerText.length <= 16),
     '弱轮 ' + tts.filter((t) => t.score < tgt.score).length + ' 个');
 

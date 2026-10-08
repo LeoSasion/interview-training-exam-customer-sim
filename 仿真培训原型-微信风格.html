@@ -540,6 +540,12 @@ let dimScore = [42,42,42,42,42];
 let objDone = [];
 /* 共享评分引擎的状态（按维度 id 存），与 dimScore 保持同步。引擎不可用时为空对象 */
 let dimState = { d1:42, d2:42, d3:42, d4:42, d5:42 };
+/* AI 通道的整场累计（巡检 P11 发现的口径漂移修复）：
+ * 服务端 finish() 的综合分 = **各轮 round(score) 的平均**、各维终值 = **各轮维分平均**。
+ * 前端原先每轮把服务端返回值「覆盖」进 dimState/显示值 → 报告页显示的是**最后一轮**，
+ * 与落库（整场平均）差好几分，学员看到的分和教练端看到的记录对不上。
+ * 现在前端与服务端同口径：累计各轮 → 取平均。 */
+let dimAccum = null, dimRounds = 0, scoreAccum = 0;
 let reviewed = [];     // 逐句点评
 let pendingWant = 0;
 let voiceMode = false;
@@ -714,6 +720,7 @@ function renderObjs(){
 function openChat(i, task){
   cur = i; step = 0; running = true; ended = false;
   dimScore = [42,42,42,42,42];
+  dimAccum = null; dimRounds = 0; scoreAccum = 0;   // AI 通道整场累计（P11 口径对齐）
   // objDone 必须与目标清单等长：场景轮次(6)可能多于目标数(5)，
   // 若用轮次下标直接写入会撑出一个"不存在的目标"。
   objDone = (curScene().obj || []).map(function(){ return false; });
@@ -909,7 +916,13 @@ async function judgeInner(text){
       if(r.ok){
         const d = r.data;
         aiFailStreak = 0;
-        TRAIN.dims.forEach(dim=>{ if(typeof d.dimScores[dim.id]==='number') dimState[dim.id] = d.dimScores[dim.id]; });
+        // 整场累计（与服务端 finish 同口径）：各轮维分/轮分累加后取平均，
+        // 而不是「每轮覆盖」——否则报告页显示最后一轮、与落库分对不上（P11 巡检）
+        if(!dimAccum) dimAccum = { d1:0, d2:0, d3:0, d4:0, d5:0 };
+        TRAIN.dims.forEach(dim=>{ if(typeof d.dimScores[dim.id]==='number') dimAccum[dim.id] += d.dimScores[dim.id]; });
+        dimRounds++;
+        if(typeof d.score==='number') scoreAccum += d.score;
+        TRAIN.dims.forEach(dim=>{ dimState[dim.id] = Math.round(dimAccum[dim.id] / dimRounds); });
         TRAIN.dims.forEach((dim,i)=>{ dimScore[i] = dimState[dim.id]; });
         ok = !!(d.objectives && d.objectives.some(o=>o.achieved && TRAIN.dims[wdIndexOf(o.dim)] ));
         // 目标达成以服务端判定为准：本轮目标维度是否达成
@@ -1167,7 +1180,11 @@ function toggleMute(){ $('btnMute').classList.toggle('mute-on'); }
 function finish(){
   if(ended) return;
   ended = true; running = false;
-  const total = Math.round(dimScore.reduce((a,b)=>a+b,0) / DIMS.length);
+  // 综合得分：**AI 通道与服务端 finish 同口径**（各轮轮分平均），
+  // 离线本地引擎沿用五维简单平均（本地引擎是「起始分+命中加分」的累加制，语义不同）
+  const total = (aiMode === 'on' && dimRounds > 0)
+    ? Math.round(scoreAccum / dimRounds)
+    : Math.round(dimScore.reduce((a,b)=>a+b,0) / DIMS.length);
   const passLine = curTaskPass || curScene().pass;      // 任务可覆盖场景默认达标线
   const pass = total >= passLine;
 
