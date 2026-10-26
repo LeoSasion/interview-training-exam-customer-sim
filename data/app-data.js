@@ -447,6 +447,35 @@
         records: done
       };
     },
+    /* 培训效果（P12）：首练 vs 最新 —— 直接回答「练了有没有用」。
+     * 口径：每个学员取自己 recordsOf 的首条/末条（recordsOf 已按 finishedAt 升序），
+     * 达标与否读记录自带的 passed（与三端同一字段），不另算一套判定。 */
+    effectOf: function () {
+      var firsts = [], lasts = [], improved = 0, repeaters = 0;
+      LEARNERS.forEach(function (l) {
+        var rs = H.recordsOf(l.id);
+        if (!rs.length) return;
+        var f = rs[0], la = rs[rs.length - 1];
+        firsts.push(f); lasts.push(la);
+        if (rs.length > 1) {
+          repeaters++;
+          if (la.score > f.score) improved++;
+        }
+      });
+      var passRate = function (arr) {
+        if (!arr.length) return 0;
+        return Math.round(arr.filter(function (r) { return r.passed; }).length / arr.length * 100);
+      };
+      return {
+        learners: firsts.length,
+        repeaters: repeaters,
+        improved: improved,
+        avgFirst: H.avg(firsts.map(function (r) { return r.score; })),
+        avgLast: H.avg(lasts.map(function (r) { return r.score; })),
+        passFirst: passRate(firsts),
+        passLast: passRate(lasts)
+      };
+    },
     overview: function () {
       var running = TASKS.filter(function (t) { return t.status === 'running'; });
       var allScores = RECORDS.map(function (r) { return r.score; });

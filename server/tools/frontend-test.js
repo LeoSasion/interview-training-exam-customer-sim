@@ -685,6 +685,15 @@ const LT = win.TRAIN;
     ok(depth === 0 && !broken, '学员端 CSS 花括号平衡（不平衡＝后续样式被静默丢弃）');
   }
 
+  /* ---- 培训效果（P12）：首练 vs 最新，口径走 helpers ---- */
+  const appdataSrcP12 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
+  const coachSrcP12 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  check(appdataSrcP12, /effectOf: function \(\) \{/, 'helpers.effectOf 存在（首练 vs 最新统计口径）');
+  check(appdataSrcP12, /var rs = H\.recordsOf\(l\.id\);[\s\S]{0,120}?var f = rs\[0\], la = rs\[rs\.length - 1\]/, '首/末成绩取 recordsOf 排序结果（不另算一套排序）');
+  check(coachSrcP12, /function renderEffect\(\) \{[\s\S]{0,300}?var e = H\.effectOf\(\);/, '教练台效果卡走 H.effectOf（统计不重写）');
+  check(coachSrcP12, /id="effectCard"/, '总览页有「培训效果」卡');
+  check(coachSrcP12, /renderEffect\(\);/, 'renderOverview 会刷新效果卡');
+
   /* ---- 首次引导 + 语音隐私明示（P12） ---- */
   check(learnSrc, /function showGuideIfFirst\(\)\{[\s\S]{0,120}?localStorage\.getItem\('train-guide-seen'\)/, '首次引导读 localStorage 标记（只出现一次）');
   check(learnSrc, /function closeGuide\(\)\{[\s\S]{0,200}?localStorage\.setItem\('train-guide-seen', '1'\)/, '关闭引导写标记（不再反复打扰）');

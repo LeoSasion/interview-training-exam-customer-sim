@@ -96,6 +96,18 @@
 #loginBox[hidden]{display:none}
 #loginBox .lg-card{width:344px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);
   padding:18px;box-shadow:0 18px 48px rgba(0,0,0,.4)}
+
+/* 培训效果（P12）：首练 vs 最新 */
+.eff-row{display:flex;gap:34px;flex-wrap:wrap}
+.eff-col{min-width:140px}
+.eff-lab{font-size:11.5px;color:var(--txt3);margin-bottom:6px}
+.eff-num{display:flex;align-items:baseline;gap:8px}
+.eff-num .a{font-size:20px;color:var(--txt3);text-decoration:line-through;text-decoration-thickness:1px}
+.eff-num .b{font-size:30px;font-weight:500;color:var(--txt);letter-spacing:-.02em}
+.eff-delta{font-size:12px;margin-top:5px;color:var(--txt3)}
+.eff-delta.up{color:#2E7D46}
+.eff-delta.down{color:#B3383A}
+.eff-note{font-size:11px;color:var(--txt3);margin-top:4px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -148,6 +160,15 @@
     </div>
 
     <div class="grid g5" id="kpiRow"></div>
+
+    <!-- 培训效果（P12）：首练 vs 最新 —— 回答「练了到底有没有用」 -->
+    <div class="card mt20" id="effectCard">
+      <div class="card-h">
+        <h2>培训效果 · 首练 vs 最新</h2>
+        <span class="sub" id="effectSub">—</span>
+      </div>
+      <div class="eff-row" id="effectBox"></div>
+    </div>
 
     <div class="grid g2 mt20" style="align-items:start">
       <div>
@@ -661,6 +682,32 @@
   }
 
   /* ------------------------- 总览 ------------------------- */
+  /* 培训效果（P12）：首练 vs 最新 —— 口径全部走 H.effectOf()，不另算一套 */
+  function renderEffect() {
+    var box = $('#effectBox'), sub = $('#effectSub');
+    if (!box) return;
+    var e = H.effectOf();
+    if (!e.learners) { box.innerHTML = '<p class="muted">当前范围还没有成绩记录。</p>'; return; }
+    sub.textContent = e.learners + ' 名学员 · ' + e.repeaters + ' 人练过多次';
+    var dAvg = e.avgLast - e.avgFirst;
+    var dPass = e.passLast - e.passFirst;
+    var sign = function (v) { return (v > 0 ? '+' : '') + v; };
+    var cls = function (v) { return v > 0 ? 'up' : (v < 0 ? 'down' : ''); };
+    box.innerHTML =
+      '<div class="eff-col"><div class="eff-lab">平均分</div>' +
+        '<div class="eff-num"><span class="a">' + e.avgFirst + '</span><span class="b">' + e.avgLast + '</span></div>' +
+        '<div class="eff-delta ' + cls(dAvg) + '">' + (dAvg === 0 ? '持平' : sign(dAvg) + ' 分') + '（首练 → 最新）</div></div>' +
+      '<div class="eff-col"><div class="eff-lab">达标率</div>' +
+        '<div class="eff-num"><span class="a">' + e.passFirst + '%</span><span class="b">' + e.passLast + '%</span></div>' +
+        '<div class="eff-delta ' + cls(dPass) + '">' + (dPass === 0 ? '持平' : sign(dPass) + ' 个百分点') + '</div></div>' +
+      '<div class="eff-col"><div class="eff-lab">练出提升的人</div>' +
+        '<div class="eff-num"><span class="b">' + e.improved + ' <span style="font-size:15px;color:var(--txt3)">/ ' + e.repeaters + ' 人</span></span></div>' +
+        '<div class="eff-note">多次练习者中，最新成绩高于首练的人数</div></div>' +
+      '<div class="eff-col"><div class="eff-lab">仍未达标</div>' +
+        '<div class="eff-num"><span class="b">' + Math.round((100 - e.passLast) * e.learners / 100) + ' <span style="font-size:15px;color:var(--txt3)">人</span></span></div>' +
+        '<div class="eff-note">按最新成绩统计，建议安排辅导或补练</div></div>';
+  }
+
   function renderOverview() {
     var ids = learnerIds();
     var recs = T.records.filter(function (r) { return ids.indexOf(r.learnerId) !== -1; });
@@ -686,6 +733,7 @@
     $('#orgName').textContent = T.meta.org;
     // 演示数据的基准日是 2026-10-05（任务截止/剩余天数都相对它算，见 daysLeft），
     // 写成「今天是」会与真实日期冲突（用户当误会成 bug）——如实叫「数据基准日」
+    renderEffect();
     $('#ovSub').textContent = '演示数据基准日 ' + fmtDate(T.meta.updatedAt) + ' · 你带教 ' + myLearners().length +
       ' 名学员 · 进行中任务 ' + running.length + ' 个';
 
