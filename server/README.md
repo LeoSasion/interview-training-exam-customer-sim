@@ -30,7 +30,7 @@ node server/index.js         # 等价于 npm start
 **无需 `npm install`**——本服务只用 Node 22+ 内置模块：`node:sqlite`、`node:http`、原生 `fetch`、`node:crypto`。
 仓库里的 `package.json` 只声明了 scripts，`dependencies` 是空的。
 
-### 一条命令验证全链路（210 项断言）
+### 一条命令验证全链路（220 项断言）
 
 ```bash
 node server/index.js &            # 自测需要一个已在跑的实例（默认 8848，可用 PORT 改）
@@ -49,7 +49,7 @@ node server/tools/selftest.js     # 或 npm run test:server
 所以反复跑不会把演示数据越跑越脏。唯一会增长的是 `audit_log`（审计按设计只追加）
 与 `server/store/backup/` 下的快照（每跑一次留一份，按保留策略自动只留最近 20 份，且已 gitignore）。
 
-### 没有浏览器也能验前端（291 项断言）
+### 没有浏览器也能验前端（302 项断言）
 
 ```bash
 node server/tools/frontend-test.js    # 或 npm run test:frontend
@@ -286,6 +286,49 @@ TTS（客户侧语音播报）**P11 优化已接**：浏览器原生 `speechSynt
 
 ---
 
+## 五·补二、P13 规模化与验证（本轮）
+
+### 学员批量导入（CSV）
+
+团队从 12 人扩到百人时，这是第一道卡口——此前**没有任何新建/导入学员的入口**。
+
+- 入口：管理后台「学员报告」→「＋ 导入学员」：粘贴 CSV 或选文件
+- 格式：`姓名,部门,岗位,带教人[,入职日期]`（首行表头可写可不写，支持 `"姓名"` 这类 Excel 引号字段与 BOM）
+- 校验：四项必填；**带教人必须是系统现存用户姓名**（教练台可见范围按 coach 名匹配，写错就没人能看到这个学员）
+- 去重：同名 + 同部门视为同一人，**跳过并报告**（不覆盖已有数据）
+- 报错：逐行给出真实行号与原因；单次上限 500 人（分批更可控）
+- 删除学员：`DELETE /admin/learners/:id`——**有成绩时拒绝**（先删成绩，避免出现无主记录）
+
+### 移动端 e2e（从人肉点变成脚本）
+
+```bash
+node server/tools/e2e-mobile.js      # 需后端已在 8848 运行
+```
+
+13 条断言：390px 视口、媒体查询生效、无横向溢出、手机屏 390×844 且 top=0、
+左右栏收起、标题区隐藏、FAB 可见且在视口内、点开覆盖整屏、文案切换、可收起。
+
+原理：`agent-browser` 改不了视口宽度，但 **iframe 内的媒体查询按 iframe 尺寸计算**，
+同源时父页面能读子文档 DOM 与 computedStyle——于是无真机也能验证窄屏布局。
+（`server/tools/mobile-harness.html` 就是那个 390×844 的视口容器。）
+
+### 评分校准就绪（换真 Key 后跑这一条）
+
+```bash
+# 1) 配置真实模型（.env.json 或环境变量）
+#    LLM_BASE_URL / LLM_API_KEY / LLM_MODEL
+# 2) 重跑金标校准（30 条人工评分样本全量过模型）
+curl -X POST http://127.0.0.1:8848/api/v1/goldset/calibrate \
+  -H "Authorization: Bearer <admin token>" -H "Content-Type: application/json" -d '{}'
+# 3) 看 channel 是否为真实模型、pearson / mae 是否为真实值
+```
+
+**当前记录**：`channel=llm`（**本机 mock 模型**），`n=30`，`pearson=0.638`，`mae=14.5`。
+这个数字**只能证明链路通**，不能对外说「AI 评分准确率 0.64」——换真实模型后必须重跑，
+并把新的 `channel/n/pearson/mae` 一起写进汇报材料。
+
+---
+
 ## 六、接口一览
 
 所有接口前缀 `/api/v1`，成功返回 `{ok:true,data:...}`，失败返回 `{ok:false,error,...}`。
@@ -325,6 +368,8 @@ TTS（客户侧语音播报）**P11 优化已接**：浏览器原生 `speechSynt
 | POST | `/scene-ideas` | staff | 提交待建场景（`{title, problem, recordId?}`）：带成绩时校验数据范围并自动带出学员/场景；标题与描述必填 |
 | POST | `/scene-ideas/:id/status` | staff（需编辑权） | 认领 / 关闭 / 重新打开（`{status: claimed\|closed\|open}`）；教练 403 |
 | DELETE | `/scene-ideas/:id` | staff（需编辑权） | 删除（误标清理） |
+| POST | `/admin/learners/import` | staff（需编辑权） | **学员批量导入**（P13）：body `{csv}`；返回 `created/skipped/errors`（errors 带真实行号）；单次 ≤500 行 |
+| DELETE | `/admin/learners/:id` | staff（需编辑权） | 删除学员（录错/离职）：**有成绩时 400 拒绝**（先删成绩，避免无主记录） |
 | GET | `/coach-notes` | staff | 辅导记录（按数据范围过滤；`?learnerId=` 收窄到某学员，**`?q=` 全文包含检索（P9）**——LIKE 通配符 `%`/`_`/`\` 已转义，用户输入按字面匹配） |
 | POST | `/coach-notes` | staff | 写一条辅导记录（`learnerId` / `text` / 可选 `recordId` `type`） |
 | DELETE | `/coach-notes/:id` | staff | 删除辅导记录（**仅限本人写的**，admin 例外） |

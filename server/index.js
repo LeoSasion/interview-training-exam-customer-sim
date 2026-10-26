@@ -315,6 +315,12 @@ on('DELETE', /^\/api\/v1\/records\/([^/]+)$/, async (c) => svc.deleteRecord(c.pa
  * 五个列表接口统一分页口径（P9）：不带 limit/offset 返回全量（audit 默认最近 100 条）；
  * 带则校验 limit∈[1,500] / offset>=0，返回 { items, total, limit, offset, hasMore }。 */
 on('GET', /^\/api\/v1\/records$/, async (c) => svc.listRecords(c.query, c.user));
+/* 学员批量导入（P13）：CSV → learners，零依赖（Excel 另存为 CSV 即可） */
+on('DELETE', /^\/api\/v1\/admin\/learners\/([^/]+)$/, async (c) =>
+  svc.deleteLearner(c.params[0], c.user && c.user.id));
+on('POST', /^\/api\/v1\/admin\/learners\/import$/, async (c) =>
+  svc.importLearners(c.body, c.user && c.user.id));
+
 on('GET', /^\/api\/v1\/learners$/, async (c) => svc.listLearners(c.query, c.user));
 on('GET', /^\/api\/v1\/users$/, async () => ({ items: svc.listUsers() }));
 on('GET', /^\/api\/v1\/audit$/, async (c) => svc.listAuditLog(c.query, c.user));

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>移动端 e2e harness（390×844）</title>
+<style>
+  html,body{margin:0;padding:0;background:#111;height:100%;overflow:hidden}
+  #f{width:390px;height:844px;border:0;display:block;background:#000}
+</style>
+</head>
+<body>
+<!--
+  移动端 e2e 的真实视口来源：
+  agent-browser 无法直接改视口宽度，但 <iframe> 内的媒体查询按 iframe 尺寸计算，
+  同源（都是 8848）时父页面能读 iframe 内的 DOM 与 computedStyle。
+  所以「窄屏布局」可以在无真机环境里被真实验证——本页就是那个 390×844 的视口。
+-->
+<iframe id="f" src="../../仿真培训原型-微信风格.html"></iframe>
+</body>
+</html>

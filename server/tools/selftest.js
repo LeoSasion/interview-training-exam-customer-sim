@@ -849,6 +849,52 @@ async function login(account, password) {
     }
   }
 
+  /* ---- 4h. P13：学员批量导入（CSV）+ 删除 ---- */
+  console.log('  ─────────────────────────────────────────');
+  console.log('  P13：学员批量导入');
+  const importedIds = [];
+  {
+    const csv1 = [
+      '姓名,部门,岗位,带教人,入职日期',
+      '测试导入甲,连锁渠道事业部,销售代表,周敏,2026-11-01',
+      '陈晓,连锁渠道事业部,客户经理,周敏,2026-09-15',
+      '测试导入乙,连锁渠道事业部,销售代表,查无此人,2026-11-02'
+    ].join('\n');
+    const r1 = await call('POST', '/admin/learners/import', { csv: csv1 }, { token: adm.token });
+    const d1 = data(r1) || {};
+    ok('导入接口可用（' + r1.status + '）', r1.status === 200, errText(r1));
+    ok('正常行导入成功、重复行跳过、带教人错误进 errors',
+      (d1.created || []).length === 1 && (d1.skipped || []).length === 1 && (d1.errors || []).length === 1,
+      JSON.stringify({ c: (d1.created || []).length, s: (d1.skipped || []).length, e: (d1.errors || []).length }));
+    ok('错误报告带真实行号（表头算第 1 行）',
+      !!(d1.errors && d1.errors[0] && d1.errors[0].line === 4), JSON.stringify((d1.errors || [])[0] || {}));
+    if (d1.created && d1.created[0]) importedIds.push(d1.created[0].id);
+
+    const noHeader = await call('POST', '/admin/learners/import',
+      { csv: '测试导入丙,华东大区,销售代表,陈曦' }, { token: adm.token });
+    ok('无表头纯数据也能导（按列序）', noHeader.status === 200 && (data(noHeader).created || []).length === 1);
+    if (data(noHeader) && data(noHeader).created[0]) importedIds.push(data(noHeader).created[0].id);
+
+    const coachTry = await call('POST', '/admin/learners/import',
+      { csv: '测试导入丁,华东大区,销售代表,陈曦' }, { token: cch.token });
+    eq('教练账号无导入权限 403', coachTry.status, 403);
+
+    const badCsv = await call('POST', '/admin/learners/import', { csv: '' }, { token: adm.token });
+    eq('空 CSV 被拒 400', badCsv.status, 400);
+
+    // 删除：有成绩的先拒绝，无成绩的可删
+    const delBusy = await call('DELETE', '/admin/learners/L01', undefined, { token: adm.token });
+    eq('有成绩的学员拒绝删除 400（避免无主记录）', delBusy.status, 400);
+    for (const lid of importedIds) {
+      const del = await call('DELETE', '/admin/learners/' + encodeURIComponent(lid), undefined, { token: adm.token });
+      ok('清理导入的测试学员 ' + lid + '（' + del.status + '）', del.status === 200);
+    }
+    if (importedIds[0]) {
+      const again = await call('DELETE', '/admin/learners/' + encodeURIComponent(importedIds[0]), undefined, { token: adm.token });
+      eq('重复删除 404', again.status, 404);
+    }
+  }
+
   /* ---- 9b. 清理本次练习产生的成绩 ----
    * 不复用 sid2 的中间产物：这两条成绩只属于本进程，删掉才算真正幂等。
    * 删完再确认一次，顺带验证 deleteRecord 的 404 语义。

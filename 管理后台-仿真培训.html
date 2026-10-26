@@ -357,8 +357,15 @@ tr.flash td{animation:flashRow 2.2s ease-out}
   <!-- =============== ④ 学员报告 =============== -->
   <section class="sec" id="sec-report">
     <div class="page-head">
-      <h1>学员报告</h1>
-      <p>风险分层、练习次数、平均分均调用 <code class="code">TRAIN.helpers.statsOf / riskOf</code>；点击学员查看训练档案。</p>
+      <div class="row">
+        <div>
+          <h1>学员报告</h1>
+          <p>风险分层、练习次数、平均分均调用 <code class="code">TRAIN.helpers.statsOf / riskOf</code>；点击学员查看训练档案。</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn sm ghost" data-act="import-learners" title="CSV 批量导入学员（Excel 另存为 CSV 即可）">＋ 导入学员</button>
+        </div>
+      </div>
     </div>
     <div class="card pad0">
       <div class="flex-b" style="padding:14px 18px;flex-wrap:wrap;gap:12px">
@@ -374,7 +381,34 @@ tr.flash td{animation:flashRow 2.2s ease-out}
           <span class="muted" id="repCount"></span>
         </div>
       </div>
+
+    <!-- 学员批量导入（P13）：CSV 粘贴或选文件 -->
+    <div class="mask" id="impMask" data-act="imp-close" style="display:none"></div>
+    <div class="modal" id="impModal" style="display:none">
+      <div class="card" style="margin:0;max-width:620px">
+        <div class="card-h">
+          <h3>批量导入学员</h3>
+          <button class="btn sm ghost" data-act="imp-close">关闭</button>
+        </div>
+        <p class="hint" style="margin:0 0 10px">
+          每行一个学员，列顺序：<code class="code">姓名,部门,岗位,带教人[,入职日期]</code>（首行表头可写可不写）。<br>
+          <b>带教人必须是系统里的用户姓名</b>——教练台按姓名匹配可见范围；同名同部门会自动跳过。
+        </p>
+        <div class="flex" style="gap:8px;margin-bottom:10px">
+          <input type="file" id="impFile" accept=".csv,text/csv" class="inp" style="flex:1">
+          <button class="btn sm ghost" data-act="imp-sample">填入示例</button>
+        </div>
+        <textarea class="txa" id="impCsv" style="height:170px;font-family:var(--mono,monospace);font-size:12px"
+          placeholder="姓名,部门,岗位,带教人,入职日期&#10;张三,连锁渠道事业部,销售代表,周敏,2026-11-01"></textarea>
+        <div id="impResult" style="margin-top:12px;font-size:12.5px;line-height:1.8"></div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn" data-act="imp-submit">开始导入</button>
+          <button class="btn ghost" data-act="imp-close">取消</button>
+        </div>
+      </div>
+    </div>
       <div class="tbl-wrap">
+        <table class="tbl">      <div class="tbl-wrap">
         <table class="tbl">
           <thead><tr>
             <th>学员</th><th>部门</th><th>岗位</th><th>导师</th><th>练习次数</th>
@@ -1627,6 +1661,60 @@ tr.flash td{animation:flashRow 2.2s ease-out}
    * ================================================================== */
   var sceneOpen = {};
 
+  /* 学员批量导入（P13）：CSV → 服务端校验落库；结果按 created/skipped/errors 分区展示 */
+  function openImport() {
+    var m = document.getElementById('impModal'), mk = document.getElementById('impMask');
+    if (!m) return;
+    m.style.display = 'flex';
+    if (mk) mk.style.display = 'block';
+    var r = document.getElementById('impResult');
+    if (r) r.innerHTML = '';
+  }
+  function closeImport() {
+    var m = document.getElementById('impModal'), mk = document.getElementById('impMask');
+    if (m) m.style.display = 'none';
+    if (mk) mk.style.display = 'none';
+  }
+  function importSample() {
+    var ta = document.getElementById('impCsv');
+    if (ta) {
+      ta.value = '姓名,部门,岗位,带教人,入职日期\n' +
+        '张三,连锁渠道事业部,销售代表,周敏,2026-11-01\n' +
+        '李四,华东大区,客户经理,陈曦,2026-11-03';
+    }
+  }
+  function submitImport() {
+    var ta = document.getElementById('impCsv');
+    var out = document.getElementById('impResult');
+    var csv = ta ? ta.value.trim() : '';
+    if (!csv) { toast('先粘贴 CSV 内容或选择文件'); return; }
+    if (!ADMIN_SYNC || !ADMIN_SYNC.importLearners) { toast('服务端未连接，无法导入'); return; }
+    out.innerHTML = '<span class="muted">正在校验并导入…</span>';
+    ADMIN_SYNC.importLearners(csv).then(function (r) {
+      if (!r.ok) { out.innerHTML = '<span style="color:var(--red)">导入失败：' + esc(r.error || '未知错误') + '</span>'; return; }
+      var d = r.data || {};
+      var html = '';
+      html += '<div><b style="color:#2E7D46">成功 ' + (d.created || []).length + ' 人</b>' +
+        ((d.created || []).length ? '：' + d.created.map(function (x) { return esc(x.name) + '(' + esc(x.id) + ')'; }).join('、') : '') + '</div>';
+      if ((d.skipped || []).length) {
+        html += '<div style="color:var(--txt2)">跳过 ' + d.skipped.length + ' 人（已存在）：' +
+          d.skipped.map(function (x) { return esc(x.name); }).join('、') + '</div>';
+      }
+      if ((d.errors || []).length) {
+        html += '<div style="color:var(--red)">失败 ' + d.errors.length + ' 行：</div>';
+        d.errors.forEach(function (e) {
+          html += '<div style="color:var(--red);padding-left:10px">第 ' + e.line + ' 行：' + esc(e.reason) + '</div>';
+        });
+      }
+      out.innerHTML = html;
+      if ((d.created || []).length) {
+        toast('已导入 ' + d.created.length + ' 名学员');
+        loadServerLearners && loadServerLearners();
+        renderLearners && renderLearners();
+      }
+    });
+  }
+
   /* 待建场景池（P12）：列表 + 认领 / 关闭。数据只在服务端（跨账号流转） */
   var ideas = [];
   function renderIdeas() {
@@ -2805,6 +2893,20 @@ tr.flash td{animation:flashRow 2.2s ease-out}
   /* ================================================================== *
    * 事件委托
    * ================================================================== */
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'impFile') {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var ta = document.getElementById('impCsv');
+        if (ta) ta.value = String(fr.result || '');
+        toast('已读取 ' + f.name + '，点「开始导入」');
+      };
+      fr.readAsText(f, 'utf-8');
+    }
+  });
+
   document.addEventListener('click', function (e) {
     var t = e.target.closest ? e.target.closest('[data-act]') : null;
     if (!t) return;
@@ -2815,6 +2917,10 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     if (act === 'run-calib') { runCalibration(); return; }
     if (act === 'reload-scenes') { reloadScenes(); return; }
     if (act === 'reload-audit') { loadServerAudit(); return; }
+    if (act === 'import-learners') { openImport(); return; }
+    if (act === 'imp-close') { closeImport(); return; }
+    if (act === 'imp-sample') { importSample(); return; }
+    if (act === 'imp-submit') { submitImport(); return; }
     if (act === 'reload-ideas') { loadIdeas().then(function () { toast('待建场景池已刷新'); }); return; }
     var ic = e.target.closest('[data-idea-claim]');
     if (ic) { claimIdea(ic.getAttribute('data-idea-claim')); return; }

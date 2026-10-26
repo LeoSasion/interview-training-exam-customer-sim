@@ -698,6 +698,21 @@ const LT = win.TRAIN;
   check(coachSrcP12, /ms && typeof ms\.score === 'number'[\s\S]{0,200}?人工/, '有修正时展示人工分并标记（AI 分保留在 title）');
   check(syncSrcP9, /async function patchRecordScore\(id, score, reason, revoke\)/, '同步层 patchRecordScore 支持撤销');
 
+  /* ---- 学员批量导入（P13）+ 移动端 e2e 脚本 ---- */
+  const adminSrcP13 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
+  check(adminSrcP13, /data-act="import-learners"/, '学员报告页有「导入学员」入口');
+  check(adminSrcP13, /id="impModal"[\s\S]{0,1400}?id="impCsv"/, '导入弹层有粘贴区（可直接贴 CSV）');
+  check(adminSrcP13, /fr\.readAsText\(f, 'utf-8'\)/, '也支持选文件（FileReader 读 UTF-8）');
+  check(adminSrcP13, /function submitImport\(\)[\s\S]{0,600}?ADMIN_SYNC\.importLearners\(csv\)/, '提交走服务端导入（校验/去重都在服务端）');
+  check(adminSrcP13, /带教人必须是系统里的用户姓名/, '界面明示「带教人必须是用户姓名」这条硬约束');
+  check(syncSrcP9, /async function importLearners\(csv\)/, '同步层有 importLearners');
+  const svcSrcP13 = fs.readFileSync(path.join(ROOT, 'server/service.js'), 'utf8');
+  ok(svcSrcP13.indexOf('function parseCsv') >= 0, '服务端自带 CSV 解析（零依赖，不引 xlsx 库）');
+  ok(svcSrcP13.indexOf('\\uFEFF') >= 0, 'CSV 解析处理 BOM（Excel 另存为 CSV 的常见坑）');
+  ok(svcSrcP13.indexOf('function deleteLearner') >= 0, '有删除学员能力（录错/离职），且有成绩时拒绝');
+  ok(fs.existsSync(path.join(ROOT, 'server/tools/e2e-mobile.js')), '移动端 e2e 已固化为可执行脚本（不再靠人肉点）');
+  ok(fs.existsSync(path.join(ROOT, 'server/tools/mobile-harness.html')), 'e2e 用 390×844 iframe 制造真实窄屏视口');
+
   /* ---- 待建场景池（P12）：内容供给闭环的 UI 两端 ---- */
   const adminSrcIdea = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   check(coachSrcP12, /data-idea-from="/, '质检抽屉有「标记待建场景」入口');

@@ -504,6 +504,16 @@
     return { ok: false, error: '服务端不可达' };
   }
 
+  /** 学员批量导入（P13）：CSV 文本 → 服务端校验落库 */
+  async function importLearners(csv) {
+    try {
+      var r = await req('/admin/learners/import', { method: 'POST', body: JSON.stringify({ csv: csv }) }, 30000);
+      if (r.body && r.body.ok) return { ok: true, data: r.body.data };
+      return { ok: false, error: (r.body && r.body.error) || ('HTTP ' + r.http) };
+    } catch (e) { /* ignore */ }
+    return { ok: false, error: '服务端不可达' };
+  }
+
   /** 待建场景池（P12）：列表 / 创建 / 认领 */
   async function sceneIdeas(status) {
     try {
@@ -576,7 +586,7 @@
   root.ADMIN_SYNC = {
     probe: probe, pull: pull, save: save, act: act, remove: remove,
     versions: versions, auditLog: auditLog, calibrate: calibrate, cleanupSessions: cleanupSessions,
-    patchRecordScore: patchRecordScore,
+    patchRecordScore: patchRecordScore, importLearners: importLearners,
     sceneIdeas: sceneIdeas, createSceneIdea: createSceneIdea, setSceneIdeaStatus: setSceneIdeaStatus,
     tasks: tasks, tasksOf: tasksOf, saveTask: saveTask,
     taskStatus: taskStatus, removeTask: removeTask,
