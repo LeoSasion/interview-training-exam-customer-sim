@@ -667,6 +667,21 @@ const LT = win.TRAIN;
   check(adminSrcP11, /data-act="cleanup-sessions"/, '管理端服务端页有「清理历史会话」入口');
   check(adminSrcP11, /if \(act === 'cleanup-sessions'\) \{[\s\S]{0,220}?ADMIN_SYNC\.cleanupSessions\(24\)/,
     '按钮走 cleanupSessions(24)（只清 24h 前的无成绩会话，默认保守）');
+  /* ---- 客户语音播报 TTS（P11 优化）：浏览器原生 Web Speech API，零依赖 ---- */
+  check(learnSrc, /function ttsSupported\(\)\{ return typeof window !== 'undefined' && 'speechSynthesis' in window/,
+    'TTS 能力探测如实（speechSynthesis 存在才启用）');
+  check(learnSrc, /function ttsSay\(text\)\{[\s\S]{0,120}?if\(!ttsOn \|\| !voiceMode \|\| !text\) return;/,
+    'TTS 只在「开关开 + 语音模式」下朗读（文字模式静默，不打扰）');
+  check(learnSrc, /new SpeechSynthesisUtterance\(clean\);[\s\S]{0,200}?u\.lang = 'zh-CN'/,
+    '用 SpeechSynthesisUtterance 且锁 zh-CN（原生 API，零外部依赖）');
+  check(learnSrc, /if\(side==='in'\) ttsSay\(text\);/, '客户消息（in）自动触发播报');
+  check(learnSrc, /function ttsStop\(\)\{ try\{ if\(ttsSupported\(\)\) window\.speechSynthesis\.cancel\(\); \}catch\(e\)\{\} \}/,
+    'ttsStop 可随时停播（换会话/挂机/出报告不留声音）');
+  check(learnSrc, /ttsStop\(\);\s*\/\/ 换会话\/重开时停掉上一场残留朗读/, 'openChat 停掉上一场残留朗读');
+  check(learnSrc, /ttsStop\(\);\s*\/\/ 报告页不该有客户声音残留/, 'finish 出报告前停播');
+  check(learnSrc, /function toggleSpeaker\(\)\{\s*\n\s*if\(!ttsSupported\(\)\)\{ toast2\('当前浏览器不支持语音播报'\); return; \}/,
+    '播报开关不支持时如实提示（不假装可用）');
+  check(learnSrc, /ttsSay\(text\);\s*\/\/ 通话中客户说话也要出声/, '语音通话中客户台词同样朗读');
 
   /* ---- 逐轮对话（P7） ---- */
   // 这一节要用到三个页面/脚本源码：adminSrc 上面已读，另两个在下面的分节里才声明，

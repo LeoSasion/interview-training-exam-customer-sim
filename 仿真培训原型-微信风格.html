@@ -468,7 +468,7 @@ body{
             <div id="callTipBody"></div>
           </div>
           <div class="call-ctl">
-            <button class="cbtn" id="btnSpeaker" onclick="toggleSpeaker()">
+            <button class="cbtn" id="btnSpeaker" onclick="toggleSpeaker()" title="客户语音播报开关（仅语音模式朗读）">
               <svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z" fill="currentColor"/><path d="M15.5 9.4a3.4 3.4 0 0 1 0 5.2M18 6.8a6.8 6.8 0 0 1 0 10.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
               免提
             </button>
@@ -725,6 +725,7 @@ function openChat(i, task){
   // 若用轮次下标直接写入会撑出一个"不存在的目标"。
   objDone = (curScene().obj || []).map(function(){ return false; });
   reviewed = []; callTurns = 0;
+  ttsStop();   // 换会话/重开时停掉上一场残留朗读
   dimState = { d1:42, d2:42, d3:42, d4:42, d5:42 };
   /* 任务归属：显式指定 → 用它；否则按场景自动绑定我进行中的任务 */
   const bound = task || bindTaskForScene(curScene().id);
@@ -814,7 +815,35 @@ function addMsg(side, text, opt={}){
     row.querySelector('.bub').appendChild(tag);
   }
   $('chatBody').appendChild(row); scrollBottom();
+  if(side==='in') ttsSay(text);   // 客户说话 → 语音模式下朗读（P11 优化，TTS）
 }
+
+/* ====== 客户语音播报（P11 优化）：浏览器原生 Web Speech API，零依赖 ======
+ * 只在「语音模式」下自动朗读客户消息（文字模式静默，避免打扰）。
+ * 降级：浏览器不支持 / 系统无中文语音包 → 静默跳过，练习流程不受影响。
+ * 开关：手机屏顶部扬声器按钮（toggleSpeaker）。 */
+let ttsOn = true;
+function ttsSupported(){ return typeof window !== 'undefined' && 'speechSynthesis' in window && !!window.SpeechSynthesisUtterance; }
+function ttsSay(text){
+  if(!ttsOn || !voiceMode || !text) return;
+  if(!ttsSupported()) return;
+  try{
+    window.speechSynthesis.cancel();
+    const clean = String(text).replace(/<[^>]+>/g, '').replace(/⚡ AI 实时回复/g, '').trim().slice(0, 180);
+    if(!clean) return;
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = 'zh-CN';
+    u.rate = 1.02;
+    u.pitch = 1;
+    const voices = window.speechSynthesis.getVoices() || [];
+    const zh = voices.filter(v=>/^zh/i.test(v.lang))[0]
+      || voices.filter(v=>/Chinese|中文|Huihui|Xiaoxiao|Yaoyao/i.test(v.name))[0];
+    if(zh) u.voice = zh;
+    window.speechSynthesis.speak(u);
+  }catch(e){ /* 播报失败绝不影响练习 */ }
+}
+/* 停止播报（挂机/结束/切走时调用，避免残留声音） */
+function ttsStop(){ try{ if(ttsSupported()) window.speechSynthesis.cancel(); }catch(e){} }
 
 function scrollBottom(){ const b=$('chatBody'); b.scrollTop = b.scrollHeight; }
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -1139,6 +1168,7 @@ function callNextClient(){
   const pool = sc.voicePool[idx] || [];
   $('callTipBody').innerHTML = pool.map((t,i)=>
     `<div class="o" onclick='callPick(${JSON.stringify(t)})'>${esc(t)}</div>`).join('');
+  ttsSay(text);   // 通话中客户说话也要出声（P11 TTS）
 }
 
 function callPick(t){
@@ -1166,6 +1196,7 @@ function callPick(t){
 
 function hangUp(){
   inCall = false;
+  ttsStop();
   clearInterval(callTimer);
   $('callScreen').classList.remove('on');
   // 通话结束后，把通话内容记入聊天并出报告
@@ -1173,13 +1204,21 @@ function hangUp(){
   setTimeout(finish, 700);
 }
 
-function toggleSpeaker(){ $('btnSpeaker').classList.toggle('mute-on'); }
+/* 客户语音播报开关（P11 优化）：TTS 开关；不支持时如实提示，不假装可用 */
+function toggleSpeaker(){
+  if(!ttsSupported()){ toast2('当前浏览器不支持语音播报'); return; }
+  ttsOn = !ttsOn;
+  $('btnSpeaker').classList.toggle('mute-on', !ttsOn);
+  if(!ttsOn) ttsStop();
+  toast2(ttsOn ? '客户语音播报已开启（仅语音模式）' : '客户语音播报已关闭');
+}
 function toggleMute(){ $('btnMute').classList.toggle('mute-on'); }
 
 /* ===================== 报告 ===================== */
 function finish(){
   if(ended) return;
   ended = true; running = false;
+  ttsStop();   // 报告页不该有客户声音残留
   // 综合得分：**AI 通道与服务端 finish 同口径**（各轮轮分平均），
   // 离线本地引擎沿用五维简单平均（本地引擎是「起始分+命中加分」的累加制，语义不同）
   const total = (aiMode === 'on' && dimRounds > 0)

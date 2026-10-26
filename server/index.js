@@ -429,6 +429,18 @@ function start(opts) {
   // 账号初始化：给没有口令的用户分配账号与初始口令（首次启动会打印一份）
   const created = auth.ensureAccounts(!!opts.resetPasswords);
 
+  // 启动自清（P11 优化）：删掉 7 天前「无成绩关联」的会话。
+  // 学员中途退出的练习、探针调用都会留这类过程记录，长期运行会累积；
+  // 只动无成绩的（已完成练习无论多老都保留），失败不影响启动。
+  try {
+    const swept = svc.sweepStaleSessions(24 * 7);
+    if (swept.removedSessions) {
+      console.log(`[db] 已自动清理 7 天前无成绩历史会话：${swept.removedSessions} 个（逐轮 ${swept.removedTurns} 条）`);
+    }
+  } catch (e) {
+    console.warn('[db] 启动自清历史会话失败（不影响启动）：' + e.message);
+  }
+
   server.listen(config.port, config.host, async () => {
     const lan = config.host === '0.0.0.0';
     console.log('');

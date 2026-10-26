@@ -1160,6 +1160,18 @@ function cleanupSessions(maxAgeHours, userId) {
   if (user.role !== 'admin') {
     throw Object.assign(new Error(`角色「${user.role}」无清理会话权限`), { status: 403 });
   }
+  const r = sweepStaleSessions(maxAgeHours);
+  log(user.id, 'session.cleanup', '',
+    `清理无成绩关联会话 ${r.removedSessions} 个（逐轮 ${r.removedTurns} 条，保留 ${r.keptSessions} 个）`);
+  return r;
+}
+
+/**
+ * 内部：扫掉「无成绩关联」且早于 N 小时的会话（**无权限检查**）。
+ * 手动清理（cleanupSessions）与服务启动自清（sweepStaleSessions）共用这一套逻辑，
+ * 保证两条入口的挑选口径完全一致（不能一个删 A、另一个删 B）。
+ */
+function sweepStaleSessions(maxAgeHours) {
   const hours = maxAgeHours == null ? 24 : Number(maxAgeHours);
   if (!isFinite(hours) || hours < 0) {
     throw Object.assign(new Error('maxAgeHours 须为 >= 0 的数字'), { status: 400 });
@@ -1198,7 +1210,6 @@ function cleanupSessions(maxAgeHours, userId) {
   }
 
   const kept = db.prepare('SELECT COUNT(*) AS n FROM sessions').get().n;
-  log(user.id, 'session.cleanup', '', `清理无成绩关联会话 ${victims.length} 个（逐轮 ${turns} 条，保留 ${kept} 个）`);
   return { removedSessions: victims.length, removedTurns: turns, keptSessions: kept, maxAgeHours: hours };
 }
 
@@ -1228,5 +1239,5 @@ module.exports = {
   // turnRow 一并导出：自测要断言「返回的 turns / 落库的 evidence / 逐轮接口」
   // 三处字段集完全一致，必须能拿到同一个映射函数来比对（铁律 8）
   turnRow, turn, finish, listRecords, listTurns, deleteRecord,
-  listLearners, listTasks, listUsers, listAuditLog, stats, cleanupSessions
+  listLearners, listTasks, listUsers, listAuditLog, stats, cleanupSessions, sweepStaleSessions
 };
