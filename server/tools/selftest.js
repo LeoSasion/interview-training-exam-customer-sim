@@ -849,6 +849,21 @@ async function login(account, password) {
     }
   }
 
+  /* ---- 4j. P14：并发与响应时间（"只影响快慢"的塌陷也要拦住）----
+   * 历史教训：SQLite 默认 synchronous=FULL 时每次提交 fsync 会阻塞事件循环，
+   * 单次读从 2ms 涨到 1.5s，而所有功能断言依然全绿。这里用并发把塌陷放大。
+   * 阈值刻意宽松（10 并发 < 2000ms），只为抓数量级塌陷，不做性能门禁。 */
+  console.log('  ─────────────────────────────────────────');
+  console.log('  P14：并发响应');
+  {
+    const t0 = Date.now();
+    const rs = await Promise.all(Array.from({ length: 10 }, () =>
+      call('GET', '/records?limit=50', undefined, { token: adm.token })));
+    const ms = Date.now() - t0;
+    ok('10 个并发列表请求全部成功', rs.every((r) => r.status === 200));
+    ok('10 并发总耗时 < 2000ms（实测 ' + ms + 'ms）', ms < 2000);
+  }
+
   /* ---- 4i. P14：记录时间完整性（P0 潜伏 bug 的回归闸门）----
    * 播种时读错字段名（种子是 finishedAt、SQL 读 r.at）→ 28 条 at 全空，
    * 日期显示全空、ORDER BY at 失效（排序实际靠 id 兜底）。断言必须看住。 */

@@ -30,7 +30,7 @@ node server/index.js         # 等价于 npm start
 **无需 `npm install`**——本服务只用 Node 22+ 内置模块：`node:sqlite`、`node:http`、原生 `fetch`、`node:crypto`。
 仓库里的 `package.json` 只声明了 scripts，`dependencies` 是空的。
 
-### 一条命令验证全链路（220 项断言）
+### 一条命令验证全链路（225 项断言）
 
 ```bash
 node server/index.js &            # 自测需要一个已在跑的实例（默认 8848，可用 PORT 改）
@@ -49,7 +49,7 @@ node server/tools/selftest.js     # 或 npm run test:server
 所以反复跑不会把演示数据越跑越脏。唯一会增长的是 `audit_log`（审计按设计只追加）
 与 `server/store/backup/` 下的快照（每跑一次留一份，按保留策略自动只留最近 20 份，且已 gitignore）。
 
-### 没有浏览器也能验前端（302 项断言）
+### 没有浏览器也能验前端（340 项断言）
 
 ```bash
 node server/tools/frontend-test.js    # 或 npm run test:frontend
@@ -329,6 +329,29 @@ curl -X POST http://127.0.0.1:8848/api/v1/goldset/calibrate \
 
 ---
 
+## 五·补三、P14 能力画像与协作效率（本轮）
+
+| 项 | 说明 |
+|---|---|
+| **五维能力雷达** | 教练台学员抽屉 + 学员端报告页：本人「全部练习均分」实线 vs「团队均分」虚线。口径走 `helpers.dimAvgOf`；与旁边的「最近一次五维」是两个口径，标题各自写明 |
+| **成长路径** | 按入职天数分档（第1周破冰 / 第2周需求 / 第1月异议 / 第2月促成 / 第3月综合），每档给重点维度与目标分，逐维显示「达标 / 差 N 分」，并按阶段维度推荐「下一步练什么」（标已练次数） |
+| **看板钻取** | 教练台「我的学员」「其中高风险 N 人」、管理端「在职学员数 / 整体达标率」都可点：跳到列表并**真的设置筛选**，不是只跳页 |
+| **键盘与状态** | Esc 关闭（学员端引导→录音→选择面板；教练台抽屉；管理端导入弹层）；教练台记住风险筛选（值有白名单校验） |
+| **场景一键复制** | 场景卡「复制」→ 复制体不传 id/code（新编号）、强制 `draft`、复用 `saveScene` 的校验/版本/审计（不绕过审核闸门） |
+| **一键周报** | 教练台「生成本周简报」→ 可复制文本：练习量（本周 vs 上周）、质量环比、能力结构（最强/最弱）、高风险名单带次数、任务指派/已完成/未提交、下周建议 3 条。统计区间取「数据里最新一天往前 7 天」（演示数据是历史日期，自然周会空白），区间在报告里写明 |
+
+### ⚠️ 本轮修掉的一个 P0 级潜伏 bug
+
+种子记录 **`at` 全是空串**：播种时读 `r.at`，而种子数据的时间字段叫 `finishedAt`。
+
+后果很隐蔽——日期显示全空、`ORDER BY at DESC` 全部相等（排序实际靠 id 兜底，**看起来"顺序还行"**），`recordsOf` 的「最近一次」也就不一定是真的最近。
+
+修复：播种改为 `r.at || r.finishedAt || ''`；新增 `migrateRecordAt()` 幂等补历史数据，
+并**在模块加载时执行**（`seedIfEmpty()` 对老库 early-return，只写在播种入口里永远修不到老库）。
+启动日志会打印「P14 补全历史记录时间：N 条」；selftest 新增时间完整性断言（空值 0 条、按时间排序 R001 最早）。
+
+---
+
 ## 六、接口一览
 
 所有接口前缀 `/api/v1`，成功返回 `{ok:true,data:...}`，失败返回 `{ok:false,error,...}`。
@@ -370,6 +393,7 @@ curl -X POST http://127.0.0.1:8848/api/v1/goldset/calibrate \
 | DELETE | `/scene-ideas/:id` | staff（需编辑权） | 删除（误标清理） |
 | POST | `/admin/learners/import` | staff（需编辑权） | **学员批量导入**（P13）：body `{csv}`；返回 `created/skipped/errors`（errors 带真实行号）；单次 ≤500 行 |
 | DELETE | `/admin/learners/:id` | staff（需编辑权） | 删除学员（录错/离职）：**有成绩时 400 拒绝**（先删成绩，避免无主记录） |
+| POST | `/scenes/:id/duplicate` | staff（需编辑权） | **复制场景为草稿**（P14）：新编号、强制 draft、复用 saveScene 的校验/版本/审计 |
 | GET | `/coach-notes` | staff | 辅导记录（按数据范围过滤；`?learnerId=` 收窄到某学员，**`?q=` 全文包含检索（P9）**——LIKE 通配符 `%`/`_`/`\` 已转义，用户输入按字面匹配） |
 | POST | `/coach-notes` | staff | 写一条辅导记录（`learnerId` / `text` / 可选 `recordId` `type`） |
 | DELETE | `/coach-notes/:id` | staff | 删除辅导记录（**仅限本人写的**，admin 例外） |
