@@ -748,7 +748,9 @@
       ' 名学员 · 进行中任务 ' + running.length + ' 个';
 
     $('#kpiRow').innerHTML = [
-      kpi('我的学员', myLearners().length, '人', '其中高风险 <b class="down">' + risk.red + '</b> 人'),
+      kpi('我的学员', myLearners().length, '人',
+        '其中高风险 <b class="down"' + (risk.red ? ' data-kpi-go="students:red" style="cursor:pointer;text-decoration:underline dotted" title="只看高风险"' : '') + '>' + risk.red + '</b> 人',
+        'students:all'),
       kpi('累计练习', recs.length, '场', '人均 ' + (myLearners().length ? (recs.length / myLearners().length).toFixed(1) : 0) + ' 场'),
       kpi('平均分', avg, '分', '全体均分 ' + H.overview().avgScore + ' 分'),
       kpi('达标率', passRate, '%', passRate >= 70 ? '高于整体水平' : '低于整体水平'),
@@ -761,8 +763,12 @@
     renderGap(recs);
   }
 
-  function kpi(lab, val, unit, foot) {
-    return '<div class="kpi"><div class="lab">' + lab + '</div>' +
+  function kpi(lab, val, unit, foot, go) {
+    // go：钻取目标（如 students:red）——看板上的数字应当能点进去看是"谁"，
+    // 否则「高风险 4 人」只能靠人自己对名单
+    var attrs = go ? ' style="cursor:pointer" data-kpi-go="' + go + '" title="点击查看明细"' : '';
+    var arrow = go ? ' <span style="color:var(--txt3);font-size:11px">›</span>' : '';
+    return '<div class="kpi"' + attrs + '><div class="lab">' + lab + arrow + '</div>' +
       '<div class="val">' + val + '<small>' + (unit || '') + '</small></div>' +
       '<div class="foot">' + foot + '</div></div>';
   }
@@ -1976,6 +1982,21 @@
         closeDrawer(); renderQuality(); renderOverview();
         toast('已撤销修正，恢复 AI 原分 ' + res.data.aiScore + ' 分');
       });
+      return;
+    }
+
+    // KPI 钻取（P14）：数字点进去看明细。放在所有具体动作之前，
+    // 因为卡片内部的「高风险 N 人」也带 data-kpi-go，必须先命中它而不是外层卡片。
+    var kg = e.target.closest('[data-kpi-go]');
+    if (kg) {
+      var spec = String(kg.getAttribute('data-kpi-go') || '').split(':');
+      if (spec[0] === 'students') {
+        location.hash = '#students';
+        var sel = $('#stuRisk');
+        if (sel) sel.value = spec[1] === 'red' ? 'red' : 'all';
+        renderStudents();
+      }
+      e.stopPropagation();
       return;
     }
 

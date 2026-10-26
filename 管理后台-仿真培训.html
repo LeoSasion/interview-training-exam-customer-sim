@@ -881,8 +881,11 @@ tr.flash td{animation:flashRow 2.2s ease-out}
   /* ================================================================== *
    * ① 数据看板
    * ================================================================== */
-  function kpiCard(lab, val, unit, foot, to) {
-    return '<div class="kpi"><div class="lab">' + esc(lab) + '</div>' +
+  function kpiCard(lab, val, unit, foot, to, go) {
+    // go：钻取目标（如 report:all / report:red）——看板数字要能点进去看明细
+    var attrs = go ? ' style="cursor:pointer" data-kpi-go="' + go + '" title="点击查看明细"' : '';
+    var arrow = go ? ' <span style="color:var(--txt3);font-size:11px">›</span>' : '';
+    return '<div class="kpi"' + attrs + '><div class="lab">' + esc(lab) + arrow + '</div>' +
       '<div class="val"><span class="n" data-to="' + to + '">0</span><small>' + esc(unit) + '</small></div>' +
       '<div class="foot">' + foot + '</div></div>';
   }
@@ -904,11 +907,11 @@ tr.flash td{animation:flashRow 2.2s ease-out}
 
     /* --- KPI --- */
     $('kpiRow').innerHTML =
-      kpiCard('在职学员数', o.learnerCount, '人', '覆盖 ' + depts().length + ' 个部门 · ' + T.meta.owner, o.learnerCount) +
+      kpiCard('在职学员数', o.learnerCount, '人', '覆盖 ' + depts().length + ' 个部门 · ' + T.meta.owner, o.learnerCount, 'report:all') +
       kpiCard('进行中任务', o.runningTasks, '个', '任务总数 ' + T.tasks.length + ' 个', o.runningTasks) +
       kpiCard('累计练习场次', o.totalRecords, '场', '人均 ' + (o.totalRecords / o.learnerCount).toFixed(1) + ' 场', o.totalRecords) +
-      kpiCard('平均分', o.avgScore, '分', '全部练习综合均分', o.avgScore) +
-      kpiCard('整体达标率', o.passRate, '%', '以各任务达标线为准', o.passRate);
+      kpiCard('平均分', o.avgScore, '分', '全部练习综合均分', o.avgScore, 'report:all') +
+      kpiCard('整体达标率', o.passRate, '%', '以各任务达标线为准 · 点高风险看谁拖后腿', o.passRate, 'report:red');
     [].forEach.call($('kpiRow').querySelectorAll('.n'), function (n) {
       countUp(n, parseInt(n.getAttribute('data-to'), 10) || 0);
     });
@@ -2917,6 +2920,18 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     if (act === 'run-calib') { runCalibration(); return; }
     if (act === 'reload-scenes') { reloadScenes(); return; }
     if (act === 'reload-audit') { loadServerAudit(); return; }
+    var kg = e.target.closest('[data-kpi-go]');
+    if (kg) {
+      var spec = String(kg.getAttribute('data-kpi-go') || '').split(':');
+      if (spec[0] === 'report') {
+        var nav = document.querySelector('a[data-sec="report"]');
+        if (nav) nav.click();
+        var r = spec[1] || 'all';
+        var btn = document.querySelector('#riskSeg button[data-r="' + r + '"]');
+        if (btn) btn.click();
+      }
+      return;
+    }
     if (act === 'import-learners') { openImport(); return; }
     if (act === 'imp-close') { closeImport(); return; }
     if (act === 'imp-sample') { importSample(); return; }

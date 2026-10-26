@@ -698,6 +698,16 @@ const LT = win.TRAIN;
   check(coachSrcP12, /ms && typeof ms\.score === 'number'[\s\S]{0,200}?人工/, '有修正时展示人工分并标记（AI 分保留在 title）');
   check(syncSrcP9, /async function patchRecordScore\(id, score, reason, revoke\)/, '同步层 patchRecordScore 支持撤销');
 
+  /* ---- 看板钻取（P14）：数字能点进去看是谁 ---- */
+  const coachSrcDrill = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  const adminSrcDrill = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
+  check(coachSrcDrill, /function kpi\(lab, val, unit, foot, go\)[\s\S]{0,260}?data-kpi-go="' \+ go/, '教练台 KPI 支持钻取目标');
+  check(coachSrcDrill, /'students:all'\)/, '「我的学员」卡可点开学员列表');
+  check(coachSrcDrill, /data-kpi-go="students:red"/, '「高风险 N 人」可单独点（只看高风险）');
+  check(coachSrcDrill, /spec\[0\] === 'students'[\s\S]{0,260}?sel\.value = spec\[1\] === 'red'/, '钻取会真的设置筛选并重渲染（不是只跳页）');
+  check(adminSrcDrill, /function kpiCard\(lab, val, unit, foot, to, go\)/, '管理端 KPI 支持钻取目标');
+  check(adminSrcDrill, /'report:red'\)/, '「整体达标率」可点看高风险学员（谁拖后腿）');
+
   /* ---- 成长路径（P14）：按入职天数分阶段 + 下一步练什么 ---- */
   const coachSrcGrowth = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
   check(coachSrcGrowth, /var STAGES = \[[\s\S]{0,400}?maxDay: 7[\s\S]{0,800}?maxDay: 9999/, '成长阶段表（周/月分档，最多 5 档）');
