@@ -698,6 +698,13 @@ const LT = win.TRAIN;
   check(coachSrcP12, /ms && typeof ms\.score === 'number'[\s\S]{0,200}?人工/, '有修正时展示人工分并标记（AI 分保留在 title）');
   check(syncSrcP9, /async function patchRecordScore\(id, score, reason, revoke\)/, '同步层 patchRecordScore 支持撤销');
 
+  /* ---- 成长路径（P14）：按入职天数分阶段 + 下一步练什么 ---- */
+  check(coachSrcRadar, /var STAGES = \[[\s\S]{0,400}?maxDay: 7[\s\S]{0,300}?maxDay: 9999/, '成长阶段表（周/月分档，最多 5 档）');
+  check(coachSrcRadar, /function stageOf\(l\)[\s\S]{0,300}?l\.joinDate \|\| l\.onboardAt/, '阶段按入职日期推算（缺日期时如实说明）');
+  check(coachSrcRadar, /replace\(\/\-\/g, '\/'\)/, '日期解析做兼容处理（Safari 对 2026-09-15 解析不稳）');
+  check(coachSrcRadar, /recScenes = T\.scenes\.filter\(function \(sc\) \{[\s\S]{0,160}?stg\.dims\.indexOf\(o\.dim\)/, '「下一步练什么」按阶段重点维度匹配场景');
+  check(coachSrcRadar, /自动生成，仅供带教参考/, '规则生成的内容如实标注来源（不冒充 AI 判断）');
+
   /* ---- 记录时间归一化（P14）：播种/水合两处都必须把字段对上 ---- */
   const dbSrcP14 = fs.readFileSync(path.join(ROOT, 'server/db.js'), 'utf8');
   check(dbSrcP14, /r\.at \|\| r\.finishedAt \|\| ''/, '播种时对 time 字段做归一化（种子叫 finishedAt）');

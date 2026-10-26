@@ -1034,6 +1034,89 @@
   }
 
   /**
+   * 成长路径（P14）：按入职天数给出当前阶段、该阶段重点维度与目标，
+   * 并推荐「下一步练什么」。全部规则驱动（不引 AI）——目的是把
+   * 「新人不知道现在该练什么」变成一句明确的话，而不是再堆一堆分数。
+   */
+  var STAGES = [
+    { key: 'w1', maxDay: 7, name: '第 1 周 · 开场与破冰', dims: ['d1'], target: 60 },
+    { key: 'w2', maxDay: 14, name: '第 2 周 · 需求挖掘', dims: ['d2'], target: 65 },
+    { key: 'm1', maxDay: 30, name: '第 1 月 · 异议处理与方案', dims: ['d3', 'd4'], target: 70 },
+    { key: 'm2', maxDay: 60, name: '第 2 月 · 促成推进', dims: ['d5'], target: 75 },
+    { key: 'm3', maxDay: 9999, name: '第 3 月+ · 综合实战', dims: ['d1', 'd2', 'd3', 'd4', 'd5'], target: 78 }
+  ];
+
+  function stageOf(l) {
+    var jd = l.joinDate || l.onboardAt || '';
+    // 兼容 '2026-09-15' 与 '2026/09/15'：Safari 对横线格式的 new Date 解析不稳
+    var t = new Date(String(jd).replace(/-/g, '/'));
+    if (isNaN(t.getTime())) return null;
+    var days = Math.floor((Date.now() - t.getTime()) / 86400000);
+    if (days < 0) days = 0;
+    for (var i = 0; i < STAGES.length; i++) {
+      if (days <= STAGES[i].maxDay) return Object.assign({ days: days }, STAGES[i]);
+    }
+    return Object.assign({ days: days }, STAGES[STAGES.length - 1]);
+  }
+
+  function growthHtml(l, st) {
+    var stg = stageOf(l);
+    if (!stg) return '<div class="muted" style="font-size:12.5px">入职日期缺失，无法推算成长阶段。</div>';
+    var dims = H.dimAvgOf(l.id);
+    var byId = {};
+    dims.forEach(function (d) { byId[d.id] = d.v; });
+    var focus = stg.dims.map(function (id) {
+      var d = T.dims[H.dimIndex(id)];
+      return { id: id, name: d ? d.name : id, v: byId[id] || 0, gap: (byId[id] || 0) - stg.target };
+    });
+    var weakest = focus.slice().sort(function (a, b) { return a.v - b.v; })[0];
+
+    // 推荐下一步练什么：把该阶段重点维度映射到场景（场景 objectives 里带该维度）
+    var recScenes = T.scenes.filter(function (sc) {
+      return (sc.objectives || []).some(function (o) { return stg.dims.indexOf(o.dim) !== -1; });
+    }).slice(0, 2);
+    var practiced = {};
+    H.recordsOf(l.id).forEach(function (r) { practiced[r.sceneId] = (practiced[r.sceneId] || 0) + 1; });
+
+    var rows = focus.map(function (f) {
+      var cls = f.gap >= 0 ? '' : (f.gap > -10 ? 'a' : 'r');
+      return '<div class="gap"><div class="nm">' + esc(f.name) + '</div>' +
+        '<div class="bw"><div class="bar"><i class="' + cls + '" style="width:' + Math.min(100, f.v) + '%"></i></div></div>' +
+        '<div class="vl">' + f.v + '</div>' +
+        '<span class="dl ' + (f.gap >= 0 ? 'fl' : 'dn') + '">' + (f.gap >= 0 ? '达标' : '差 ' + Math.abs(f.gap)) + '</span></div>';
+    }).join('');
+
+    var recHtml = recScenes.length
+      ? recScenes.map(function (sc) {
+        var n = practiced[sc.id] || 0;
+        return '<div class="note-item"><div class="bd"><div class="bt">' + esc(sc.name) +
+          ' <span class="tag ' + (n ? 'g' : 'b') + '" style="font-size:10px">' + (n ? '已练 ' + n + ' 次' : '还没练过') + '</span></div>' +
+          '<div class="bm"><span>' + esc((sc.objectives || []).map(function (o) { return o.text; }).slice(0, 1).join('')) + '</span></div>' +
+          '</div></div>';
+      }).join('')
+      : '<div class="muted" style="font-size:12.5px">暂无匹配该阶段重点的场景，可在「场景库」新建或复制一个。</div>';
+
+    var lead = stg.days <= 7 ? '刚入职，先把「敢开口、能破冰」练稳，别急着背话术。'
+      : stg.days <= 14 ? '进入第 2 周，重点从「开口」转到「问对问题」——先问清再用方案。'
+      : stg.days <= 30 ? '第 1 个月是关键期：价格与客诉这两类异议能稳住，就算过了新手关。'
+      : stg.days <= 60 ? '第 2 个月看促成：能不能在对话里自然推进下一步动作。'
+      : '已进入实战期，建议按「最弱维度」逐个专项复训，并让主管做一次对话质检。';
+
+    return '<div style="font-size:12.5px;line-height:1.9">' +
+      '<div><b>' + esc(stg.name) + '</b>　<span class="tag b" style="font-size:10px">入职第 ' + (stg.days + 1) + ' 天</span>' +
+      '　<span class="muted">本阶段目标：重点维度 ≥ ' + stg.target + '</span></div>' +
+      '<div class="muted" style="margin:4px 0 8px">' + esc(lead) + '</div>' +
+      rows +
+      (weakest && weakest.gap < 0
+        ? '<div class="tipbox" style="margin-top:8px">当前最该补的是 <b>' + esc(weakest.name) + '</b>（' + weakest.v + ' 分，距本阶段目标差 ' +
+          Math.abs(weakest.gap) + ' 分）。下一步优先练下面的场景，练完让主管看一次对话。</div>'
+        : '<div class="tipbox" style="margin-top:8px">本阶段重点维度都已达标，可以进入下一阶段的场景，或让主管安排一次综合实战。</div>') +
+      '<div class="sec-title" style="margin-top:10px">下一步练什么</div>' + recHtml +
+      '<div class="hint">按「入职天数 + 当前各维均分 + 场景覆盖」自动生成，仅供带教参考。</div>' +
+      '</div>';
+  }
+
+  /**
    * 五维能力雷达（P14）：本人「全部记录均分」 vs 「团队均分」。
    * 口径走 H.dimAvgOf（逐维均分）与 H.overview().dimAvg（团队），不在这里另算。
    * 与下方「最近一次五维得分」是两个口径：这里看能力画像，那里看单场发挥——
@@ -1210,6 +1293,9 @@
       '<textarea class="txa" id="noteText" placeholder="例如：价格异议这一轮，学员直接降价没有先问用量。下次重点练「先问后答」。"></textarea>' +
       '<div class="hint">' + (srvOnline() ? '保存后写入服务端，自己和其他带教打开都能看到。' : '服务端未连接，当前先存在本机浏览器，恢复连接后需重新保存。') + '</div></div>' +
       '<button class="btn pri" id="noteSave">保存辅导记录</button>' +
+
+      '<div class="sec-title">成长路径 · 当前阶段</div>' +
+      '<div class="card" style="padding:12px 13px">' + growthHtml(l, st) + '</div>' +
 
       '<div class="sec-title">AI 带教建议</div>' +
       '<div class="tipbox">' + suggestHtml(l, st, last) + '</div>'
