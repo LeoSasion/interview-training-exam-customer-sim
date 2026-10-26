@@ -1776,6 +1776,17 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     }).catch(function () { /* ignore */ });
   }
 
+  /* 复制场景（P14）：运营「基于现有改一版」的常用动作，复制品强制 draft */
+  function duplicateScene(id) {
+    if (!ADMIN_SYNC || !ADMIN_SYNC.duplicateScene) { toast('服务端未连接，无法复制场景'); return; }
+    ADMIN_SYNC.duplicateScene(id).then(function (r) {
+      if (!r || !r.ok) { toast('复制失败：' + ((r && r.error) || '未知错误')); return; }
+      var sc = r.scene || {};
+      toast('已复制为草稿：' + (sc.name || '新场景') + '（改完提交审核即可发布）');
+      reloadScenes && reloadScenes();
+    });
+  }
+
   function renderScenes() {
     $('sceneCount').textContent = SCENES.length;
     $('sceneBox').innerHTML = SCENES.map(function (s) {
@@ -1795,6 +1806,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
           '</div>' +
           '<div class="btn-row">' +
             '<button class="btn sm ghost" data-act="scene-edit" data-sid="' + s.id + '">编辑</button>' +
+            '<button class="btn sm ghost" data-act="scene-dup" data-sid="' + s.id + '" title="基于这个场景改一版（复制为草稿，走正常审核）">复制</button>' +
             '<button class="btn sm pri" data-act="assign-scene" data-sid="' + s.id + '"' +
               (canAssign(s.id) ? '' : ' disabled style="opacity:.45;cursor:not-allowed" title="仅已发布场景可下发"') +
               '>下发该场景</button>' +
@@ -2932,6 +2944,8 @@ tr.flash td{animation:flashRow 2.2s ease-out}
       }
       return;
     }
+    var sd = e.target.closest('[data-act="scene-dup"]');
+    if (sd) { duplicateScene(sd.getAttribute('data-sid')); return; }
     if (act === 'import-learners') { openImport(); return; }
     if (act === 'imp-close') { closeImport(); return; }
     if (act === 'imp-sample') { importSample(); return; }

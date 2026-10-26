@@ -705,6 +705,13 @@ const LT = win.TRAIN;
   const adminSrcP14 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   const appdataSrcP14 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
 
+  /* ---- 场景复制（P14）：基于现有改一版，复制品必须走正常审核 ---- */
+  const svcSrcDup = fs.readFileSync(path.join(ROOT, 'server/service.js'), 'utf8');
+  check(svcSrcDup, /function duplicateScene\(id, userId\)[\s\S]{0,900}?saveScene\(clone, userId\);/, '复制复用 saveScene（校验/版本/审计一条路径）');
+  check(svcSrcDup, /clone = \{[\s\S]{0,400}?status: 'active'/, '复制体不传 id/code（由 saveScene 生成新编号）');
+  check(syncSrcP9, /async function duplicateScene\(id\)/, '同步层有 duplicateScene');
+  check(adminSrcP14, /data-act="scene-dup"/, '场景卡有「复制」入口');
+
   /* ---- 键盘与状态（P14）：Esc 关闭 / Enter 发送 / 筛选记忆 ---- */
   check(learnSrc, /if\(event\.key==='Enter'\)sendText\(\)/, '学员端 Enter 直接发送（学习成本最低的操作）');
   check(learnSrc, /if \(e\.key !== 'Escape'\) return;[\s\S]{0,80}?var guide = document\.getElementById\('guide'\)/, '学员端 Esc 先关引导（不让人被浮层卡住）');

@@ -495,6 +495,41 @@ function saveScene(input, userId) {
   return getScene(rec.id);
 }
 
+/**
+ * 复制场景为草稿（P14）
+ *
+ * 运营最常做的事是「基于现有场景改一版」。重新建空场景再逐字段填太折磨，
+ * 所以给一键复制：复制体不传 id/code（由 saveScene 生成），强制 draft 并走正常审核流程——
+ * 复制品绝不能绕过「提交审核 → 审批发布」的闸门。
+ */
+function duplicateScene(id, userId) {
+  const user = requireUser(userId);
+  assertCanEdit(user);
+  const src = getScene(id);
+  if (!src) throw Object.assign(new Error('场景不存在'), { status: 404 });
+  const clone = {
+    name: String(src.name || '场景') + '（副本）',
+    subtitle: src.subtitle || '',
+    avatarText: src.avatarText || '',
+    color: src.color || '#5B8FF9',
+    taskName: src.taskName || '',
+    channel: src.channel || '',
+    category: src.category || '',
+    difficulty: src.difficulty || '',
+    passLine: src.passLine || 60,
+    duration: src.duration || 0,
+    status: 'active',
+    brief: src.brief || '',
+    script: src.script || [],
+    objectives: src.objectives || [],
+    voicePool: src.voicePool || [],
+    tips: src.tips || []
+  };
+  const saved = saveScene(clone, userId);   // 不传 id → 新建 + 强制 draft
+  log(user.id, 'scene.duplicate', saved.id, `复制场景：${src.name} → ${saved.name}`);
+  return saved;
+}
+
 function deleteScene(id, userId) {
   const user = requireUser(userId);
   assertCanEdit(user);
@@ -1509,5 +1544,5 @@ module.exports = {
   // 三处字段集完全一致，必须能拿到同一个映射函数来比对（铁律 8）
   turnRow, turn, finish, listRecords, listTurns, deleteRecord,
   listLearners, listTasks, listUsers, listAuditLog, stats, cleanupSessions, sweepStaleSessions, setManualScore,
-  listIdeas, createIdea, setIdeaStatus, deleteIdea, importLearners, deleteLearner
+  listIdeas, createIdea, setIdeaStatus, deleteIdea, importLearners, deleteLearner, duplicateScene
 };

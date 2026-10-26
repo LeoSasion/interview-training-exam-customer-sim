@@ -238,6 +238,9 @@ on('GET', /^\/api\/v1\/scenes\/([^/]+)$/, async (c) => {
   return s;
 });
 on('POST', /^\/api\/v1\/scenes$/, async (c) => svc.saveScene(c.body, c.user.id));
+/* 复制场景为草稿（P14）：运营「基于现有改一版」的一键入口，复制品强制 draft */
+on('POST', /^\/api\/v1\/scenes\/([^/]+)\/duplicate$/, async (c) =>
+  svc.duplicateScene(c.params[0], c.user && c.user.id));
 on('PUT', /^\/api\/v1\/scenes\/([^/]+)$/, async (c) =>
   svc.saveScene(Object.assign({}, c.body, { id: c.params[0] }), c.user.id));
 on('DELETE', /^\/api\/v1\/scenes\/([^/]+)$/, async (c) => svc.deleteScene(c.params[0], c.user.id));
