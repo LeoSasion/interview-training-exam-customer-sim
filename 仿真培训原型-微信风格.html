@@ -311,6 +311,34 @@ body{
 .ai-src.off{color:#8A8A8A;background:rgba(0,0,0,.06)}
 .src-note{margin-top:12px;font-size:11.5px;color:#8A8A8A;line-height:1.6}
 .src-note b{color:#4A4A4A}
+
+/* ============ 真机适配（窄屏）============
+ * 培训场景里学员就用手机练。桌面三栏（302+376+302+间距 ≈ 1209px）在手机上必然溢出，
+ * 所以窄屏时：手机屏铺满整屏，左右信息栏收进右下角浮层（FAB 打开/收起）。
+ * 只在窄屏生效——桌面布局一字不动（已验收交付物的回归基线不受影响）。 */
+.mobilefab{display:none}
+@media (max-width:960px){
+  html,body{height:100%;overflow:hidden}
+  body{padding:0;min-height:100%}
+  .page-head{display:none}
+  .stage{display:block;max-width:none;margin:0;padding:0;gap:0}
+  .phone-wrap{width:100%;height:100vh;height:100dvh;margin:0}
+  .phone{width:100%;height:100%;border-radius:0;padding:0;background:transparent}
+  .phone::after{display:none}
+  .screen{height:100%;border-radius:0}
+  .side{display:none}
+  .side.mopen{
+    display:flex;position:fixed;inset:0;z-index:95;overflow:auto;
+    padding:16px 16px 84px;background:var(--page-bg);width:auto;flex:1 1 auto;
+  }
+  .mobilefab{
+    display:flex;position:fixed;right:14px;bottom:104px;z-index:96;
+    width:52px;height:52px;border-radius:50%;align-items:center;justify-content:center;
+    background:var(--acc);color:#fff;border:none;font-size:12px;font-weight:500;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  }
+  .mobilefab.open{background:rgba(0,0,0,.72)}
+}
 </style>
 </head>
 <body>
@@ -318,10 +346,12 @@ body{
 <div class="page-head">
   <div class="ph-main">
     <h1>仿真培训 · 微信场景陪练<span class="tag">新员工入职培训</span></h1>
-    <p>按国内 IM 使用习惯构建：微信会话列表 → 1 对 1 对话（含语音条）→ 微信语音通话 → 训练报告。点击左侧任意会话开始。</p>
+    <p>按国内 IM 使用习惯构建：微信会话列表 → 1 对 1 对话（含语音条）→ 微信语音通话 → 训练报告。点击任意会话开始。</p>
   </div>
   <button class="themebtn" id="btnPageTheme" onclick="togglePageTheme()">浅色模式</button>
 </div>
+
+<button class="mobilefab" id="mobileFab" onclick="toggleMobileInfo()" aria-label="任务与目标">任务</button>
 
 <div class="stage">
 
@@ -1106,6 +1136,15 @@ function openSimSheet(){
   $('sheet').classList.add('on');
 }
 function closeSheet(){ $('sheet').classList.remove('on'); }
+
+/* 真机适配：窄屏浮层开关（任务/目标/操作说明收进 FAB） */
+function toggleMobileInfo(){
+  const sides = Array.from(document.querySelectorAll('.side'));
+  const open = sides.some(s=>s.classList.contains('mopen'));
+  sides.forEach(s=>s.classList.toggle('mopen', !open));
+  const fab = document.getElementById('mobileFab');
+  if(fab){ fab.classList.toggle('open', !open); fab.textContent = open ? '任务' : '收起'; }
+}
 
 function pickVoice(t){
   closeSheet();

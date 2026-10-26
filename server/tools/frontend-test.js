@@ -663,6 +663,27 @@ const LT = win.TRAIN;
   check(indexJsP11, /'\.webm': 'audio\/webm'/, '静态服务的 MIME 表含 .webm（浏览器录音/测试样本正确下发音频类型）');
   /* ---- P11 巡检补齐：无成绩关联历史会话的清理（自测清场 + 管理端按钮） ---- */
   check(syncSrcP9, /async function cleanupSessions\(maxAgeHours\)/, '同步层 cleanupSessions（清理无成绩关联的历史会话）');
+
+  /* ---- 真机适配（P12）：窄屏手机屏铺满、信息栏收进 FAB ---- */
+  check(learnSrc, /@media \(max-width:960px\)\{[\s\S]{0,600}?\.phone\{width:100%;height:100%/, '窄屏断点存在且手机屏铺满全屏');
+  check(learnSrc, /@media \(max-width:960px\)\{[\s\S]{0,800}?\.side\{display:none\}/, '窄屏时左右信息栏收起（不是简单删掉，见 FAB）');
+  check(learnSrc, /\.side\.mopen\{[\s\S]{0,200}?position:fixed;inset:0/, '信息栏以整屏浮层展开（手机可读）');
+  check(learnSrc, /\.mobilefab\{display:none\}/, 'FAB 桌面隐藏（不干扰已验收布局）');
+  check(learnSrc, /@media \(max-width:960px\)\{[\s\S]{0,1400}?\.page-head\{display:none\}/, '窄屏隐藏页面标题区（不占用手机屏空间）');
+  check(learnSrc, /function toggleMobileInfo\(\)\{[\s\S]{0,300}?classList\.toggle\('mopen', !open\)/, 'FAB 可开可关（再次点击收起）');
+
+  /* ---- CSS 花括号平衡（P12 真机踩坑）：不平衡会让**后续全部样式被静默丢弃**，
+   * 页面照样渲染（所以看着像"样式怪了"而不是报错）——必须用断言看住 ---- */
+  {
+    const styleBlock = (learnSrc.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+    const cssNoCmt = styleBlock.replace(/\/\*[\s\S]*?\*\//g, '');
+    let depth = 0, broken = false;
+    for (const ch of cssNoCmt) {
+      if (ch === '{') depth++;
+      else if (ch === '}') { depth--; if (depth < 0) { broken = true; break; } }
+    }
+    ok(depth === 0 && !broken, '学员端 CSS 花括号平衡（不平衡＝后续样式被静默丢弃）');
+  }
   const adminSrcP11 = adminSrc;
   check(adminSrcP11, /data-act="cleanup-sessions"/, '管理端服务端页有「清理历史会话」入口');
   check(adminSrcP11, /if \(act === 'cleanup-sessions'\) \{[\s\S]{0,220}?ADMIN_SYNC\.cleanupSessions\(24\)/,
