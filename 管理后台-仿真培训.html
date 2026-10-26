@@ -863,6 +863,14 @@ tr.flash td{animation:flashRow 2.2s ease-out}
       close();
       try { onOk(v); } catch (e) { console.error('[uiConfirm]', e); }
     };
+    // 键盘：Esc 取消；有输入框时 Ctrl/⌘+Enter 确认（单 Enter 保留换行）
+    box.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.stopPropagation(); close(); return; }
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        box.querySelector('[data-uc-ok]').click();
+      }
+    });
     var ta = box.querySelector('#ucInput');
     if (ta) setTimeout(function () { ta.focus(); }, 40);
   }
@@ -2967,6 +2975,24 @@ tr.flash td{animation:flashRow 2.2s ease-out}
       };
       fr.readAsText(f, 'utf-8');
     }
+  });
+
+  /* 新窗口链接在 iframe / 预览面板里会被浏览器拦（无提示、没反应）。
+   * 这里拦住点击，明确告诉用户原因并给出可复制的地址，而不是让人以为链接坏了。
+   * 真实浏览器（非 iframe）不拦截，保持原行为。 */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[target="_blank"]');
+    if (!a) return;
+    var inFrame = false;
+    try { inFrame = (window.self !== window.top); } catch (err) { inFrame = true; }
+    if (!inFrame) return;
+    e.preventDefault();
+    var url = a.href || '';
+    uiConfirm('当前在预览面板中，新窗口会被拦截。<br>请把下面的地址复制到浏览器打开：' +
+      '<div style="margin-top:8px;padding:8px 10px;background:var(--panel2);border-radius:8px;' +
+      'font-family:monospace;font-size:12px;word-break:break-all">' + esc(url) + '</div>',
+      function () { try { window.open(url, '_blank'); } catch (err) { /* 预览里仍可能被拦，忽略 */ } },
+      { title: '打开新页面', okText: '仍要尝试打开' });
   });
 
   document.addEventListener('click', function (e) {

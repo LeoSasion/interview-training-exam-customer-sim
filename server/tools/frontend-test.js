@@ -705,6 +705,12 @@ const LT = win.TRAIN;
   const adminSrcP14 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   const appdataSrcP14 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
 
+  /* ---- P16-b：新窗口链接在 iframe 里被拦 → 明确提示而不是静默失败 ---- */
+  ok(adminSrcP14.indexOf('window.self !== window.top') >= 0, '管理端检测 iframe 环境（预览面板）');
+  ok(adminSrcP14.indexOf('预览面板中，新窗口会被拦截') >= 0, '新窗口被拦时给出可复制地址（不静默失败）');
+  const coachSrcIframe = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  ok(coachSrcIframe.indexOf('window.self !== window.top') >= 0, '教练台同样处理新窗口链接');
+
   /* ---- P16：原生模态框在 iframe 里会被拦 → 全部改页内弹层 ---- */
   check(adminSrcP14, /function uiConfirm\(msg, onOk, opts\)/, '有页内确认组件 uiConfirm');
   ok(adminSrcP14.indexOf('opts.input != null') >= 0 && adminSrcP14.indexOf('id="ucInput"') >= 0,

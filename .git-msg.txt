@@ -1,0 +1,12 @@
+fix(P16-b): 新窗口链接在 iframe 里被静默拦截 → 明确提示可复制地址
+
+上一批把原生 confirm/prompt/alert 换成了页内弹层，这批补齐同类：
+- 管理端/教练台顶部 3 个 target="_blank" 链接（学员端/教练端/产品规划）
+  在预览面板里点了**没有任何反应**（浏览器需要 allow-popups）
+- 现在检测 window.self !== window.top：在 iframe 里拦下点击，
+  弹页内说明 + 可复制的完整地址（「仍要尝试打开」按钮保留原行为）
+- 非 iframe（真实浏览器）不拦截，行为不变
+
+另外 uiConfirm 补键盘：Esc 取消、Ctrl/⌘+Enter 确认。
+
+断言 365（+3）：两页都有 iframe 检测 + 明确提示文案。
