@@ -30,7 +30,7 @@ node server/index.js         # 等价于 npm start
 **无需 `npm install`**——本服务只用 Node 22+ 内置模块：`node:sqlite`、`node:http`、原生 `fetch`、`node:crypto`。
 仓库里的 `package.json` 只声明了 scripts，`dependencies` 是空的。
 
-### 一条命令验证全链路（152 项断言）
+### 一条命令验证全链路（210 项断言）
 
 ```bash
 node server/index.js &            # 自测需要一个已在跑的实例（默认 8848，可用 PORT 改）
@@ -49,7 +49,7 @@ node server/tools/selftest.js     # 或 npm run test:server
 所以反复跑不会把演示数据越跑越脏。唯一会增长的是 `audit_log`（审计按设计只追加）
 与 `server/store/backup/` 下的快照（每跑一次留一份，按保留策略自动只留最近 20 份，且已 gitignore）。
 
-### 没有浏览器也能验前端（185 项断言）
+### 没有浏览器也能验前端（291 项断言）
 
 ```bash
 node server/tools/frontend-test.js    # 或 npm run test:frontend
@@ -270,6 +270,22 @@ TTS（客户侧语音播报）**P11 优化已接**：浏览器原生 `speechSynt
 
 ---
 
+## 五·补、P12 体验与协作优化（本轮）
+
+| 项 | 说明 |
+|---|---|
+| **真机适配** | 学员端 ≤960px：手机屏 100%×100dvh 铺满、页面标题区隐藏、左右信息栏收进右下角 FAB（可开可关）。桌面三栏**一字未改**（媒体查询隔离）。验证方式：iframe 390×844 真实视口 |
+| **首次引导** | 新学员第一次打开弹三步说明（点会话 → 回复客户 → 自动出报告），写 `localStorage` 标记后不再出现 |
+| **客户语音播报** | 浏览器原生 `speechSynthesis`，仅语音模式朗读客户话；开关在手机屏顶部扬声器键 |
+| **录音隐私明示** | 录音浮层显示「录音在本机识别 · 不上传 · 不留存」 |
+| **培训效果** | 教练台总览「首练 vs 最新」：平均分/达标率前后对比、练过多次者中提升人数、仍未达标人数（口径走 `helpers.effectOf()`） |
+| **批量催办** | 学员列表多选 + 全选 →「批量催办」，每人一条【催办】辅导记录（复用 `addNote` 的离线兜底） |
+| **分数人工修正** | 质检表「修正分」：AI 分保留、人工分并存、原因必填、进审计、可撤销（`{revoke:true}`） |
+| **待建场景池** | 教练质检抽屉「标记待建场景」→ 管理端「场景库」顶部认领起草（`scene_ideas` 表，18 张表） |
+| **记录导出** | 质检页「导出 CSV」：BOM + 引号转义，范围＝可见集 + 当前筛选，零依赖 |
+
+---
+
 ## 六、接口一览
 
 所有接口前缀 `/api/v1`，成功返回 `{ok:true,data:...}`，失败返回 `{ok:false,error,...}`。
@@ -304,6 +320,11 @@ TTS（客户侧语音播报）**P11 优化已接**：浏览器原生 `speechSynt
 | GET | `/records` `/learners` `/tasks` `/coach-notes` `/audit` | — | **列表分页统一口径（P9）**：`?limit=&offset=`（`limit∈[1,500]`、`offset≥0`，非法 400），返回 `{ items, total, limit, offset, hasMore }`，`total` 是筛选后总数；**不带分页参数仍是全量**（三端水合依赖，audit 例外：无参默认最近 100 条）。翻页配**稳定排序**（主键次级定序），不重不漏 |
 | GET | `/records/:id/turns` | staff | **一条成绩的逐轮对话（P7）**。只卡**数据可见范围**（不卡 `can_edit`/`can_review` —— 看自己名下学员的对话是带教本职）。越范围 / 无归属成绩一律 403，不存在 404 |
 | DELETE | `/records/:id` | staff（需编辑权） | 删除一条成绩（**连带删掉它的质检结论**，避免留下无主结论） |
+| PATCH | `/records/:id` | staff（需编辑权） | **人工修正分数**（P12）：`{score, reason}` 或 `{revoke:true}`。修正值写 `payload.manualScore`（分数/原因/操作人/时间），**AI 原分保留**——不直接改 `score` 列，否则「逐轮均分≡总分」契约就破了。原因必填（400）、越界 400、无编辑权 403 |
+| GET | `/scene-ideas` | staff | **待建场景池**（P12）：`?status=open\|claimed\|closed\|all`；返回 `items/total/open` |
+| POST | `/scene-ideas` | staff | 提交待建场景（`{title, problem, recordId?}`）：带成绩时校验数据范围并自动带出学员/场景；标题与描述必填 |
+| POST | `/scene-ideas/:id/status` | staff（需编辑权） | 认领 / 关闭 / 重新打开（`{status: claimed\|closed\|open}`）；教练 403 |
+| DELETE | `/scene-ideas/:id` | staff（需编辑权） | 删除（误标清理） |
 | GET | `/coach-notes` | staff | 辅导记录（按数据范围过滤；`?learnerId=` 收窄到某学员，**`?q=` 全文包含检索（P9）**——LIKE 通配符 `%`/`_`/`\` 已转义，用户输入按字面匹配） |
 | POST | `/coach-notes` | staff | 写一条辅导记录（`learnerId` / `text` / 可选 `recordId` `type`） |
 | DELETE | `/coach-notes/:id` | staff | 删除辅导记录（**仅限本人写的**，admin 例外） |
