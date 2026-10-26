@@ -504,6 +504,32 @@
     return { ok: false, error: '服务端不可达' };
   }
 
+  /** 待建场景池（P12）：列表 / 创建 / 认领 */
+  async function sceneIdeas(status) {
+    try {
+      var r = await req('/scene-ideas' + (status && status !== 'all' ? '?status=' + encodeURIComponent(status) : ''), { method: 'GET' }, 15000);
+      if (r.body && r.body.ok) return r.body.data;
+      return { items: [], total: 0, open: 0, ok: false, error: (r.body && r.body.error) || ('HTTP ' + r.http) };
+    } catch (e) { /* ignore */ }
+    return { items: [], total: 0, open: 0, ok: false, error: '服务端不可达' };
+  }
+  async function createSceneIdea(payload) {
+    try {
+      var r = await req('/scene-ideas', { method: 'POST', body: JSON.stringify(payload) }, 15000);
+      if (r.body && r.body.ok) return { ok: true, idea: r.body.data.idea };
+      return { ok: false, error: (r.body && r.body.error) || ('HTTP ' + r.http) };
+    } catch (e) { /* ignore */ }
+    return { ok: false, error: '服务端不可达' };
+  }
+  async function setSceneIdeaStatus(id, status) {
+    try {
+      var r = await req('/scene-ideas/' + encodeURIComponent(id) + '/status', { method: 'POST', body: JSON.stringify({ status: status }) }, 15000);
+      if (r.body && r.body.ok) return { ok: true, idea: r.body.data.idea };
+      return { ok: false, error: (r.body && r.body.error) || ('HTTP ' + r.http) };
+    } catch (e) { /* ignore */ }
+    return { ok: false, error: '服务端不可达' };
+  }
+
   async function calibrate(mode) {
     try {
       var r = await req('/goldset/calibrate', { method: 'POST', body: JSON.stringify({ mode: mode || 'auto' }) }, 60000);
@@ -551,6 +577,7 @@
     probe: probe, pull: pull, save: save, act: act, remove: remove,
     versions: versions, auditLog: auditLog, calibrate: calibrate, cleanupSessions: cleanupSessions,
     patchRecordScore: patchRecordScore,
+    sceneIdeas: sceneIdeas, createSceneIdea: createSceneIdea, setSceneIdeaStatus: setSceneIdeaStatus,
     tasks: tasks, tasksOf: tasksOf, saveTask: saveTask,
     taskStatus: taskStatus, removeTask: removeTask,
     coachNotes: coachNotes, addCoachNote: addCoachNote, removeCoachNote: removeCoachNote,

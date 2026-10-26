@@ -256,6 +256,23 @@ CREATE TABLE IF NOT EXISTS record_qc (
 );
 CREATE INDEX IF NOT EXISTS idx_qc_state ON record_qc(state);
 
+/* 待建场景池（P12）：质检/辅导中发现的共性问题 → 运营认领 → 起草新场景。
+ * 内容供给闭环：不再只靠运营闭门造车，问题从实战里来。 */
+CREATE TABLE IF NOT EXISTS scene_ideas (
+  id          TEXT PRIMARY KEY,
+  title       TEXT NOT NULL,            -- 一句话概括（运营可改）
+  problem     TEXT NOT NULL,            -- 客户异议/学员卡点的具体描述
+  quote       TEXT,                     -- 引用原对话（截断）
+  record_id   TEXT,                     -- 来源成绩（可空）
+  learner_id  TEXT,
+  scene_id    TEXT,                     -- 来源场景
+  status      TEXT NOT NULL DEFAULT 'open',   -- open 待认领 / claimed 已认领 / closed 已关闭
+  by_name     TEXT, by_id TEXT,
+  claimed_by  TEXT, claimed_at TEXT,
+  at          TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_idea_status ON scene_ideas(status);
+
 CREATE TABLE IF NOT EXISTS meta (
   k TEXT PRIMARY KEY,
   v TEXT

@@ -284,10 +284,13 @@
           <h1>对话质检</h1>
           <p>系统按维度分给出排序，分数偏低或未达标优先抽检。质检结论可标记为「话术需要统一」并转交培训运营更新剧本。</p>
         </div>
-        <div class="seg" id="qFilter">
-          <button class="on" data-q="all">全部</button>
-          <button data-q="high">高风险学员</button>
-          <button data-q="fail">未达标</button>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div class="seg" id="qFilter">
+            <button class="on" data-q="all">全部</button>
+            <button data-q="high">高风险学员</button>
+            <button data-q="fail">未达标</button>
+          </div>
+          <button class="btn sm ghost" data-act="export-csv" title="导出当前筛选范围的成绩明细（Excel 可直接打开）">导出 CSV</button>
         </div>
       </div>
     </div>
@@ -1426,6 +1429,45 @@
   }
 
   /* ------------------------- 对话质检 ------------------------- */
+  /* 记录导出（P12）：前端生成 CSV（BOM + 引号转义），Excel 直接可开。
+   * 范围＝当前身份可见集 + 当前筛选（不导全库，避免越权带出范围外数据）。 */
+  function exportCsv() {
+    var filt = ($('#qFilter .on') || {}).dataset ? $('#qFilter .on').dataset.q : 'all';
+    var list = T.records.slice().sort(function (a, b) { return a.score - b.score; });
+    if (filt === 'high') list = list.filter(function (r) { return H.riskOf(r.learnerId) === 'red'; });
+    if (filt === 'fail') list = list.filter(function (r) { return !r.passed; });
+
+    var head = ['学员', '部门', '场景', '任务', '成绩', '达标', '分数来源', '练习时间', '质检结论'];
+    var rows = list.map(function (r) {
+      var l = T.learnerById(r.learnerId), sc = T.sceneById(r.sceneId), tk = T.taskById(r.taskId);
+      var ms = r.manualScore;
+      var st = qcState[r.id] || r.qc || '';
+      return [
+        l ? l.name : r.learnerId, l ? l.dept : '',
+        sc ? sc.name : r.sceneId, tk ? tk.title : '自主练习',
+        ms ? ms.score : r.score,
+        ms ? (ms.score >= (r.passLine || 60) ? '达标' : '未达标') : (r.passed ? '达标' : '未达标'),
+        ms ? ('人工修正（AI ' + r.score + '）') : 'AI 评分',
+        fmtDate(r.finishedAt),
+        st === 'ok' ? '已通过' : (st === 'flag' ? '待统一话术' : '未抽检')
+      ];
+    });
+    var csv = String.fromCharCode(0xFEFF) + [head].concat(rows).map(function (arr) {
+      return arr.map(function (v) {
+        return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+      }).join(',');
+    }).join(String.fromCharCode(13, 10));
+
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '训练成绩-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    toast('已导出 ' + rows.length + ' 条记录（' + (filt === 'all' ? '全部' : filt === 'high' ? '高风险' : '未达标') + '）');
+  }
+
   function renderQuality() {
     var filt = ($('#qFilter .on') || {}).dataset ? $('#qFilter .on').dataset.q : 'all';
     var ids = myLearners().map(function (l) { return l.id; });
@@ -1480,6 +1522,7 @@
         '<button class="btn sm ghost" data-qc="ok" data-rid="' + r.id + '">通过</button>' +
         '<button class="btn sm ghost" data-qc="flag" data-rid="' + r.id + '">标记</button>' +
         '<button class="btn sm ghost" data-manual-score="' + r.id + '" title="AI 分可被带教主管推翻（原分保留）">修正分</button>' +
+        '<button class="btn sm ghost" data-idea-from="' + r.id + '" title="把这条对话暴露的共性问题转给运营，作为新场景的素材">标记待建场景</button>' +
         (st ? '<button class="btn sm ghost" data-qc-clear="' + r.id + '">撤销</button>' : '') +
         '</div></td>' +
         '</tr>';
@@ -1493,6 +1536,34 @@
    * 质检人只能凭分数判断"这条要不要标记"。现在按需拉出真实逐轮明细，
    * 结论按钮就在摘要下方，看完即可判定。
    */
+  /* 待建场景池（P12）：把质检发现的问题结构化转给运营——内容供给闭环的入口 */
+  function openIdeaDrawer(rid) {
+    var r = T.records.filter(function (x) { return x.id === rid; })[0];
+    if (!r) return;
+    var sc = T.sceneById(r.sceneId), l = T.learnerById(r.learnerId);
+    openDrawer('标记待建场景', '' +
+      '<div class="kvline"><span class="k">来源</span><span class="v">' + esc(l ? l.name : r.learnerId) + ' · ' +
+        esc(sc ? sc.name : r.sceneId) + ' · ' + (r.manualScore ? r.manualScore.score : r.score) + ' 分</span></div>' +
+      '<div style="margin:14px 0 6px;font-size:12px;color:var(--txt2)">问题标题（一句话，运营认领时看的就是它）</div>' +
+      '<input class="txa" id="ideaTitle" style="height:40px" placeholder="例如：竞品临时降价时的价值锚定话术缺失">' +
+      '<div style="margin:12px 0 6px;font-size:12px;color:var(--txt2)">具体问题（客户异议 / 学员卡点）</div>' +
+      '<textarea class="txa" id="ideaProblem" placeholder="例如：客户拿竞品限时促销压价，学员只会重复报价，没有价值锚定，最后只能让步"></textarea>' +
+      '<div class="btn-row" style="margin-top:14px">' +
+      '<button class="btn" data-idea-save="' + rid + '">提交到待建池</button>' +
+      '<button class="btn ghost" data-idea-cancel="1">取消</button></div>');
+  }
+  function saveIdea(rid) {
+    var title = (($('#ideaTitle') || {}).value || '').trim();
+    var problem = (($('#ideaProblem') || {}).value || '').trim();
+    if (!title || !problem) { toast('标题与问题描述都要填'); return; }
+    if (!SYNC || !SYNC.createSceneIdea) { toast('服务端未连接，无法提交（待建池需要服务端）'); return; }
+    SYNC.createSceneIdea({ title: title, problem: problem, recordId: rid }).then(function (res) {
+      if (!res.ok) { toast('提交失败：' + (res.error || '未知错误')); return; }
+      closeDrawer();
+      toast('已提交到待建场景池，运营在管理后台「场景库」认领起草');
+    });
+  }
+
   /* 人工修正分数（P12）：AI 分保留，修正值并存；原因必填（审计留痕） */
   function openScoreDrawer(rid) {
     var r = T.records.filter(function (x) { return x.id === rid; })[0];
@@ -1733,6 +1804,12 @@
       if (it && it.go) it.go();
       return;
     }
+    var idf = e.target.closest('[data-idea-from]');
+    if (idf) { openIdeaDrawer(idf.getAttribute('data-idea-from')); e.stopPropagation(); return; }
+    var ids = e.target.closest('[data-idea-save]');
+    if (ids) { saveIdea(ids.getAttribute('data-idea-save')); return; }
+    var idc = e.target.closest('[data-idea-cancel]');
+    if (idc) { closeDrawer(); return; }
     var mso = e.target.closest('[data-manual-score]');
     if (mso) { openScoreDrawer(mso.getAttribute('data-manual-score')); e.stopPropagation(); return; }
     var mss = e.target.closest('[data-ms-save]');
@@ -1755,6 +1832,8 @@
 
     // 多选列：让浏览器处理 checkbox，不要触发行级「打开辅导抽屉」
     if (e.target.closest('[data-noclick]')) return;
+    var ex = e.target.closest('[data-act="export-csv"]');
+    if (ex) { exportCsv(); return; }
     var br = e.target.closest('[data-act="bulk-remind"]');
     if (br) { bulkRemind(); return; }
     var bc = e.target.closest('[data-act="bulk-clear"]');

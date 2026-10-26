@@ -698,6 +698,21 @@ const LT = win.TRAIN;
   check(coachSrcP12, /ms && typeof ms\.score === 'number'[\s\S]{0,200}?人工/, '有修正时展示人工分并标记（AI 分保留在 title）');
   check(syncSrcP9, /async function patchRecordScore\(id, score, reason, revoke\)/, '同步层 patchRecordScore 支持撤销');
 
+  /* ---- 待建场景池（P12）：内容供给闭环的 UI 两端 ---- */
+  const adminSrcIdea = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
+  check(coachSrcP12, /data-idea-from="/, '质检抽屉有「标记待建场景」入口');
+  check(coachSrcP12, /function saveIdea\(rid\)[\s\S]{0,400}?SYNC\.createSceneIdea\(\{ title: title, problem: problem, recordId: rid \}/, '提交走服务端 createSceneIdea（跨账号流转）');
+  check(adminSrcIdea, /id="ideaBox"/, '管理端场景库有「待建场景池」卡');
+  check(adminSrcIdea, /function renderIdeas\(\)[\s\S]{0,600}?待认领/, '池子按状态渲染（待认领/已认领/已关闭）');
+  check(adminSrcIdea, /data-idea-claim="/, '运营可认领起草');
+  check(syncSrcP9, /async function sceneIdeas\(status\)[\s\S]{0,700}?async function createSceneIdea/, '同步层有池子的列表/创建/认领三件套');
+
+  /* ---- 记录导出（P12）：前端生成 CSV，零依赖、范围受控 ---- */
+  check(coachSrcP12, /data-act="export-csv"/, '质检页有「导出 CSV」入口');
+  check(coachSrcP12, /function exportCsv\(\)[\s\S]{0,300}?if \(filt === 'fail'\) list = list\.filter/, '导出范围跟当前筛选一致（不是无脑导全库）');
+  ok(coachSrcP12.indexOf('replace(/\"/g') >= 0, 'CSV 引号转义（值里带逗号/引号不会撑破列）');
+  check(coachSrcP12, /String\.fromCharCode\(0xFEFF\)/, 'CSV 带 BOM（Excel 打开中文不乱码）');
+
   /* ---- 培训效果（P12）：首练 vs 最新，口径走 helpers ---- */
   check(appdataSrcP12, /effectOf: function \(\) \{/, 'helpers.effectOf 存在（首练 vs 最新统计口径）');
   check(appdataSrcP12, /var rs = H\.recordsOf\(l\.id\);[\s\S]{0,120}?var f = rs\[0\], la = rs\[rs\.length - 1\]/, '首/末成绩取 recordsOf 排序结果（不另算一套排序）');

@@ -817,6 +817,38 @@ async function login(account, password) {
     eq('重复撤销被拒 400（没有修正可撤）', revAgain.status, 400);
   }
 
+  /* ---- 4g. P12：待建场景池（内容供给闭环） ---- */
+  console.log('  ─────────────────────────────────────────');
+  console.log('  P12：待建场景池');
+  let ideaId = null;
+  {
+    const cr = await call('POST', '/scene-ideas', {
+      title: 'selftest：竞品限时降价的应对',
+      problem: 'selftest 校验用：客户拿竞品促销压价，学员只会重复报价',
+      recordId: recId
+    }, { token: adm.token });
+    ok('教练/管理可提交待建场景（' + cr.status + '）', cr.status === 200 && !!(data(cr) && data(cr).idea), errText(cr));
+    ideaId = data(cr) && data(cr).idea && data(cr).idea.id;
+    ok('待建场景自动带来源成绩的学员/场景', !!(data(cr) && data(cr).idea.learnerId && data(cr).idea.sceneId));
+
+    const li = data(await call('GET', '/scene-ideas?status=open', undefined, { token: adm.token }));
+    ok('列表能按状态筛出待认领（含刚提交的）', !!(li && (li.items || []).some((x) => x.id === ideaId)));
+
+    const bad = await call('POST', '/scene-ideas', { title: '' }, { token: adm.token });
+    eq('缺标题/描述被拒 400', bad.status, 400);
+
+    const claim = await call('POST', '/scene-ideas/' + encodeURIComponent(ideaId) + '/status', { status: 'claimed' }, { token: adm.token });
+    ok('运营可认领（状态→claimed）', claim.status === 200 && data(claim) && data(claim).idea.status === 'claimed');
+    const coachClaim = await call('POST', '/scene-ideas/' + encodeURIComponent(ideaId) + '/status', { status: 'claimed' }, { token: cch.token });
+    eq('教练无认领权限 403（内容治理归运营）', coachClaim.status, 403);
+
+    // 清场：删掉自测造的待建场景（保持幂等）
+    if (ideaId) {
+      const del = await call('DELETE', '/scene-ideas/' + encodeURIComponent(ideaId), undefined, { token: adm.token });
+      ok('清理自测待建场景（' + del.status + '）', del.status === 200);
+    }
+  }
+
   /* ---- 9b. 清理本次练习产生的成绩 ----
    * 不复用 sid2 的中间产物：这两条成绩只属于本进程，删掉才算真正幂等。
    * 删完再确认一次，顺带验证 deleteRecord 的 404 语义。

@@ -1258,6 +1258,88 @@ function setManualScore(id, score, reason, userId, revoke) {
   return { id: rid, aiScore: rec.score, manualScore: pl.manualScore };
 }
 
+/* ================================================================== *
+ * 待建场景池（P12）：内容供给闭环
+ *   教练在质检里标「这类问题话术没覆盖」→ 进池 → 运营认领 → 起草新场景。
+ *   为什么不做成「自动生成场景」：场景是训练资产，草稿必须人确认；
+ *   系统只负责把「实战暴露的问题」结构化地带到运营面前。
+ * ================================================================== */
+function ideaRow(r) {
+  return {
+    id: r.id, title: r.title, problem: r.problem, quote: r.quote || '',
+    recordId: r.record_id || '', learnerId: r.learner_id || '', sceneId: r.scene_id || '',
+    status: r.status, by: r.by_name || '', at: r.at || '',
+    claimedBy: r.claimed_by || '', claimedAt: r.claimed_at || ''
+  };
+}
+
+function listIdeas(query) {
+  const q = query || {};
+  let sql = 'SELECT * FROM scene_ideas';
+  const args = [];
+  if (q.status && q.status !== 'all') { sql += ' WHERE status = ?'; args.push(String(q.status)); }
+  sql += ' ORDER BY at DESC, id DESC';
+  const items = db.prepare(sql).all(...args).map(ideaRow);
+  return { items, total: items.length, open: db.prepare("SELECT COUNT(*) AS n FROM scene_ideas WHERE status='open'").get().n };
+}
+
+/** 教练把一条成绩暴露的问题标记为「待建场景」 */
+function createIdea(payload, userId) {
+  const user = requireUser(userId);
+  const title = String((payload && payload.title) || '').trim();
+  const problem = String((payload && payload.problem) || '').trim();
+  if (!title || !problem) {
+    throw Object.assign(new Error('请填写标题与问题描述'), { status: 400 });
+  }
+  const rid = String((payload && payload.recordId) || '');
+  let rec = null;
+  if (rid) {
+    rec = db.prepare('SELECT * FROM records WHERE id = ?').get(rid);
+    if (!rec) throw Object.assign(new Error('成绩不存在'), { status: 404 });
+    assertRecordScope(user, rec);   // 只能为自己的可见范围提问题
+  }
+  const id = 'SI-' + nowStamp().replace(/[-: ]/g, '').slice(2, 14) + '-' + Math.random().toString(36).slice(2, 5);
+  db.prepare(`INSERT INTO scene_ideas
+    (id,title,problem,quote,record_id,learner_id,scene_id,status,by_name,by_id,at)
+    VALUES (?,?,?,?,?,?,?,'open',?,?,?)`).run(
+    id, title.slice(0, 120), problem.slice(0, 600), String((payload && payload.quote) || '').slice(0, 300),
+    rid, rec ? rec.learner_id : String((payload && payload.learnerId) || ''),
+    rec ? rec.scene_id : String((payload && payload.sceneId) || ''),
+    user.name, user.id, nowStamp()
+  );
+  log(user.id, 'scene-idea.create', id, `待建场景：${title.slice(0, 40)}`);
+  return { idea: ideaRow(db.prepare('SELECT * FROM scene_ideas WHERE id = ?').get(id)) };
+}
+
+/** 运营认领 / 关闭（内容治理动作，与场景编辑同权限） */
+function setIdeaStatus(id, status, userId) {
+  const user = requireUser(userId);
+  assertCanAssignTask(user);   // 与任务下发/场景编辑同一权限档
+  const row = db.prepare('SELECT * FROM scene_ideas WHERE id = ?').get(String(id || ''));
+  if (!row) throw Object.assign(new Error('待建场景不存在'), { status: 404 });
+  const st = String(status || '');
+  if (st !== 'claimed' && st !== 'closed' && st !== 'open') {
+    throw Object.assign(new Error('状态须为 claimed / closed / open'), { status: 400 });
+  }
+  const claimed = st === 'claimed';
+  db.prepare('UPDATE scene_ideas SET status = ?, claimed_by = ?, claimed_at = ? WHERE id = ?').run(
+    st, claimed ? user.name : (st === 'open' ? '' : row.claimed_by || ''), claimed ? nowStamp() : row.claimed_at || '', row.id
+  );
+  log(user.id, 'scene-idea.' + st, row.id, `待建场景状态 ${row.status} → ${st}`);
+  return { idea: ideaRow(db.prepare('SELECT * FROM scene_ideas WHERE id = ?').get(row.id)) };
+}
+
+/** 删除待建场景（误标/测试数据清理；与认领同权限） */
+function deleteIdea(id, userId) {
+  const user = requireUser(userId);
+  assertCanAssignTask(user);
+  const row = db.prepare('SELECT * FROM scene_ideas WHERE id = ?').get(String(id || ''));
+  if (!row) throw Object.assign(new Error('待建场景不存在'), { status: 404 });
+  db.prepare('DELETE FROM scene_ideas WHERE id = ?').run(row.id);
+  log(user.id, 'scene-idea.delete', row.id, `删除待建场景：${row.title.slice(0, 40)}`);
+  return { id: row.id, deleted: true };
+}
+
 function stats() {
   const one = (sql) => { const r = db.prepare(sql).get(); return r ? Object.values(r)[0] : 0; };
   return {
@@ -1284,5 +1366,6 @@ module.exports = {
   // turnRow 一并导出：自测要断言「返回的 turns / 落库的 evidence / 逐轮接口」
   // 三处字段集完全一致，必须能拿到同一个映射函数来比对（铁律 8）
   turnRow, turn, finish, listRecords, listTurns, deleteRecord,
-  listLearners, listTasks, listUsers, listAuditLog, stats, cleanupSessions, sweepStaleSessions, setManualScore
+  listLearners, listTasks, listUsers, listAuditLog, stats, cleanupSessions, sweepStaleSessions, setManualScore,
+  listIdeas, createIdea, setIdeaStatus, deleteIdea
 };

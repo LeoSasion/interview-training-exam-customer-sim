@@ -295,6 +295,14 @@ on('POST', /^\/api\/v1\/records\/([^/]+)\/qc$/, async (c) => {
 });
 on('DELETE', /^\/api\/v1\/records\/([^/]+)\/qc$/, async (c) => svc.clearQc(c.params[0], c.user.id));
 // 逐轮对话（P7）：列表接口刻意不带正文，页面按需取这一条
+/* 待建场景池（P12）：教练标记 → 运营认领（内容供给闭环） */
+on('GET', /^\/api\/v1\/scene-ideas$/, async (c) => svc.listIdeas(c.query));
+on('POST', /^\/api\/v1\/scene-ideas$/, async (c) => svc.createIdea(c.body, c.user && c.user.id));
+on('DELETE', /^\/api\/v1\/scene-ideas\/([^/]+)$/, async (c) =>
+  svc.deleteIdea(c.params[0], c.user && c.user.id));
+on('POST', /^\/api\/v1\/scene-ideas\/([^/]+)\/status$/, async (c) =>
+  svc.setIdeaStatus(c.params[0], c.body && c.body.status, c.user && c.user.id));
+
 /* 人工修正分数（P12）：AI 分可被带教主管推翻，修正值与原分并存（审计留痕） */
 on('PATCH', /^\/api\/v1\/records\/([^/]+)$/, async (c) =>
   svc.setManualScore(c.params[0], c.body && c.body.score, c.body && c.body.reason, c.user && c.user.id, !!(c.body && c.body.revoke)));
