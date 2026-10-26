@@ -684,6 +684,13 @@ const LT = win.TRAIN;
     }
     ok(depth === 0 && !broken, '学员端 CSS 花括号平衡（不平衡＝后续样式被静默丢弃）');
   }
+
+  /* ---- 首次引导 + 语音隐私明示（P12） ---- */
+  check(learnSrc, /function showGuideIfFirst\(\)\{[\s\S]{0,120}?localStorage\.getItem\('train-guide-seen'\)/, '首次引导读 localStorage 标记（只出现一次）');
+  check(learnSrc, /function closeGuide\(\)\{[\s\S]{0,200}?localStorage\.setItem\('train-guide-seen', '1'\)/, '关闭引导写标记（不再反复打扰）');
+  check(learnSrc, /<div class="gstep"><div class="n">1<\/div>/, '引导卡有分步说明（不是一句空提示）');
+  check(learnSrc, /录音在本机识别 · 不上传 · 不留存/, '录音浮层如实明示隐私（企业采购必问）');
+  check(learnSrc, /\.guide\{position:fixed;inset:0;z-index:120/, '引导卡为整屏遮罩居中（不与手机框冲突）');
   const adminSrcP11 = adminSrc;
   check(adminSrcP11, /data-act="cleanup-sessions"/, '管理端服务端页有「清理历史会话」入口');
   check(adminSrcP11, /if \(act === 'cleanup-sessions'\) \{[\s\S]{0,220}?ADMIN_SYNC\.cleanupSessions\(24\)/,

@@ -138,6 +138,26 @@ body{
 .pill{font-size:10px;line-height:15px;padding:0 5px;border-radius:4px;background:var(--wx-pill-bg);color:var(--wx-pill-fg);
   border:.5px solid var(--wx-pill-bd);flex:0 0 auto;margin-left:6px}
 .pill.on-task{background:var(--wx-taskpill-bg);color:var(--wx-taskpill-fg);border-color:transparent;font-weight:500}
+/* 首次引导（P12）：只出现一次的三步说明卡 */
+.guide{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:22px;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(3px)}
+.guide.on{display:flex}
+.guide-card{width:330px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:20px 19px 16px;box-shadow:0 18px 48px rgba(0,0,0,.45)}
+.guide-card h3{margin:0 0 4px;font-size:15px;font-weight:500;color:var(--txt)}
+.guide-card .gsub{font-size:12px;color:var(--txt3);margin:0 0 14px}
+.gstep{display:flex;gap:10px;margin:0 0 12px}
+.gstep .n{flex:0 0 20px;height:20px;border-radius:50%;background:var(--acc-soft);color:var(--acc-txt);
+  font-size:11px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.gstep .t{font-size:12.5px;line-height:1.6;color:var(--txt2)}
+.gstep .t b{color:var(--txt);font-weight:500}
+.guide-card .gfoot{display:flex;gap:8px;margin-top:4px}
+.guide-card button{flex:1;height:36px;border-radius:9px;border:1px solid var(--line2);background:transparent;
+  color:var(--txt2);font-size:12.5px;cursor:pointer;font-family:inherit}
+.guide-card button.pri{border:none;background:var(--acc);color:#fff;font-weight:500}
+/* 录音隐私说明（P12）*/
+.vdur{font-size:11px;color:rgba(255,255,255,.5);margin-top:6px;letter-spacing:.01em}
+
 /* 语音链路轻提示（P11）：屏幕中央黑条，微信风格 */
 .vtoast{position:fixed;top:22%;left:50%;transform:translateX(-50%);z-index:99;background:rgba(0,0,0,.78);
   color:#fff;font-size:12.5px;line-height:1.6;padding:8px 16px;border-radius:9px;max-width:80vw;display:none;
@@ -351,6 +371,21 @@ body{
   <button class="themebtn" id="btnPageTheme" onclick="togglePageTheme()">浅色模式</button>
 </div>
 
+<!-- 首次引导（P12）：只出现一次，两个按钮都会写标记 -->
+<div class="guide" id="guide">
+  <div class="guide-card">
+    <h3>欢迎，这是你的第一次演练</h3>
+    <p class="gsub">三步就够，大约 6–8 分钟</p>
+    <div class="gstep"><div class="n">1</div><div class="t"><b>点一个客户会话</b>开始练习，客户会一条条抛出真实异议</div></div>
+    <div class="gstep"><div class="n">2</div><div class="t"><b>回复客户</b>：可以打字，也可以点话筒按住说话（录音在本机转文字，不上传）</div></div>
+    <div class="gstep"><div class="n">3</div><div class="t"><b>结束自动出报告</b>：五个维度打分 + 逐句点评，带教主管也会看到</div></div>
+    <div class="gfoot">
+      <button onclick="closeGuide()">我知道了</button>
+      <button class="pri" onclick="closeGuide()">开始练习</button>
+    </div>
+  </div>
+</div>
+
 <button class="mobilefab" id="mobileFab" onclick="toggleMobileInfo()" aria-label="任务与目标">任务</button>
 
 <div class="stage">
@@ -461,6 +496,7 @@ body{
             <div class="recbox">
               <div class="wave" id="wave"></div>
               <div style="font-size:13px;color:rgba(255,255,255,.75)" id="recovText">正在录音，松开结束</div>
+              <div class="vdur" id="recovPrivacy">录音在本机识别 · 不上传 · 不留存</div>
             </div>
           </div>
 
@@ -1453,6 +1489,19 @@ window.__LRN = () => ({
 });
 window.addEventListener('resize', scrollBottom);
 boot();
+
+/* 首次引导（P12）：新学员第一次打开给三步说明；点任意按钮写标记，之后不再出现 */
+function showGuideIfFirst(){
+  try{ if(localStorage.getItem('train-guide-seen') === '1') return; }catch(e){ return; }
+  const el = document.getElementById('guide');
+  if(el) el.classList.add('on');
+}
+function closeGuide(){
+  const el = document.getElementById('guide');
+  if(el) el.classList.remove('on');
+  try{ localStorage.setItem('train-guide-seen', '1'); }catch(e){ /* 隐私模式下写不了，本次仍可关闭 */ }
+}
+setTimeout(showGuideIfFirst, 700);
 </script>
 </body>
 </html>
