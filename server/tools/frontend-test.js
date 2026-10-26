@@ -705,6 +705,16 @@ const LT = win.TRAIN;
   const adminSrcP14 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   const appdataSrcP14 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
 
+  /* ---- P15 bug 修复：口径与假数据 ---- */
+  check(appdataSrcP14, /dimAvgScope: function \(learnerIds\)[\s\S]{0,500}?RECORDS\.filter/, 'dimAvgScope 按传入学员过滤后再算均分');
+  check(coachSrcP14, /var team = H\.dimAvgScope \? H\.dimAvgScope\(learnerIds\(\)\)/, '雷达对照线用「当前可见范围」（不再拿全库均分对比）');
+  check(coachSrcP14, /当前范围均分（' \+ myLearners\(\)\.length \+ ' 人）/, '图例写明对照范围人数');
+  check(coachSrcP14, /mine\.every\(function \(d\) \{ return !d\.n; \}\)[\s\S]{0,160}?还没有练习记录/, '无样本不画雷达（42 基准会被误读成能力分）');
+  check(learnSrc, /\$\('tScene'\)\.textContent = curScene\(\)\.name/, '任务卡「训练场景」用真实场景名（原写死"微信沟通"）');
+  check(learnSrc, /\$\('tRound'\)\.textContent = doneN \+ ' 次'/, '「本任务已练」按真实记录统计（原写死"3 次"）');
+  check(learnSrc, /\$\('tDeadline'\)\.textContent = \(bound && bound\.dueAt\)/, '截止时间取任务真实截止日（原写死"10-08 18:00"）');
+  ok(learnSrc.indexOf('<span>剩余练习次数</span>') < 0, '写死的「剩余练习次数」标签已移除（注释里的说明不算）');
+
   /* ---- 一键周报（P14）：数字要准、口径要说清 ---- */
   check(coachSrcP14, /data-act="weekly"/, '总览页有「生成本周简报」入口');
   check(coachSrcP14, /function buildWeeklyReport\(\)[\s\S]{0,900}?latest = String\(all\[all\.length - 1\]\.finishedAt\)\.slice\(0, 10\)/, '统计区间取数据最新一天（演示数据是历史日期，自然周会算出空白）');

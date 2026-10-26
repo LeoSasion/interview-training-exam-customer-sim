@@ -447,6 +447,19 @@
         records: done
       };
     },
+    /* 某批学员的逐维均分（P15）：雷达/周报的「对照线」必须与当前可见范围一致。
+     * 教练在「我带的学员」视图下，若对照的是全库均分（含别人的学员），
+     * 这个对比就失真了——同一屏里一半数字是"我的"、一半是"全公司的"。 */
+    dimAvgScope: function (learnerIds) {
+      var set = {};
+      (learnerIds || []).forEach(function (id) { set[String(id)] = 1; });
+      var rs = RECORDS.filter(function (r) { return set[String(r.learnerId)]; });
+      return DIMS.map(function (d) {
+        var vals = rs.map(function (r) { return (r.dimScores || {})[d.id]; })
+          .filter(function (v) { return typeof v === 'number'; });
+        return { id: d.id, name: d.name, avg: vals.length ? H.avg(vals) : 0, n: vals.length };
+      });
+    },
     /* 逐维均分（P14）：雷达图与成长建议共用——避免各页面各算一套。
      * 口径：该学员所有记录的 dimScores[dim] 求平均（与 statsOf.avg 同为 H.avg）。
      * 无记录时返回基准 42（与本项目「起始分 42」一致，不显示 0 误导成"极差"）。 */

@@ -945,8 +945,12 @@ async function login(account, password) {
     const cl = await call('POST', '/admin/cleanup-sessions', { maxAgeHours: 0 }, { token: adm.token });
     ok('清理无成绩关联的自测会话（删 ' + ((data(cl) || {}).removedSessions) + ' 个 / 保留 ' +
       ((data(cl) || {}).keptSessions) + ' 个）', cl.status === 200 && !!data(cl));
-    ok('清理后不残留无成绩会话（会话数 === 有成绩关联数）',
-      !!data(cl) && data(cl).keptSessions === 0, '保留 ' + (data(cl) || {}).keptSessions + ' 个');
+    // 不能断言「一个会话都不剩」：真机跑过一场练习就会留 1 个「有成绩关联」的会话，
+    // 那是应该保留的。用「再清一次删 0 个」验证真的清干净了（幂等）。
+    const cl2 = await call('POST', '/admin/cleanup-sessions', { maxAgeHours: 0 }, { token: adm.token });
+    ok('连续两次清理幂等（第二次删 0 个，说明已无「无成绩关联」会话）',
+      !!data(cl2) && data(cl2).removedSessions === 0,
+      '第二次删 ' + ((data(cl2) || {}).removedSessions) + ' 个 / 保留 ' + ((data(cl2) || {}).keptSessions) + ' 个');
     const opDenied = await call('POST', '/admin/cleanup-sessions', {}, { token: op.token });
     eq('运营账号无清理会话权限（403）', opDenied.status, 403);
   }

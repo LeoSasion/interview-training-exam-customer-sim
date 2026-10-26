@@ -763,7 +763,9 @@
       return { l: l, risk: H.riskOf(l.id), st: H.statsOf(l.id) };
     }).filter(function (x) { return x.risk === 'red'; })
       .sort(function (a, b) { return a.st.avg - b.st.avg; });
-    var dims = H.overview().dimAvg.slice().sort(function (a, b) { return a.avg - b.avg; });
+    // 能力结构按当前可见范围统计（教练报自己学员，不能混入全库均分）
+    var dims = (H.dimAvgScope ? H.dimAvgScope(ids) : H.overview().dimAvg)
+      .slice().sort(function (a, b) { return a.avg - b.avg; });
     var weakest = dims[0], strongest = dims[dims.length - 1];
     var pendingTask = T.tasks.filter(function (t) { return t.status === 'running'; });
 
@@ -778,7 +780,7 @@
     lines.push('二、质量');
     lines.push('  本周均分 ' + avg(thisWeek) + ' 分（上周 ' + avg(lastWeek) + '）；达标率 ' + rate(thisWeek) + '%（上周 ' + rate(lastWeek) + '%，' +
       (rate(thisWeek) - rate(lastWeek) >= 0 ? '+' : '') + (rate(thisWeek) - rate(lastWeek)) + ' 个百分点）。');
-    lines.push('三、能力结构（全量）');
+    lines.push('三、能力结构（范围：我带的 ' + myLearners().length + ' 名学员）');
     lines.push('  最强「' + strongest.name + '」' + strongest.avg + ' 分；最弱「' + weakest.name + '」' + weakest.avg + ' 分。');
     lines.push('四、需要关注');
     if (focusList.length) {
@@ -1239,7 +1241,15 @@
    */
   function radarSvg(lid) {
     var mine = H.dimAvgOf(lid);
-    var team = H.overview().dimAvg;
+    // 一名学员如果还没有任何练习，H.dimAvgOf 会返回基准 42——画出来会被读成
+    // "他能力 42 分"，而事实是"还没练过"。没有样本就不画图，如实说清楚。
+    if (mine.every(function (d) { return !d.n; })) {
+      return '<div class="muted" style="font-size:12.5px;padding:14px 4px;text-align:center">' +
+        '这名学员还没有练习记录，暂时无法生成能力画像。<br>' +
+        '<span style="color:var(--txt3)">下发一次任务或让他自主练一场，这里就会出现五维雷达。</span></div>';
+    }
+    // 对照线只用「当前可见范围」的学员（教练在"我带的学员"视图下不能拿全库均分做对比）
+    var team = H.dimAvgScope ? H.dimAvgScope(learnerIds()) : H.overview().dimAvg;
     var teamMap = {};
     team.forEach(function (t) { teamMap[t.id] = t.avg; });
     var dims = mine.map(function (d) { return { name: d.name, v: d.v, team: teamMap[d.id] || 0 }; });
@@ -1288,7 +1298,7 @@
       'aria-label="五维能力雷达图：本人与团队均分对比">' + g + '</svg>' +
       '<div class="hint" style="text-align:center;margin-top:2px">' +
       '<span style="color:var(--blue,#3B8DF9)">■</span> 本人均分　' +
-      '<span style="color:var(--txt3)">╌╌</span> 团队均分</div>';
+      '<span style="color:var(--txt3)">╌╌</span> 当前范围均分（' + myLearners().length + ' 人）</div>';
   }
 
   function openLearnerDrawer(lid) {

@@ -158,6 +158,7 @@ body{
 /* 录音隐私说明（P12）*/
 .vdur{font-size:11px;color:rgba(255,255,255,.5);margin-top:6px;letter-spacing:.01em}
 /* 能力雷达（P14） */
+.radar-empty{font-size:12px;color:#8A8A8A;padding:14px 4px;text-align:center;line-height:1.7}
 .radar-wrap{color:#3EB575}
 .radar-wrap svg{color:inherit}
 .radar-lg{text-align:center;font-size:11px;color:#8A8A8A;margin-top:2px}
@@ -400,10 +401,10 @@ body{
     <div class="card">
       <h2>本次训练任务</h2>
       <div class="kv"><span>任务名称</span><span id="tName">客户异议处理</span></div>
-      <div class="kv"><span>训练场景</span><span id="tScene">微信沟通</span></div>
-      <div class="kv"><span>达标线</span><span id="tPass">60 分</span></div>
-      <div class="kv"><span>剩余练习次数</span><span id="tRound">3 次</span></div>
-      <div class="kv"><span>截止时间</span><span>10-08 18:00</span></div>
+      <div class="kv"><span>训练场景</span><span id="tScene">—</span></div>
+      <div class="kv"><span>达标线</span><span id="tPass">—</span></div>
+      <div class="kv"><span>本任务已练</span><span id="tRound">—</span></div>
+      <div class="kv"><span>截止时间</span><span id="tDeadline">—</span></div>
     </div>
 
     <div class="card">
@@ -810,6 +811,21 @@ function openChat(i, task){
   $('backNum').textContent = '1';
   $('tName').textContent = bound ? bound.title : curScene().task;
   $('tPass').textContent = (curTaskPass || curScene().pass) + ' 分';
+  /* 任务卡三项动态化（P15 修 bug）：原先「训练场景」写死"微信沟通"、
+     「剩余练习次数」写死"3 次"、「截止时间」写死"10-08 18:00"（且从未更新）。
+     学员会看到早已过期的截止日期和永远不变的次数——假数据比留空更糟。 */
+  $('tScene').textContent = curScene().name;
+  var doneN = 0;
+  try{
+    if(window.TRAIN && TRAIN.records){
+      doneN = TRAIN.records.filter(function (r) {
+        if(r.learnerId !== ME) return false;
+        return curTaskId ? r.taskId === curTaskId : !r.taskId;
+      }).length;
+    }
+  }catch(e){ doneN = 0; }
+  $('tRound').textContent = doneN + ' 次';
+  $('tDeadline').textContent = (bound && bound.dueAt) ? String(bound.dueAt).slice(0, 10) : '不限时';
   $('chatBody').innerHTML = `<div class="time-div">今天 ${nowTime()}</div>`;
   $('tipBox').innerHTML = curScene().tips[0];
   $('msgInput').value=''; onInput();
@@ -1302,6 +1318,11 @@ function radarMini(learnerId){
   const H = window.TRAIN && TRAIN.helpers;
   if(!H || !H.dimAvgOf) return '';
   const mine = H.dimAvgOf(learnerId);
+  /* 无样本时 dimAvgOf 返回基准 42，画出雷达会被读成"我能力 42 分"——
+     事实是"还没练过"，所以不画图。 */
+  if(mine.every(d=>!d.n)){
+    return '<div class="radar-empty">还没有练习记录，练完一场就会生成你的能力画像。</div>';
+  }
   const team = (H.overview().dimAvg || []);
   const tmap = {};
   team.forEach(t=>{ tmap[t.id] = t.avg; });
