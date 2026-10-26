@@ -822,6 +822,51 @@ tr.flash td{animation:flashRow 2.2s ease-out}
   function shortDT(s) { return String(s).slice(5, 16); }
 
   var toastTimer = null;
+  /**
+   * 页内确认（P16）
+   *
+   * 原生 confirm / prompt 在 **iframe 或沙箱预览面板** 里会被浏览器拦（返回 false/null 或直接抛错），
+   * 表现就是「点删除/下线/重置/驳回完全没反应」——用户以为是按钮坏了。
+   * 统一改成页内弹层，任何环境都能用。
+   *
+   * @param {string} msg  支持 HTML
+   * @param {Function} onOk  确认后回调；传了 opts.input 时第一个参数是输入内容
+   * @param {{title?:string, okText?:string, input?:string}} [opts]
+   */
+  function uiConfirm(msg, onOk, opts) {
+    opts = opts || {};
+    var mask = document.createElement('div');
+    mask.className = 'mask';
+    mask.style.cssText = 'display:block;z-index:300';
+    var box = document.createElement('div');
+    box.className = 'modal';
+    box.style.cssText = 'display:flex;z-index:301';
+    box.innerHTML =
+      '<div class="card" style="margin:0;max-width:460px">' +
+        '<div class="card-h"><h3>' + esc(opts.title || '请确认') + '</h3></div>' +
+        '<div style="font-size:13px;line-height:1.85;color:var(--txt2)">' + msg + '</div>' +
+        (opts.input != null
+          ? '<textarea class="txa" id="ucInput" style="margin-top:12px;height:88px">' + esc(opts.input) + '</textarea>'
+          : '') +
+        '<div class="btn-row" style="margin-top:14px;justify-content:flex-end">' +
+          '<button class="btn ghost" data-uc-cancel="1">取消</button>' +
+          '<button class="btn pri" data-uc-ok="1">' + esc(opts.okText || '确定') + '</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(mask);
+    document.body.appendChild(box);
+    function close() { mask.remove(); box.remove(); }
+    box.querySelector('[data-uc-cancel]').onclick = close;
+    mask.onclick = close;
+    box.querySelector('[data-uc-ok]').onclick = function () {
+      var v = opts.input != null ? (box.querySelector('#ucInput').value || '') : true;
+      close();
+      try { onOk(v); } catch (e) { console.error('[uiConfirm]', e); }
+    };
+    var ta = box.querySelector('#ucInput');
+    if (ta) setTimeout(function () { ta.focus(); }, 40);
+  }
+
   function toast(msg) {
     var n = $('toast');
     n.textContent = msg;
@@ -1351,14 +1396,16 @@ tr.flash td{animation:flashRow 2.2s ease-out}
 
   function removeTask(tid) {
     var t = T.tasks.filter(function (x) { return x.id === tid; })[0];
-    if (!confirm('删除任务「' + ((t && t.title) || tid) + '」？\n该任务的指派关系会一并删除，已产生的练习成绩会保留。此操作不可撤销。')) return;
-    if (!canSrvWrite()) { toast('服务端未连接：无法删除服务端任务'); return; }
-    ADMIN_SYNC.removeTask(tid).then(function (r) {
-      if (!r.ok) { srvFail(r, '删除失败'); return; }
-      closeDrawer();
-      hydrateFromServer();
-      toast('任务已删除');
-    });
+    uiConfirm('删除任务「' + esc((t && t.title) || tid) + '」？<br>该任务的指派关系会一并删除，' +
+      '已产生的练习成绩会保留。<br><b>此操作不可撤销。</b>', function () {
+      if (!canSrvWrite()) { toast('服务端未连接：无法删除服务端任务'); return; }
+      ADMIN_SYNC.removeTask(tid).then(function (r) {
+        if (!r.ok) { srvFail(r, '删除失败'); return; }
+        closeDrawer();
+        hydrateFromServer();
+        toast('任务已删除');
+      });
+    }, { title: '删除任务', okText: '确认删除' });
   }
 
   /* ================================================================== *
@@ -2439,16 +2486,16 @@ tr.flash td{animation:flashRow 2.2s ease-out}
 
   function rejectScene() {
     var s = sceneById2(ED.curId); if (!s) return;
-    var reason = window.prompt('请填写驳回原因（学员端不会看到）', '目标与轮次未对齐，请补充第 6 轮客户台词');
-    if (reason === null) return;
-    var rs = (reason || '').trim() || '未填写原因';
-    s.publish = 'draft';
-    setAudit(s.id, { status: 'draft', rejectReason: rs });
-    persist(); renderEditor();
-    if (!canSrvWrite()) { toast('已驳回「' + s.name + '」（本地），退回草稿'); return; }
-    ADMIN_SYNC.act(s.id, 'reject', { reason: rs }).then(function (r) {
-      serverActOk('reject', r, '已驳回「' + s.name + '」，退回草稿');
-    });
+    uiConfirm('请填写驳回原因（学员端不会看到）：', function (val) {
+      var rs = String(val || '').trim() || '未填写原因';
+      s.publish = 'draft';
+      setAudit(s.id, { status: 'draft', rejectReason: rs });
+      persist(); renderEditor();
+      if (!canSrvWrite()) { toast('已驳回「' + s.name + '」（本地），退回草稿'); return; }
+      ADMIN_SYNC.act(s.id, 'reject', { reason: rs }).then(function (r) {
+        serverActOk('reject', r, '已驳回「' + s.name + '」，退回草稿');
+      });
+    }, { title: '驳回场景 · ' + s.name, okText: '确认驳回', input: '目标与轮次未对齐，请补充第 6 轮客户台词' });
   }
 
   function offlineScene() {
@@ -2559,7 +2606,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
   }
   function onWhoClick() {
     var u = window.ADMIN_SYNC && ADMIN_SYNC.authUser;
-    if (u) { if (confirm('退出登录？')) logout(); return; }
+    if (u) { uiConfirm('退出登录？', function () { logout(); }); return; }
     if (!srvOnline()) { toast('服务端未连接：当前为离线模式，无需登录'); return; }
     requireLogin();
   }
@@ -2977,7 +3024,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     if (act === 'auth') { onWhoClick(); return; }
     if (act === 'auth-close') { hideLogin(); return; }
     if (act === 'auth-do') { doLogin(); return; }
-    if (act === 'auth-logout') { if (confirm('退出登录？')) logout(); return; }
+    if (act === 'auth-logout') { uiConfirm('退出登录？', function () { logout(); }); return; }
     if (act === 'auth-fill') {
       e.preventDefault();
       $('authAcc').value = t.getAttribute('data-acc') || '';
@@ -3062,9 +3109,12 @@ tr.flash td{animation:flashRow 2.2s ease-out}
       return;
     }
     if (act === 'ed-pick') {
-      if (ED.dirty && !confirm('当前场景有未保存的修改，切换将丢失，确定继续？')) return;
-      ED.curId = t.getAttribute('data-sid'); ED.dirty = false; ED.kwDraft = {};
-      renderEditor();
+      var pick = function () {
+        ED.curId = t.getAttribute('data-sid'); ED.dirty = false; ED.kwDraft = {};
+        renderEditor();
+      };
+      if (ED.dirty) { uiConfirm('当前场景有未保存的修改，切换将丢失，确定继续？', pick, { okText: '丢弃并切换' }); return; }
+      pick();
       return;
     }
     if (act === 'ed-revert') {
@@ -3129,21 +3179,24 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     if (act === 'ed-vdiff') { openDiff(parseInt(t.getAttribute('data-v'), 10)); return; }
     if (act === 'ed-vrollback') {
       var rv = parseInt(t.getAttribute('data-v'), 10);
-      if (confirm('确定回滚到 v' + rv + '？当前内容将被该版本覆盖（会生成一个新版本记录）。')) rollback(rv);
+      uiConfirm('确定回滚到 v' + rv + '？<br>当前内容将被该版本覆盖（会生成一个新版本记录）。',
+        function () { rollback(rv); }, { title: '回滚版本', okText: '确认回滚' });
       return;
     }
     if (act === 'ed-submit') { submitReview(); return; }
     if (act === 'ed-approve') { approveScene(); return; }
     if (act === 'ed-reject') { rejectScene(); return; }
     if (act === 'ed-offline') {
-      if (confirm('确定下线该场景？下线后不可再下发学员。')) offlineScene();
+      uiConfirm('确定下线该场景？<br>下线后不可再下发学员。', function () { offlineScene(); },
+        { title: '下线场景', okText: '确认下线' });
       return;
     }
     if (act === 'editor-reset') {
-      if (confirm('确定重置？这将清空本地所有编辑改动与版本记录，恢复为 app-data.js 的初始场景。')) {
-        resetStore(); renderEditor();
-        toast('已重置为初始数据（本地改动与版本记录已清空）');
-      }
+      uiConfirm('确定重置？<br>这将清空本地所有编辑改动与版本记录，恢复为 app-data.js 的初始场景。',
+        function () {
+          resetStore(); renderEditor();
+          toast('已重置为初始数据（本地改动与版本记录已清空）');
+        }, { title: '重置数据', okText: '确认重置' });
       return;
     }
 

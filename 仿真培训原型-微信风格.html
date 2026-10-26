@@ -705,7 +705,7 @@ function startTask(taskId){
   const t = taskFeed().filter(x => x.id === taskId)[0];
   if(!t) return;
   const i = SCENES.map(s => s.id).indexOf(t.sceneId);
-  if(i < 0){ alert('该任务关联的场景不在当前场景库中（可能已被下线）'); return; }
+  if(i < 0){ toast2('该任务关联的场景不在当前场景库中（可能已被下线）'); return; }
   openChat(i, t);
 }
 

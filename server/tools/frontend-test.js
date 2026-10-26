@@ -705,6 +705,18 @@ const LT = win.TRAIN;
   const adminSrcP14 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   const appdataSrcP14 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
 
+  /* ---- P16：原生模态框在 iframe 里会被拦 → 全部改页内弹层 ---- */
+  check(adminSrcP14, /function uiConfirm\(msg, onOk, opts\)/, '有页内确认组件 uiConfirm');
+  ok(adminSrcP14.indexOf('opts.input != null') >= 0 && adminSrcP14.indexOf('id="ucInput"') >= 0,
+    '页内确认支持带输入框（替代 prompt 的驳回原因）');
+  ok(adminSrcP14.indexOf('if (!confirm(') < 0 && adminSrcP14.indexOf('if (confirm(') < 0
+    && adminSrcP14.indexOf('window.prompt') < 0,
+    '管理端已无原生 confirm/prompt（iframe 里会被拦＝点了没反应）');
+  check(adminSrcP14, /uiConfirm\('删除任务「/, '删除任务走页内确认');
+  check(adminSrcP14, /title: '驳回场景 · ' \+ s\.name/, '驳回场景走页内弹层（原因可填）');
+  check(adminSrcP14, /uiConfirm\('确定下线该场景/, '下线场景走页内确认');
+  ok(learnSrc.indexOf('alert(') < 0, '学员端已无原生 alert（改用 toast2）');
+
   /* ---- P15-c：脚本作用域陷阱（window.xxx 判断恒为 undefined）---- */
   ok(learnSrc.indexOf('window.curScene ?') < 0 && learnSrc.indexOf('window.curScene ?') === -1, '不再用 window.curScene 判断（注释里的说明不算）');
   check(learnSrc, /try \{ scene = curScene\(\); \} catch \(e\) \{ scene = null; \}/, '取场景走 try 保护（离线/异常时不崩）');
