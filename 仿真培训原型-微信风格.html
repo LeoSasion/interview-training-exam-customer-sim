@@ -1538,6 +1538,16 @@ window.__LRN = () => ({
   sceneIds: SCENES.map(s => s.id),
   sceneCount: SCENES.length
 });
+/* Esc 关闭（P14）：先有关闭，再谈快捷——被浮层挡住时不用去找关闭按钮 */
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  var guide = document.getElementById('guide');
+  if (guide && guide.classList.contains('on')) { closeGuide(); return; }
+  if (stopRealVoice && document.getElementById('recov') && document.getElementById('recov').classList.contains('on')) { stopRealVoice(); return; }
+  var sheet = document.getElementById('sheet');
+  if (sheet && sheet.classList.contains('on')) { closeSheet(); return; }
+});
+
 window.addEventListener('resize', scrollBottom);
 boot();
 

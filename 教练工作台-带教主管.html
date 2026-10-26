@@ -949,9 +949,18 @@
   }
 
   /* ------------------------- 我的学员 ------------------------- */
+  var STU_RISK_KEY = 'coach-stu-risk';
   function renderStudents() {
     var kw = ($('#stuSearch').value || '').trim().toLowerCase();
+    // 记住上次的风险筛选（刷新后不用重选）；值必须校验，避免脏数据把列表筛空
     var rf = $('#stuRisk').value;
+    var saved = null;
+    try { saved = localStorage.getItem(STU_RISK_KEY); } catch (e) {}
+    if (!rf && saved && /^(all|red|yellow|green)$/.test(saved)) {
+      $('#stuRisk').value = saved;
+      rf = saved;
+    }
+    try { if (rf) localStorage.setItem(STU_RISK_KEY, rf); } catch (e) {}
     var list = myLearners().filter(function (l) {
       if (rf !== 'all' && H.riskOf(l.id) !== rf) return false;
       if (!kw) return true;
@@ -1887,6 +1896,11 @@
   } catch (e) {}
 
   /* 勾选状态（P12 批量催办）：单个勾选与全选都走委托——列表是渲染时重建的 */
+  /* Esc 关抽屉（P14）：键盘用户不必去找关闭按钮 */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && $('#drawer') && $('#drawer').classList.contains('on')) closeDrawer();
+  });
+
   document.addEventListener('change', function (e) {
     var t = e.target;
     if (t && t.classList && t.classList.contains('stuPick')) {

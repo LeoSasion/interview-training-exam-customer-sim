@@ -698,41 +698,50 @@ const LT = win.TRAIN;
   check(coachSrcP12, /ms && typeof ms\.score === 'number'[\s\S]{0,200}?人工/, '有修正时展示人工分并标记（AI 分保留在 title）');
   check(syncSrcP9, /async function patchRecordScore\(id, score, reason, revoke\)/, '同步层 patchRecordScore 支持撤销');
 
+  /* P14 断言段：源码变量统一在这里读一次。
+   * 教训：之前每个块各自 const，一改插入顺序就 TDZ（本文件已踩 4 次）——
+   * 新增 P14 断言请直接用下面这几个变量，不要再自己 fs.readFileSync。 */
+  const coachSrcP14 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  const adminSrcP14 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
+  const appdataSrcP14 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
+
+  /* ---- 键盘与状态（P14）：Esc 关闭 / Enter 发送 / 筛选记忆 ---- */
+  check(learnSrc, /if\(event\.key==='Enter'\)sendText\(\)/, '学员端 Enter 直接发送（学习成本最低的操作）');
+  check(learnSrc, /if \(e\.key !== 'Escape'\) return;[\s\S]{0,80}?var guide = document\.getElementById\('guide'\)/, '学员端 Esc 先关引导（不让人被浮层卡住）');
+  check(learnSrc, /sheet\.classList\.contains\('on'\)\) \{ closeSheet\(\); return; \}/, '学员端 Esc 关选择面板');
+  check(coachSrcP14, /e\.key === 'Escape' && \$\('#drawer'\)/, '教练台 Esc 关抽屉');
+  check(adminSrcP14, /const modal = document\.getElementById\('impModal'\)|var im = document\.getElementById\('impModal'\)/, '管理端 Esc 关导入弹层');
+  check(coachSrcP14, /STU_RISK_KEY = 'coach-stu-risk'[\s\S]{0,600}?\/\^\(all\|red\|yellow\|green\)\$\//, '风险筛选记忆值有白名单校验（脏数据不会把列表筛空）');
+
   /* ---- 看板钻取（P14）：数字能点进去看是谁 ---- */
-  const coachSrcDrill = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
-  const adminSrcDrill = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
-  check(coachSrcDrill, /function kpi\(lab, val, unit, foot, go\)[\s\S]{0,260}?data-kpi-go="' \+ go/, '教练台 KPI 支持钻取目标');
-  check(coachSrcDrill, /'students:all'\)/, '「我的学员」卡可点开学员列表');
-  check(coachSrcDrill, /data-kpi-go="students:red"/, '「高风险 N 人」可单独点（只看高风险）');
-  check(coachSrcDrill, /spec\[0\] === 'students'[\s\S]{0,260}?sel\.value = spec\[1\] === 'red'/, '钻取会真的设置筛选并重渲染（不是只跳页）');
-  check(adminSrcDrill, /function kpiCard\(lab, val, unit, foot, to, go\)/, '管理端 KPI 支持钻取目标');
-  check(adminSrcDrill, /'report:red'\)/, '「整体达标率」可点看高风险学员（谁拖后腿）');
+  check(coachSrcP14, /function kpi\(lab, val, unit, foot, go\)[\s\S]{0,260}?data-kpi-go="' \+ go/, '教练台 KPI 支持钻取目标');
+  check(coachSrcP14, /'students:all'\)/, '「我的学员」卡可点开学员列表');
+  check(coachSrcP14, /data-kpi-go="students:red"/, '「高风险 N 人」可单独点（只看高风险）');
+  check(coachSrcP14, /spec\[0\] === 'students'[\s\S]{0,260}?sel\.value = spec\[1\] === 'red'/, '钻取会真的设置筛选并重渲染（不是只跳页）');
+  check(adminSrcP14, /function kpiCard\(lab, val, unit, foot, to, go\)/, '管理端 KPI 支持钻取目标');
+  check(adminSrcP14, /'report:red'\)/, '「整体达标率」可点看高风险学员（谁拖后腿）');
 
   /* ---- 成长路径（P14）：按入职天数分阶段 + 下一步练什么 ---- */
-  const coachSrcGrowth = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
-  check(coachSrcGrowth, /var STAGES = \[[\s\S]{0,400}?maxDay: 7[\s\S]{0,800}?maxDay: 9999/, '成长阶段表（周/月分档，最多 5 档）');
-  check(coachSrcGrowth, /function stageOf\(l\)[\s\S]{0,300}?l\.joinDate \|\| l\.onboardAt/, '阶段按入职日期推算（缺日期时如实说明）');
-  check(coachSrcGrowth, /replace\(\/\-\/g, '\/'\)/, '日期解析做兼容处理（Safari 对 2026-09-15 解析不稳）');
-  check(coachSrcGrowth, /recScenes = T\.scenes\.filter\(function \(sc\) \{[\s\S]{0,160}?stg\.dims\.indexOf\(o\.dim\)/, '「下一步练什么」按阶段重点维度匹配场景');
-  check(coachSrcGrowth, /自动生成，仅供带教参考/, '规则生成的内容如实标注来源（不冒充 AI 判断）');
+  check(coachSrcP14, /var STAGES = \[[\s\S]{0,400}?maxDay: 7[\s\S]{0,800}?maxDay: 9999/, '成长阶段表（周/月分档，最多 5 档）');
+  check(coachSrcP14, /function stageOf\(l\)[\s\S]{0,300}?l\.joinDate \|\| l\.onboardAt/, '阶段按入职日期推算（缺日期时如实说明）');
+  check(coachSrcP14, /replace\(\/\-\/g, '\/'\)/, '日期解析做兼容处理（Safari 对 2026-09-15 解析不稳）');
+  check(coachSrcP14, /recScenes = T\.scenes\.filter\(function \(sc\) \{[\s\S]{0,160}?stg\.dims\.indexOf\(o\.dim\)/, '「下一步练什么」按阶段重点维度匹配场景');
+  check(coachSrcP14, /自动生成，仅供带教参考/, '规则生成的内容如实标注来源（不冒充 AI 判断）');
 
   /* ---- 记录时间归一化（P14）：播种/水合两处都必须把字段对上 ---- */
   const dbSrcP14 = fs.readFileSync(path.join(ROOT, 'server/db.js'), 'utf8');
   check(dbSrcP14, /r\.at \|\| r\.finishedAt \|\| ''/, '播种时对 time 字段做归一化（种子叫 finishedAt）');
   check(dbSrcP14, /function migrateRecordAt\(\)[\s\S]{0,400}?UPDATE records SET at = \?/, '有幂等迁移补历史空时间');
   check(dbSrcP14, /const MIGRATED_AT = migrateRecordAt\(\);/, '迁移在模块加载时跑（seedIfEmpty 对老库 early-return）');
-  const coachSrcT = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
-  check(coachSrcT, /finishedAt: r\.at/, '水合时 at → finishedAt（前端字段）');
+  check(coachSrcP14, /finishedAt: r\.at/, '水合时 at → finishedAt（前端字段）');
 
   /* ---- 五维能力雷达（P14）：口径同源 + 两个口径标注清楚 ---- */
-  const coachSrcRadar = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
-  const appdataRadar = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
-  check(appdataRadar, /dimAvgOf: function \(learnerId\) \{/, 'helpers.dimAvgOf 存在（逐维均分口径）');
-  check(appdataRadar, /dimAvgOf: function[\s\S]{0,600}?H\.avg\(vals\)/, '逐维均分走 H.avg（不另写平均算法）');
-  check(coachSrcRadar, /function radarSvg\(lid\)[\s\S]{0,900}?H\.dimAvgOf\(lid\)/, '教练台雷达用 dimAvgOf（统计不重写）');
-  check(coachSrcRadar, /<polygon points="' \+ poly\(function \(d\) \{ return d\.team; \}\)/, '雷达叠加团队均分（虚线对照）');
-  check(coachSrcRadar, /五维能力雷达 · 全部练习均分（虚线为团队均分）/, '教练台雷达标题写明口径');
-  check(coachSrcRadar, /最近一次五维得分/, '相邻区块标明是「最近一次」（两个口径不混淆）');
+  check(appdataSrcP14, /dimAvgOf: function \(learnerId\) \{/, 'helpers.dimAvgOf 存在（逐维均分口径）');
+  check(appdataSrcP14, /dimAvgOf: function[\s\S]{0,600}?H\.avg\(vals\)/, '逐维均分走 H.avg（不另写平均算法）');
+  check(coachSrcP14, /function radarSvg\(lid\)[\s\S]{0,900}?H\.dimAvgOf\(lid\)/, '教练台雷达用 dimAvgOf（统计不重写）');
+  check(coachSrcP14, /<polygon points="' \+ poly\(function \(d\) \{ return d\.team; \}\)/, '雷达叠加团队均分（虚线对照）');
+  check(coachSrcP14, /五维能力雷达 · 全部练习均分（虚线为团队均分）/, '教练台雷达标题写明口径');
+  check(coachSrcP14, /最近一次五维得分/, '相邻区块标明是「最近一次」（两个口径不混淆）');
   check(learnSrc, /function radarMini\(learnerId\)[\s\S]{0,600}?H\.dimAvgOf\(learnerId\)/, '学员端报告页雷达同样走 helpers');
   check(learnSrc, /能力维度 · 本场/, '学员端本场维度标题写明「本场」（与画像区分）');
 

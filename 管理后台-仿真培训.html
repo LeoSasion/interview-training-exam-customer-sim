@@ -3254,6 +3254,8 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     }
     if (e.key === 'Escape') {
       if ($('authBox').classList.contains('on')) { hideLogin(); return; }
+      var im = document.getElementById('impModal');
+      if (im && getComputedStyle(im).display !== 'none') { closeImport(); return; }
       closeDrawer();
     }
   });
