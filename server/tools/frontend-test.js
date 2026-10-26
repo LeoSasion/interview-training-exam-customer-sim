@@ -705,6 +705,13 @@ const LT = win.TRAIN;
   const adminSrcP14 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   const appdataSrcP14 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
 
+  /* ---- 一键周报（P14）：数字要准、口径要说清 ---- */
+  check(coachSrcP14, /data-act="weekly"/, '总览页有「生成本周简报」入口');
+  check(coachSrcP14, /function buildWeeklyReport\(\)[\s\S]{0,900}?latest = String\(all\[all\.length - 1\]\.finishedAt\)\.slice\(0, 10\)/, '统计区间取数据最新一天（演示数据是历史日期，自然周会算出空白）');
+  check(coachSrcP14, /区间：' \+ wStart \+ ' ~ ' \+ wEnd \+ '（对比上周/, '报告里写明区间与对比区间（不让人误读）');
+  check(coachSrcP14, /H\.taskProgress \? H\.taskProgress\(t\.id\)/, '未提交人次用 taskProgress 算准（不拿指派人次冒充）');
+  check(coachSrcP14, /navigator\.clipboard\.writeText\(txt\)[\s\S]{0,200}?ta\.select\(\)/, '复制失败时降级为选中全文（iframe/无权限环境也能用）');
+
   /* ---- 场景复制（P14）：基于现有改一版，复制品必须走正常审核 ---- */
   const svcSrcDup = fs.readFileSync(path.join(ROOT, 'server/service.js'), 'utf8');
   check(svcSrcDup, /function duplicateScene\(id, userId\)[\s\S]{0,900}?saveScene\(clone, userId\);/, '复制复用 saveScene（校验/版本/审计一条路径）');
