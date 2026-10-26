@@ -226,6 +226,12 @@
             <option value="yellow">需关注</option>
             <option value="green">正常</option>
           </select>
+          <span class="spacer"></span>
+          <span id="bulkBar" style="display:none;align-items:center;gap:8px">
+            <span id="bulkCount" style="font-size:12px;color:var(--txt2)"></span>
+            <button class="btn sm" data-act="bulk-remind">批量催办</button>
+            <button class="btn sm ghost" data-act="bulk-clear">取消选择</button>
+          </span>
         </div>
       </div>
     </div>
@@ -235,6 +241,7 @@
         <table class="tbl">
           <thead>
             <tr>
+              <th style="width:36px"><input type="checkbox" id="stuAll" title="全选当前列表" aria-label="全选当前列表"></th>
               <th style="width:210px">学员</th>
               <th>导师</th>
               <th class="num">练习次数</th>
@@ -958,6 +965,7 @@
       var trendCls = trend.charAt(0) === '↑' ? 'color:var(--acc-txt)' : (trend.charAt(0) === '↓' ? 'color:var(--red)' : 'color:var(--txt3)');
       var last = st.last;
       return '<tr data-go-coach="' + l.id + '" style="cursor:pointer">' +
+        '<td data-noclick="1"><input type="checkbox" class="stuPick" data-lid="' + l.id + '" aria-label="选择 ' + esc(l.name) + '"></td>' +
         '<td><div class="flex">' + ava(l) + '<div><div style="font-weight:500">' + esc(l.name) + '</div>' +
         '<div style="font-size:11.5px;color:var(--txt3)">' + esc(l.dept) + ' · ' + esc(l.position) + '</div></div></div></td>' +
         '<td>' + esc(l.mentor) + '</td>' +
@@ -971,6 +979,42 @@
         '<td><button class="btn sm" data-go-coach="' + l.id + '">去辅导</button></td>' +
         '</tr>';
     }).join('');
+
+    // 渲染后回填已选状态（切换筛选不丢选择），并刷新工具条
+    $$('.stuPick').forEach(function (c) {
+      if (pickSet[c.getAttribute('data-lid')]) c.checked = true;
+    });
+    syncBulkBar();
+  }
+
+  /* ---- 批量催办（P12）：多选学员 → 每人写一条催办记录（复用 addNote 的离线兜底/失败撤回） ---- */
+  var pickSet = {};
+  function selectedIds() {
+    return Object.keys(pickSet).filter(function (k) { return pickSet[k]; });
+  }
+  function syncBulkBar() {
+    var bar = $('#bulkBar'), cnt = $('#bulkCount');
+    if (!bar) return;
+    var ids = selectedIds();
+    bar.style.display = ids.length ? 'flex' : 'none';
+    if (cnt) cnt.textContent = '已选 ' + ids.length + ' 人';
+  }
+  function clearPicks() {
+    pickSet = {};
+    $$('.stuPick').forEach(function (c) { c.checked = false; });
+    var all = $('#stuAll'); if (all) all.checked = false;
+    syncBulkBar();
+  }
+  function bulkRemind() {
+    var ids = selectedIds();
+    if (!ids.length) { toast('先勾选要催办的学员'); return; }
+    var text = '【催办】请尽快完成当前练习任务，有卡点随时找我。';
+    toast('正在催办 ' + ids.length + ' 人…');
+    Promise.all(ids.map(function (lid) { return addNote(lid, text); })).then(function (rs) {
+      var ok = rs.filter(Boolean).length;
+      toast('已催办 ' + ok + '/' + ids.length + ' 人' + (ok < ids.length ? '（其余未同步，见服务端连接状态）' : '') + '，记录在「一对一辅导」页可见');
+      clearPicks();
+    });
   }
 
   /* ------------------------- 学员辅导抽屉 ------------------------- */
@@ -1420,7 +1464,14 @@
         '<td><div style="font-weight:500">' + esc(l.name) + (ids.indexOf(l.id) !== -1 ? ' <span class="tag b" style="font-size:10px">我带的</span>' : '') + '</div>' +
         '<div style="font-size:11.5px;color:var(--txt3)">' + esc(tk ? tk.title : '自主练习') + ' · ' + esc(fmtDate(r.finishedAt)) + '</div></td>' +
         '<td>' + esc(sc.name) + ' <span class="muted" style="font-size:11.5px">' + esc(sc.category) + '</span></td>' +
-        '<td class="num"><b style="color:' + (r.passed ? 'var(--acc-txt)' : 'var(--red)') + '">' + r.score + '</b></td>' +
+        '<td class="num">' + (function () {
+          var ms = r.manualScore;
+          if (ms && typeof ms.score === 'number') {
+            return '<b style="color:var(--acc-txt)" title="AI 原分 ' + r.score + '｜' + esc(ms.reason || '') + '">' + ms.score +
+              '</b> <span class="tag b" style="font-size:10px">人工</span>';
+          }
+          return '<b style="color:' + (r.passed ? 'var(--acc-txt)' : 'var(--red)') + '">' + r.score + '</b>';
+        })() + '</td>' +
         '<td class="num muted">' + r.passLine + '</td>' +
         '<td><span class="tag ' + (weakest.v >= 60 ? 'a' : 'r') + '">' + esc(weakest.d.name) + ' ' + weakest.v + '</span></td>' +
         '<td>' + status + '</td>' +
@@ -1428,6 +1479,7 @@
         '<button class="btn sm" data-open-turns="' + r.id + '">看对话</button>' +
         '<button class="btn sm ghost" data-qc="ok" data-rid="' + r.id + '">通过</button>' +
         '<button class="btn sm ghost" data-qc="flag" data-rid="' + r.id + '">标记</button>' +
+        '<button class="btn sm ghost" data-manual-score="' + r.id + '" title="AI 分可被带教主管推翻（原分保留）">修正分</button>' +
         (st ? '<button class="btn sm ghost" data-qc-clear="' + r.id + '">撤销</button>' : '') +
         '</div></td>' +
         '</tr>';
@@ -1441,6 +1493,41 @@
    * 质检人只能凭分数判断"这条要不要标记"。现在按需拉出真实逐轮明细，
    * 结论按钮就在摘要下方，看完即可判定。
    */
+  /* 人工修正分数（P12）：AI 分保留，修正值并存；原因必填（审计留痕） */
+  function openScoreDrawer(rid) {
+    var r = T.records.filter(function (x) { return x.id === rid; })[0];
+    if (!r) return;
+    var l = T.learnerById(r.learnerId), ms = r.manualScore;
+    openDrawer('修正成绩 · ' + (l ? l.name : ''), '' +
+      '<div class="kvline"><span class="k">当前 AI 分</span><span class="v">' + r.score + ' 分</span></div>' +
+      (ms ? '<div class="kvline"><span class="k">已修正</span><span class="v">' + ms.score + ' 分（' + esc(ms.by) + ' · ' + esc(ms.at) + '）</span></div>' +
+        '<div style="font-size:12px;color:var(--txt3);margin:2px 0 10px">原因：' + esc(ms.reason) + '</div>' : '') +
+      '<div style="margin:14px 0 6px;font-size:12px;color:var(--txt2)">修正为（0–100）</div>' +
+      '<input class="txa" id="msScore" type="number" min="0" max="100" style="height:40px" value="' + (ms ? ms.score : r.score) + '">' +
+      '<div style="margin:12px 0 6px;font-size:12px;color:var(--txt2)">修正原因（必填，进审计）</div>' +
+      '<textarea class="txa" id="msReason" placeholder="例如：现场表现比模型判断更好，客户异议处理到位"></textarea>' +
+      '<div class="btn-row" style="margin-top:14px">' +
+      '<button class="btn" data-ms-save="' + rid + '">保存修正</button>' +
+      (ms ? '<button class="btn ghost" data-ms-revoke="' + rid + '">撤销修正（恢复 AI 分）</button>' : '') +
+      '<button class="btn ghost" data-ms-cancel="1">取消</button></div>');
+  }
+  function saveManualScore(rid) {
+    var sc = parseInt(($('#msScore') || {}).value, 10);
+    var rsn = (($('#msReason') || {}).value || '').trim();
+    if (!(sc >= 0 && sc <= 100)) { toast('分数须为 0–100'); return; }
+    if (!rsn) { toast('请填写修正原因'); return; }
+    if (!SYNC || !SYNC.patchRecordScore) { toast('服务端未连接，无法修正（修正需要留痕）'); return; }
+    SYNC.patchRecordScore(rid, sc, rsn).then(function (res) {
+      if (!res.ok) { toast('修正失败：' + (res.error || '未知错误')); return; }
+      var rec = T.records.filter(function (x) { return x.id === rid; })[0];
+      if (rec) rec.manualScore = res.data.manualScore;
+      closeDrawer();
+      renderQuality();
+      renderOverview();
+      toast('已修正为 ' + sc + ' 分（AI 原分 ' + res.data.aiScore + ' 保留，已记入审计）');
+    });
+  }
+
   function openQcDrawer(rid) {
     var r = T.records.filter(function (x) { return x.id === rid; })[0];
     if (!r) return;
@@ -1573,6 +1660,24 @@
     if (saved) document.documentElement.dataset.theme = saved;
   } catch (e) {}
 
+  /* 勾选状态（P12 批量催办）：单个勾选与全选都走委托——列表是渲染时重建的 */
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t && t.classList && t.classList.contains('stuPick')) {
+      pickSet[t.getAttribute('data-lid')] = t.checked;
+      syncBulkBar();
+      return;
+    }
+    if (t && t.id === 'stuAll') {
+      var on = !!t.checked;
+      $$('.stuPick').forEach(function (c) {
+        c.checked = on;
+        pickSet[c.getAttribute('data-lid')] = on;
+      });
+      syncBulkBar();
+    }
+  });
+
   document.addEventListener('click', function (e) {
     // 注意顺序：先处理更具体的操作按钮，再处理整行/整卡的兜底点击。
     // 早期版本把 [data-go-coach] 放在最前面，导致学员报告表里的「通过/标记」
@@ -1628,6 +1733,33 @@
       if (it && it.go) it.go();
       return;
     }
+    var mso = e.target.closest('[data-manual-score]');
+    if (mso) { openScoreDrawer(mso.getAttribute('data-manual-score')); e.stopPropagation(); return; }
+    var mss = e.target.closest('[data-ms-save]');
+    if (mss) { saveManualScore(mss.getAttribute('data-ms-save')); return; }
+    var msc = e.target.closest('[data-ms-cancel]');
+    if (msc) { closeDrawer(); return; }
+    var mrv = e.target.closest('[data-ms-revoke]');
+    if (mrv) {
+      var rvId = mrv.getAttribute('data-ms-revoke');
+      if (!SYNC || !SYNC.patchRecordScore) { toast('服务端未连接，无法撤销'); return; }
+      SYNC.patchRecordScore(rvId, null, null, true).then(function (res) {
+        if (!res.ok) { toast('撤销失败：' + (res.error || '未知错误')); return; }
+        var rec = T.records.filter(function (x) { return x.id === rvId; })[0];
+        if (rec) rec.manualScore = null;
+        closeDrawer(); renderQuality(); renderOverview();
+        toast('已撤销修正，恢复 AI 原分 ' + res.data.aiScore + ' 分');
+      });
+      return;
+    }
+
+    // 多选列：让浏览器处理 checkbox，不要触发行级「打开辅导抽屉」
+    if (e.target.closest('[data-noclick]')) return;
+    var br = e.target.closest('[data-act="bulk-remind"]');
+    if (br) { bulkRemind(); return; }
+    var bc = e.target.closest('[data-act="bulk-clear"]');
+    if (bc) { clearPicks(); return; }
+
     var go = e.target.closest('[data-go-coach]');
     if (go) {
       // 行内按钮自行处理点击，不要让整行兜底逻辑重复触发

@@ -785,6 +785,38 @@ async function login(account, password) {
   const del = await call('DELETE', '/scenes/' + sid, undefined, { token: op.token });
   eq('清理临时场景成功', del.status, 200);
 
+  /* ---- 4f. P12：人工修正分数（AI 分保留、修正并存、原因必填、权限闸门） ---- */
+  console.log('  ─────────────────────────────────────────');
+  console.log('  P12：人工修正分数');
+  {
+    const msOk = await call('PATCH', '/records/' + encodeURIComponent(recId),
+      { score: 88, reason: 'selftest：现场表现优于模型判断' }, { token: adm.token });
+    ok('admin 可修正成绩（' + msOk.status + '）', msOk.status === 200 && !!data(msOk), errText(msOk));
+    ok('返回 AI 原分 + 人工分并存',
+      !!(data(msOk) && data(msOk).manualScore && typeof data(msOk).aiScore === 'number'));
+
+    const listMs = (data(await call('GET', '/records?learnerId=L01')) || {}).items || [];
+    const found = listMs.filter((r) => r.id === recId)[0];
+    ok('列表带回 manualScore（前端可直接渲染）', !!(found && found.manualScore && found.manualScore.score === 88));
+    ok('AI 原分未被改写（逐轮均分契约不破）', !!(found && found.score !== 88));
+
+    const noReason = await call('PATCH', '/records/' + encodeURIComponent(recId), { score: 90 }, { token: adm.token });
+    eq('缺原因被拒 400（修正必须留痕）', noReason.status, 400);
+    const badScore = await call('PATCH', '/records/' + encodeURIComponent(recId), { score: 120, reason: 'x' }, { token: adm.token });
+    eq('越界分数被拒 400', badScore.status, 400);
+    const coachTry = await call('PATCH', '/records/' + encodeURIComponent(recId), { score: 90, reason: 'x' }, { token: cch.token });
+    eq('教练账号无修正权限 403', coachTry.status, 403);
+
+    // 撤销：改错了能退回去（恢复 AI 原分）
+    const rev = await call('PATCH', '/records/' + encodeURIComponent(recId), { revoke: true }, { token: adm.token });
+    ok('撤销修正成功且 manualScore 清空', rev.status === 200 && data(rev) && data(rev).manualScore === null);
+    const listAfter = (data(await call('GET', '/records?learnerId=L01')) || {}).items || [];
+    const f2 = listAfter.filter((r) => r.id === recId)[0];
+    ok('撤销后列表不再带人工分', !!(f2 && !f2.manualScore));
+    const revAgain = await call('PATCH', '/records/' + encodeURIComponent(recId), { revoke: true }, { token: adm.token });
+    eq('重复撤销被拒 400（没有修正可撤）', revAgain.status, 400);
+  }
+
   /* ---- 9b. 清理本次练习产生的成绩 ----
    * 不复用 sid2 的中间产物：这两条成绩只属于本进程，删掉才算真正幂等。
    * 删完再确认一次，顺带验证 deleteRecord 的 404 语义。

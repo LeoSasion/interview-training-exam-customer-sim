@@ -685,9 +685,20 @@ const LT = win.TRAIN;
     ok(depth === 0 && !broken, '学员端 CSS 花括号平衡（不平衡＝后续样式被静默丢弃）');
   }
 
-  /* ---- 培训效果（P12）：首练 vs 最新，口径走 helpers ---- */
   const appdataSrcP12 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
   const coachSrcP12 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+
+  /* ---- 批量催办 + 分数修正（P12） ---- */
+  check(coachSrcP12, /class="stuPick" data-lid="/, '学员列表有逐行勾选框（批量操作入口）');
+  check(coachSrcP12, /id="stuAll"/, '表头有全选（不用一个个点）');
+  check(coachSrcP12, /function bulkRemind\(\)[\s\S]{0,400}?addNote\(lid, text\)/, '批量催办复用 addNote（离线兜底/失败撤回同一条路径）');
+  check(coachSrcP12, /data-manual-score="/, '质检表有「修正分」入口');
+  check(coachSrcP12, /function saveManualScore\(rid\)[\s\S]{0,700}?SYNC\.patchRecordScore\(rid, sc, rsn\)/, '修正走服务端（留痕），不做纯前端改分');
+  check(coachSrcP12, /data-ms-revoke=/, '修正可撤销（恢复 AI 原分）');
+  check(coachSrcP12, /ms && typeof ms\.score === 'number'[\s\S]{0,200}?人工/, '有修正时展示人工分并标记（AI 分保留在 title）');
+  check(syncSrcP9, /async function patchRecordScore\(id, score, reason, revoke\)/, '同步层 patchRecordScore 支持撤销');
+
+  /* ---- 培训效果（P12）：首练 vs 最新，口径走 helpers ---- */
   check(appdataSrcP12, /effectOf: function \(\) \{/, 'helpers.effectOf 存在（首练 vs 最新统计口径）');
   check(appdataSrcP12, /var rs = H\.recordsOf\(l\.id\);[\s\S]{0,120}?var f = rs\[0\], la = rs\[rs\.length - 1\]/, '首/末成绩取 recordsOf 排序结果（不另算一套排序）');
   check(coachSrcP12, /function renderEffect\(\) \{[\s\S]{0,300}?var e = H\.effectOf\(\);/, '教练台效果卡走 H.effectOf（统计不重写）');

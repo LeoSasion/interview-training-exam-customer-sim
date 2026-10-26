@@ -854,7 +854,9 @@ function listRecords(query, user) {
       // （三端 grep evidence 均为 0 处引用，所以撤掉不影响任何现有页面）。
       // turnCount 只告诉页面「这条记录有没有对话可看」，正文按需打下面那个接口。
       turnCount: (P(r.evidence, []) || []).length,
-      source: r.source
+      source: r.source,
+      // 人工修正分（P12）：带教主管推翻 AI 判断时写在这里，与 AI 分并存（不删原分）
+      manualScore: pl.manualScore || null
     };
   });
 
@@ -1213,6 +1215,49 @@ function sweepStaleSessions(maxAgeHours) {
   return { removedSessions: victims.length, removedTurns: turns, keptSessions: kept, maxAgeHours: hours };
 }
 
+/**
+ * 人工修正分数（P12）
+ *
+ * AI 分是模型判断，带教主管有权推翻——但**不改原分**：修正值写在
+ * payload.manualScore（分数/原因/操作人/时间），AI 分原样保留。
+ * 为什么不直接 UPDATE score：P7 契约是「逐轮均分 ≡ 成绩单总分」，
+ * 直接改总分会让教练台并排显示时自相矛盾，也让「AI 判得准不准」无从追溯。
+ */
+function setManualScore(id, score, reason, userId, revoke) {
+  const user = requireUser(userId);
+  const rid = String(id == null ? '' : id);
+  const rec = db.prepare('SELECT * FROM records WHERE id = ?').get(rid);
+  if (!rec) throw Object.assign(new Error('成绩不存在'), { status: 404 });
+  assertRecordScope(user, rec);
+  if (!user.can_edit && user.role !== 'admin') {
+    throw Object.assign(new Error(`角色「${user.role}」无修正成绩权限`), { status: 403 });
+  }
+
+  // 撤销修正（P12）：改错了能退回去——删掉人工分，AI 原分自动生效
+  if (revoke) {
+    const pl0 = P(rec.payload, {}) || {};
+    const prev = pl0.manualScore;
+    if (!prev) throw Object.assign(new Error('这条成绩没有人工修正，无需撤销'), { status: 400 });
+    delete pl0.manualScore;
+    db.prepare('UPDATE records SET payload = ? WHERE id = ?').run(JSON.stringify(pl0), rid);
+    log(user.id, 'record.manual-score.revoke', rid, `撤销人工修正（原 ${prev.score} 分 → 恢复 AI ${rec.score} 分）`);
+    return { id: rid, aiScore: rec.score, manualScore: null, revoked: true };
+  }
+
+  const n = Math.round(Number(score));
+  if (!isFinite(n) || n < 0 || n > 100) {
+    throw Object.assign(new Error('修正分数须为 0–100 的整数'), { status: 400 });
+  }
+  const rsn = String(reason == null ? '' : reason).trim().slice(0, 200);
+  if (!rsn) throw Object.assign(new Error('请填写修正原因（留痕用）'), { status: 400 });
+
+  const pl = P(rec.payload, {}) || {};
+  pl.manualScore = { score: n, reason: rsn, by: user.name, byId: user.id, at: nowStamp() };
+  db.prepare('UPDATE records SET payload = ? WHERE id = ?').run(JSON.stringify(pl), rid);
+  log(user.id, 'record.manual-score', rid, `人工修正 ${rec.score} → ${n}：${rsn.slice(0, 60)}`);
+  return { id: rid, aiScore: rec.score, manualScore: pl.manualScore };
+}
+
 function stats() {
   const one = (sql) => { const r = db.prepare(sql).get(); return r ? Object.values(r)[0] : 0; };
   return {
@@ -1239,5 +1284,5 @@ module.exports = {
   // turnRow 一并导出：自测要断言「返回的 turns / 落库的 evidence / 逐轮接口」
   // 三处字段集完全一致，必须能拿到同一个映射函数来比对（铁律 8）
   turnRow, turn, finish, listRecords, listTurns, deleteRecord,
-  listLearners, listTasks, listUsers, listAuditLog, stats, cleanupSessions, sweepStaleSessions
+  listLearners, listTasks, listUsers, listAuditLog, stats, cleanupSessions, sweepStaleSessions, setManualScore
 };

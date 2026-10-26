@@ -295,6 +295,10 @@ on('POST', /^\/api\/v1\/records\/([^/]+)\/qc$/, async (c) => {
 });
 on('DELETE', /^\/api\/v1\/records\/([^/]+)\/qc$/, async (c) => svc.clearQc(c.params[0], c.user.id));
 // 逐轮对话（P7）：列表接口刻意不带正文，页面按需取这一条
+/* 人工修正分数（P12）：AI 分可被带教主管推翻，修正值与原分并存（审计留痕） */
+on('PATCH', /^\/api\/v1\/records\/([^/]+)$/, async (c) =>
+  svc.setManualScore(c.params[0], c.body && c.body.score, c.body && c.body.reason, c.user && c.user.id, !!(c.body && c.body.revoke)));
+
 on('GET', /^\/api\/v1\/records\/([^/]+)\/turns$/, async (c) => svc.listTurns(c.params[0], c.user.id));
 // 必须排在 /records/:id/qc 之后：前者带子路径，先匹配更具体的
 on('DELETE', /^\/api\/v1\/records\/([^/]+)$/, async (c) => svc.deleteRecord(c.params[0], c.user.id));

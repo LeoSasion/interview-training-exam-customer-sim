@@ -490,6 +490,20 @@
     return { ok: false, error: '服务端不可达' };
   }
 
+  /** 人工修正分数（P12）：AI 分保留，修正值并存；仅 admin/可编辑角色可用 */
+  async function patchRecordScore(id, score, reason, revoke) {
+    try {
+      var body = revoke ? { revoke: true } : { score: score, reason: reason };
+      var r = await req('/records/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        body: JSON.stringify(body)
+      }, 15000);
+      if (r.body && r.body.ok) return { ok: true, data: r.body.data };
+      return { ok: false, error: (r.body && r.body.error) || ('HTTP ' + r.http) };
+    } catch (e) { /* ignore */ }
+    return { ok: false, error: '服务端不可达' };
+  }
+
   async function calibrate(mode) {
     try {
       var r = await req('/goldset/calibrate', { method: 'POST', body: JSON.stringify({ mode: mode || 'auto' }) }, 60000);
@@ -536,6 +550,7 @@
   root.ADMIN_SYNC = {
     probe: probe, pull: pull, save: save, act: act, remove: remove,
     versions: versions, auditLog: auditLog, calibrate: calibrate, cleanupSessions: cleanupSessions,
+    patchRecordScore: patchRecordScore,
     tasks: tasks, tasksOf: tasksOf, saveTask: saveTask,
     taskStatus: taskStatus, removeTask: removeTask,
     coachNotes: coachNotes, addCoachNote: addCoachNote, removeCoachNote: removeCoachNote,
