@@ -705,6 +705,11 @@ const LT = win.TRAIN;
   const adminSrcP14 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   const appdataSrcP14 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
 
+  /* ---- P15-c：脚本作用域陷阱（window.xxx 判断恒为 undefined）---- */
+  ok(learnSrc.indexOf('window.curScene ?') < 0 && learnSrc.indexOf('window.curScene ?') === -1, '不再用 window.curScene 判断（注释里的说明不算）');
+  check(learnSrc, /try \{ scene = curScene\(\); \} catch \(e\) \{ scene = null; \}/, '取场景走 try 保护（离线/异常时不崩）');
+  check(learnSrc, /passLine \? \(passLine \+ ' 分'\) : '按场景'/, '无任务时达标线显示「按场景」而不是假默认 60');
+
   /* ---- P15-b：任务卡首屏不留空 + 从会话入口统一渲染 ---- */
   check(learnSrc, /function renderTaskCard\(bound\)[\s\S]{0,2200}?getElementById\('tDeadline'\)\.textContent/,
     '任务卡渲染抽成函数（一处定义，不再散落在 openChat 里）');

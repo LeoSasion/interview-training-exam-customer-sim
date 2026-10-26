@@ -803,14 +803,21 @@ function renderTaskCard(bound){
     var running = taskFeed().filter(function(t){ return t.status === 'running'; });
     fb = running[0] || null;
   }
-  var scene = fb ? (window.TRAIN && TRAIN.sceneById ? TRAIN.sceneById(fb.sceneId) : null)
-                 : (window.curScene ? curScene() : null);
+  /* 注意：curScene 是脚本作用域内的声明，不挂在 window 上——
+     用 window.curScene 判断会恒为 undefined，导致场景永远显示"自主选择"。 */
+  var scene = null;
+  if (fb) {
+    scene = (window.TRAIN && TRAIN.sceneById) ? TRAIN.sceneById(fb.sceneId) : null;
+  } else {
+    try { scene = curScene(); } catch (e) { scene = null; }
+  }
   var nameEl = document.getElementById('tName');
   if(!nameEl) return;
-  nameEl.textContent = fb ? fb.title : (scene ? scene.task : '暂无任务');
-  document.getElementById('tScene').textContent = scene ? scene.name : '—';
-  var passLine = (fb && fb.passLine) || (scene && scene.pass) || 60;
-  document.getElementById('tPass').textContent = passLine + ' 分';
+  nameEl.textContent = fb ? fb.title : (scene ? scene.task : '暂无任务（自主练习）');
+  // 无任务时不要显示破折号：学员还没选场景，写明"自主练习，进入会话后按场景算"
+  document.getElementById('tScene').textContent = scene ? scene.name : '自主选择';
+  var passLine = (fb && fb.passLine) || (scene && scene.pass);
+  document.getElementById('tPass').textContent = passLine ? (passLine + ' 分') : '按场景';
   var doneN = 0;
   try{
     if(window.TRAIN && TRAIN.records){
