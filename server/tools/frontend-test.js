@@ -698,6 +698,26 @@ const LT = win.TRAIN;
   check(coachSrcP12, /ms && typeof ms\.score === 'number'[\s\S]{0,200}?人工/, '有修正时展示人工分并标记（AI 分保留在 title）');
   check(syncSrcP9, /async function patchRecordScore\(id, score, reason, revoke\)/, '同步层 patchRecordScore 支持撤销');
 
+  /* ---- 记录时间归一化（P14）：播种/水合两处都必须把字段对上 ---- */
+  const dbSrcP14 = fs.readFileSync(path.join(ROOT, 'server/db.js'), 'utf8');
+  check(dbSrcP14, /r\.at \|\| r\.finishedAt \|\| ''/, '播种时对 time 字段做归一化（种子叫 finishedAt）');
+  check(dbSrcP14, /function migrateRecordAt\(\)[\s\S]{0,400}?UPDATE records SET at = \?/, '有幂等迁移补历史空时间');
+  check(dbSrcP14, /const MIGRATED_AT = migrateRecordAt\(\);/, '迁移在模块加载时跑（seedIfEmpty 对老库 early-return）');
+  const coachSrcT = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  check(coachSrcT, /finishedAt: r\.at/, '水合时 at → finishedAt（前端字段）');
+
+  /* ---- 五维能力雷达（P14）：口径同源 + 两个口径标注清楚 ---- */
+  const coachSrcRadar = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  const appdataRadar = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
+  check(appdataRadar, /dimAvgOf: function \(learnerId\) \{/, 'helpers.dimAvgOf 存在（逐维均分口径）');
+  check(appdataRadar, /dimAvgOf: function[\s\S]{0,600}?H\.avg\(vals\)/, '逐维均分走 H.avg（不另写平均算法）');
+  check(coachSrcRadar, /function radarSvg\(lid\)[\s\S]{0,900}?H\.dimAvgOf\(lid\)/, '教练台雷达用 dimAvgOf（统计不重写）');
+  check(coachSrcRadar, /<polygon points="' \+ poly\(function \(d\) \{ return d\.team; \}\)/, '雷达叠加团队均分（虚线对照）');
+  check(coachSrcRadar, /五维能力雷达 · 全部练习均分（虚线为团队均分）/, '教练台雷达标题写明口径');
+  check(coachSrcRadar, /最近一次五维得分/, '相邻区块标明是「最近一次」（两个口径不混淆）');
+  check(learnSrc, /function radarMini\(learnerId\)[\s\S]{0,600}?H\.dimAvgOf\(learnerId\)/, '学员端报告页雷达同样走 helpers');
+  check(learnSrc, /能力维度 · 本场/, '学员端本场维度标题写明「本场」（与画像区分）');
+
   /* ---- 学员批量导入（P13）+ 移动端 e2e 脚本 ---- */
   const adminSrcP13 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   check(adminSrcP13, /data-act="import-learners"/, '学员报告页有「导入学员」入口');

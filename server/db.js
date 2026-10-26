@@ -502,6 +502,11 @@ function migrateP5() {
 
 const MIGRATED_P5 = migrateP5();
 
+/* P14：修复历史记录空时间——放在模块加载时跑，因为 seedIfEmpty() 对老库 early-return，
+ * 只写在播种入口里的话，已有的演示库永远不会被修（铁律 11 的同一个坑）。 */
+const MIGRATED_AT = migrateRecordAt();
+if (MIGRATED_AT) console.log('[db] P14 补全历史记录时间：' + MIGRATED_AT + ' 条');
+
 /* ================================================================== *
  * P7：逐轮对话（演示数据的构造规则）
  *
@@ -679,12 +684,41 @@ function loadAppData() {
   return fn(sandbox.window, sandbox.console);
 }
 
+/**
+ * 修复历史记录空时间（P14）
+ *
+ * P0 播种时直接读 `r.at`，而种子数据的时间字段是 `finishedAt` → 28 条 at 全是空串。
+ * 后果很隐蔽：日期显示为空、`ORDER BY at DESC` 全部相等（排序实际靠 id 兜底，
+ * 看起来"顺序还行"），`recordsOf` 的「最近一次」也就不一定是真的最近。
+ *
+ * 幂等：只补 at 为空的记录，值取 app-data 种子的 finishedAt（真相源）。
+ */
+function migrateRecordAt() {
+  let T;
+  try { T = loadAppData(); } catch (e) { return 0; }
+  const map = new Map();
+  (T.records || []).forEach((r) => {
+    const t = r.finishedAt || r.at;
+    if (t) map.set(String(r.id), String(t));
+  });
+  if (!map.size) return 0;
+  const rows = db.prepare("SELECT id FROM records WHERE at IS NULL OR at = ''").all();
+  const upd = db.prepare('UPDATE records SET at = ? WHERE id = ?');
+  let n = 0;
+  rows.forEach((row) => {
+    const t = map.get(String(row.id));
+    if (t) { upd.run(t, row.id); n++; }
+  });
+  return n;
+}
+
 function seedIfEmpty() {
   const row = db.prepare('SELECT COUNT(*) AS n FROM scenes').get();
   if (row && row.n > 0) return { seeded: false, reason: '已有数据' };
 
   const T = loadAppData();
   const byUser = (T.meta && T.meta.owner) || '培训运营组';
+  migrateRecordAt();   // 铁律 11：新库也要从播种入口调一次
   const at = nowStamp();
 
   const insScene = db.prepare(`INSERT INTO scenes
@@ -731,7 +765,7 @@ function seedIfEmpty() {
      dim_scores,objectives,evidence,source,payload) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
   (T.records || []).forEach((r) => {
     insRec.run(r.id, r.learnerId, r.taskId || '', r.sceneId || '', r.score || 0,
-      r.passed ? 1 : 0, r.at || '', r.channel || 'text', config.rubricVersion, 1,
+      r.passed ? 1 : 0, r.at || r.finishedAt || '', r.channel || 'text', config.rubricVersion, 1,
       J(r.dimScores || {}), J(r.objectives || []), J([]), 'seed', J(r));
   });
 
@@ -837,7 +871,7 @@ function sceneRow(r) {
   });
 }
 
-module.exports = { db, pragmas, seedIfEmpty, loadAppData, log, sceneRow, scopeLabel, nowStamp, today, J, P, migrateTasksP4, MIGRATED, migrateP5, MIGRATED_P5, seedDemoCoachContent,
+module.exports = { db, pragmas, seedIfEmpty, loadAppData, log, sceneRow, scopeLabel, nowStamp, today, J, P, migrateTasksP4, MIGRATED, migrateP5, MIGRATED_P5, migrateRecordAt, MIGRATED_AT, seedDemoCoachContent,
   // spreadExact 导出给自测：分摊算法的「精度」是 P7 的验收核心，
   // 必须能脱离数据库单独断言（sum === target*n 对任意 target/n 都成立）
   migrateP7, MIGRATED_P7, seedDemoDialogues, spreadExact };

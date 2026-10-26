@@ -1033,6 +1033,66 @@
     $('#drawer').classList.remove('on');
   }
 
+  /**
+   * 五维能力雷达（P14）：本人「全部记录均分」 vs 「团队均分」。
+   * 口径走 H.dimAvgOf（逐维均分）与 H.overview().dimAvg（团队），不在这里另算。
+   * 与下方「最近一次五维得分」是两个口径：这里看能力画像，那里看单场发挥——
+   * 所以两个区块的标题都写清楚，避免被误读成同一个数。
+   */
+  function radarSvg(lid) {
+    var mine = H.dimAvgOf(lid);
+    var team = H.overview().dimAvg;
+    var teamMap = {};
+    team.forEach(function (t) { teamMap[t.id] = t.avg; });
+    var dims = mine.map(function (d) { return { name: d.name, v: d.v, team: teamMap[d.id] || 0 }; });
+    var n = dims.length;
+    var cx = 150, cy = 124, R = 88;
+    var ang = function (i) { return -Math.PI / 2 + i * 2 * Math.PI / n; };
+    var pt = function (i, val) {
+      var r = R * Math.max(0, Math.min(100, val)) / 100;
+      return [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))];
+    };
+    var poly = function (getter) {
+      return dims.map(function (d, i) {
+        var p = pt(i, getter(d));
+        return p[0].toFixed(1) + ',' + p[1].toFixed(1);
+      }).join(' ');
+    };
+    var g = '';
+    // 网格：25/50/75/100 四层同心五边形
+    [25, 50, 75, 100].forEach(function (lv) {
+      g += '<polygon points="' + poly(function () { return lv; }) + '" fill="none" style="stroke:var(--line)" stroke-width="0.8"/>';
+    });
+    // 轴线
+    dims.forEach(function (_, i) {
+      var p = pt(i, 100);
+      g += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p[0].toFixed(1) + '" y2="' + p[1].toFixed(1) +
+        '" style="stroke:var(--line)" stroke-width="0.8"/>';
+    });
+    // 团队均分（虚线，先画，压在本人下面）
+    g += '<polygon points="' + poly(function (d) { return d.team; }) +
+      '" fill="none" style="stroke:var(--txt3)" stroke-width="1.2" stroke-dasharray="4 3"/>';
+    // 本人（填充 + 描边）
+    g += '<polygon points="' + poly(function (d) { return d.v; }) +
+      '" style="fill:rgba(59,141,249,.16);stroke:var(--blue,#3B8DF9)" stroke-width="1.8" stroke-linejoin="round"/>';
+    // 顶点 + 标签（短名取前两字：开场/需求/异议/方案/促成）
+    dims.forEach(function (d, i) {
+      var p = pt(i, d.v);
+      g += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="2.8" style="fill:var(--blue,#3B8DF9)"/>';
+      var lp = pt(i, 118);
+      var anchor2 = Math.abs(lp[0] - cx) < 8 ? 'middle' : (lp[0] > cx ? 'start' : 'end');
+      g += '<text x="' + lp[0].toFixed(1) + '" y="' + (lp[1] - 2).toFixed(1) + '" text-anchor="' + anchor2 +
+        '" style="fill:var(--txt2)" font-size="11">' + esc(d.name.slice(0, 2)) + '</text>';
+      g += '<text x="' + lp[0].toFixed(1) + '" y="' + (lp[1] + 12).toFixed(1) + '" text-anchor="' + anchor2 +
+        '" style="fill:var(--txt3)" font-size="10">' + d.v + '</text>';
+    });
+    return '<svg viewBox="0 0 300 250" width="100%" style="max-width:320px;display:block;margin:0 auto" role="img" ' +
+      'aria-label="五维能力雷达图：本人与团队均分对比">' + g + '</svg>' +
+      '<div class="hint" style="text-align:center;margin-top:2px">' +
+      '<span style="color:var(--blue,#3B8DF9)">■</span> 本人均分　' +
+      '<span style="color:var(--txt3)">╌╌</span> 团队均分</div>';
+  }
+
   function openLearnerDrawer(lid) {
     var l = T.learnerById(lid), st = H.statsOf(lid), risk = H.riskOf(lid);
     var rs = H.recordsOf(lid);
@@ -1136,6 +1196,9 @@
 
       '<div class="sec-title">成绩趋势</div>' +
       '<div class="card" style="padding:12px">' + svg + '</div>' +
+
+      '<div class="sec-title">五维能力雷达 · 全部练习均分（虚线为团队均分）</div>' +
+      '<div class="card" style="padding:10px 8px 6px">' + radarSvg(lid) + '</div>' +
 
       '<div class="sec-title">最近一次五维得分' + (last ? '（' + esc(fmtDate(last.finishedAt)) + '）' : '') + '</div>' +
       (last ? dimRows : '<div class="muted" style="font-size:12.5px">尚无练习记录</div>') +

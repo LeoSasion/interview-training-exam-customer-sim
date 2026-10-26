@@ -849,6 +849,21 @@ async function login(account, password) {
     }
   }
 
+  /* ---- 4i. P14：记录时间完整性（P0 潜伏 bug 的回归闸门）----
+   * 播种时读错字段名（种子是 finishedAt、SQL 读 r.at）→ 28 条 at 全空，
+   * 日期显示全空、ORDER BY at 失效（排序实际靠 id 兜底）。断言必须看住。 */
+  console.log('  ─────────────────────────────────────────');
+  console.log('  P14：记录时间完整性');
+  {
+    const all = (data(await call('GET', '/records?limit=100', undefined, { token: adm.token })) || {}).items || [];
+    const empty = all.filter((r) => !r.at || String(r.at).length < 10);
+    ok('所有成绩都有练习时间（空 ' + empty.length + ' 条 / 共 ' + all.length + ' 条）', all.length > 0 && empty.length === 0,
+      empty.slice(0, 3).map((r) => r.id).join(','));
+    const asc = all.slice().sort((a, b) => String(a.at).localeCompare(String(b.at)));
+    ok('按时间排序时 R001 最早（排序不靠 id 兜底）', !!(asc[0] && asc[0].id === 'R001'), asc[0] && asc[0].id);
+    ok('最新一条不是 R001（DESC 排序有效）', !!(all[0] && all[0].id !== 'R001'), all[0] && all[0].id);
+  }
+
   /* ---- 4h. P13：学员批量导入（CSV）+ 删除 ---- */
   console.log('  ─────────────────────────────────────────');
   console.log('  P13：学员批量导入');

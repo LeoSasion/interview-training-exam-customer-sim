@@ -447,6 +447,17 @@
         records: done
       };
     },
+    /* 逐维均分（P14）：雷达图与成长建议共用——避免各页面各算一套。
+     * 口径：该学员所有记录的 dimScores[dim] 求平均（与 statsOf.avg 同为 H.avg）。
+     * 无记录时返回基准 42（与本项目「起始分 42」一致，不显示 0 误导成"极差"）。 */
+    dimAvgOf: function (learnerId) {
+      var rs = H.recordsOf(learnerId);
+      return DIMS.map(function (d) {
+        var vals = rs.map(function (r) { return (r.dimScores || {})[d.id]; })
+          .filter(function (v) { return typeof v === 'number'; });
+        return { id: d.id, name: d.name, v: vals.length ? H.avg(vals) : 42, n: vals.length };
+      });
+    },
     /* 培训效果（P12）：首练 vs 最新 —— 直接回答「练了有没有用」。
      * 口径：每个学员取自己 recordsOf 的首条/末条（recordsOf 已按 finishedAt 升序），
      * 达标与否读记录自带的 passed（与三端同一字段），不另算一套判定。 */

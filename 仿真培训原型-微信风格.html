@@ -157,6 +157,11 @@ body{
 .guide-card button.pri{border:none;background:var(--acc);color:#fff;font-weight:500}
 /* 录音隐私说明（P12）*/
 .vdur{font-size:11px;color:rgba(255,255,255,.5);margin-top:6px;letter-spacing:.01em}
+/* 能力雷达（P14） */
+.radar-wrap{color:#3EB575}
+.radar-wrap svg{color:inherit}
+.radar-lg{text-align:center;font-size:11px;color:#8A8A8A;margin-top:2px}
+.radar-lg b{font-weight:500;color:#A0A0A5}
 
 /* 语音链路轻提示（P11）：屏幕中央黑条，微信风格 */
 .vtoast{position:fixed;top:22%;left:50%;transform:translateX(-50%);z-index:99;background:rgba(0,0,0,.78);
@@ -1290,6 +1295,47 @@ function toggleSpeaker(){
 function toggleMute(){ $('btnMute').classList.toggle('mute-on'); }
 
 /* ===================== 报告 ===================== */
+/* 五维能力雷达（P14）：全部练习均分 vs 团队均分。
+ * 口径走 TRAIN.helpers.dimAvgOf / overview().dimAvg，不在这里另算。
+ * 为什么放在报告页：单场分数只说明这一场，能力画像要跨场看。 */
+function radarMini(learnerId){
+  const H = window.TRAIN && TRAIN.helpers;
+  if(!H || !H.dimAvgOf) return '';
+  const mine = H.dimAvgOf(learnerId);
+  const team = (H.overview().dimAvg || []);
+  const tmap = {};
+  team.forEach(t=>{ tmap[t.id] = t.avg; });
+  const dims = mine.map(d=>({ name:d.name, v:d.v, team:tmap[d.id]||0 }));
+  const n = dims.length;
+  if(!n) return '';
+  const cx=150, cy=124, R=86;
+  const ang = i => -Math.PI/2 + i*2*Math.PI/n;
+  const pt = (i,v)=>{ const r=R*Math.max(0,Math.min(100,v))/100; return [cx+r*Math.cos(ang(i)), cy+r*Math.sin(ang(i))]; };
+  const poly = getter => dims.map((d,i)=>{ const p=pt(i,getter(d)); return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' ');
+  let g='';
+  [25,50,75,100].forEach(lv=>{
+    g += '<polygon points="'+poly(()=>lv)+'" fill="none" stroke="rgba(128,128,128,.35)" stroke-width="0.8"/>';
+  });
+  dims.forEach((_,i)=>{
+    const p = pt(i,100);
+    g += '<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'" stroke="rgba(128,128,128,.35)" stroke-width="0.8"/>';
+  });
+  g += '<polygon points="'+poly(d=>d.team)+'" fill="none" stroke="rgba(128,128,128,.65)" stroke-width="1.2" stroke-dasharray="4 3"/>';
+  g += '<polygon points="'+poly(d=>d.v)+'" fill="rgba(62,181,117,.16)" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>';
+  dims.forEach((d,i)=>{
+    const p = pt(i,d.v);
+    g += '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="currentColor"/>';
+    const lp = pt(i,120);
+    const a2 = Math.abs(lp[0]-cx)<8 ? 'middle' : (lp[0]>cx ? 'start' : 'end');
+    g += '<text x="'+lp[0].toFixed(1)+'" y="'+(lp[1]-2).toFixed(1)+'" text-anchor="'+a2+'" fill="rgba(128,128,128,.95)" font-size="10">'+esc(d.name.slice(0,2))+'</text>';
+    g += '<text x="'+lp[0].toFixed(1)+'" y="'+(lp[1]+11).toFixed(1)+'" text-anchor="'+a2+'" fill="rgba(128,128,128,.7)" font-size="9">'+d.v+'</text>';
+  });
+  return '<div class="radar-wrap"><svg viewBox="0 0 300 250" width="100%" style="max-width:280px;display:block;margin:0 auto" ' +
+    'role="img" aria-label="五维能力雷达：本人与团队均分对比">'+g+'</svg>' +
+    '<div class="radar-lg"><b>实线</b> 我的全部练习均分　<b>虚线</b> 团队均分</div></div>';
+}
+
+
 function finish(){
   if(ended) return;
   ended = true; running = false;
@@ -1344,7 +1390,12 @@ function finish(){
       <div class="verdict ${pass?'v-pass':'v-fail'}">${pass?'已达标':'未达标，建议再练一次'}</div>
       <div class="src-note">${srcLine}</div>
     </div>
-    <div class="rcard"><h3>能力维度</h3>${rows}</div>
+    <div class="rcard"><h3>能力维度 · 本场</h3>${rows}
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(128,128,128,.18)">
+        <div style="font-size:12px;color:#8A8A8A;margin-bottom:4px">能力画像（全部练习均分 · 虚线为团队均分）</div>
+        ${radarMini(ME)}
+      </div>
+    </div>
     <div class="rcard"><h3>关键对话点评</h3>${items}</div>
     <div class="rcard"><h3>AI 带教建议</h3>
       <div style="font-size:13px;line-height:1.8;color:#4A4A4A">
