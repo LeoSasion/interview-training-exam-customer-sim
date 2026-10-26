@@ -705,14 +705,24 @@ const LT = win.TRAIN;
   const adminSrcP14 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   const appdataSrcP14 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
 
+  /* ---- P15-b：任务卡首屏不留空 + 从会话入口统一渲染 ---- */
+  check(learnSrc, /function renderTaskCard\(bound\)[\s\S]{0,2200}?getElementById\('tDeadline'\)\.textContent/,
+    '任务卡渲染抽成函数（一处定义，不再散落在 openChat 里）');
+  check(learnSrc, /if\(!fb && typeof taskFeed === 'function'\)[\s\S]{0,200}?running\[0\]/, '未进会话时用「最近一条进行中任务」填充（不留"—"）');
+  check(learnSrc, /setTimeout\(function\(\)\{ try\{ renderTaskCard\(null\); \}catch\(e\)\{\} \}, 1200\)/, '首屏等任务同步后渲染一次');
+  check(learnSrc, /renderTaskCard\(bound\);/, '进会话时按绑定任务渲染');
+
   /* ---- P15 bug 修复：口径与假数据 ---- */
   check(appdataSrcP14, /dimAvgScope: function \(learnerIds\)[\s\S]{0,500}?RECORDS\.filter/, 'dimAvgScope 按传入学员过滤后再算均分');
   check(coachSrcP14, /var team = H\.dimAvgScope \? H\.dimAvgScope\(learnerIds\(\)\)/, '雷达对照线用「当前可见范围」（不再拿全库均分对比）');
   check(coachSrcP14, /当前范围均分（' \+ myLearners\(\)\.length \+ ' 人）/, '图例写明对照范围人数');
   check(coachSrcP14, /mine\.every\(function \(d\) \{ return !d\.n; \}\)[\s\S]{0,160}?还没有练习记录/, '无样本不画雷达（42 基准会被误读成能力分）');
-  check(learnSrc, /\$\('tScene'\)\.textContent = curScene\(\)\.name/, '任务卡「训练场景」用真实场景名（原写死"微信沟通"）');
-  check(learnSrc, /\$\('tRound'\)\.textContent = doneN \+ ' 次'/, '「本任务已练」按真实记录统计（原写死"3 次"）');
-  check(learnSrc, /\$\('tDeadline'\)\.textContent = \(bound && bound\.dueAt\)/, '截止时间取任务真实截止日（原写死"10-08 18:00"）');
+  check(learnSrc, /getElementById\('tScene'\)\.textContent = scene \? scene\.name/,
+    '任务卡「训练场景」用真实场景名（原写死"微信沟通"）');
+  check(learnSrc, /getElementById\('tRound'\)\.textContent = doneN \+ ' 次'/,
+    '「本任务已练」按真实记录统计（原写死"3 次"）');
+  check(learnSrc, /getElementById\('tDeadline'\)\.textContent =\s*\(fb && fb\.dueAt\)/,
+    '截止时间取任务真实截止日（原写死"10-08 18:00"）');
   ok(learnSrc.indexOf('<span>剩余练习次数</span>') < 0, '写死的「剩余练习次数」标签已移除（注释里的说明不算）');
 
   /* ---- 一键周报（P14）：数字要准、口径要说清 ---- */

@@ -789,6 +789,42 @@ function renderObjs(){
 }
 
 /* ===================== 流程 ===================== */
+/**
+ * 任务卡渲染（P15）
+ *
+ * 原先这三项是写死的演示文案（"微信沟通"/"3 次"/"10-08 18:00"，且从不更新）。
+ * 改为真实数据后出现新问题：**未进会话时整卡是"—"**，看起来像加载失败。
+ * 所以统一成一个函数：进会话时用绑定任务，首页用「最近一条进行中任务」，
+ * 两处都不留空。
+ */
+function renderTaskCard(bound){
+  var fb = bound || null;
+  if(!fb && typeof taskFeed === 'function'){
+    var running = taskFeed().filter(function(t){ return t.status === 'running'; });
+    fb = running[0] || null;
+  }
+  var scene = fb ? (window.TRAIN && TRAIN.sceneById ? TRAIN.sceneById(fb.sceneId) : null)
+                 : (window.curScene ? curScene() : null);
+  var nameEl = document.getElementById('tName');
+  if(!nameEl) return;
+  nameEl.textContent = fb ? fb.title : (scene ? scene.task : '暂无任务');
+  document.getElementById('tScene').textContent = scene ? scene.name : '—';
+  var passLine = (fb && fb.passLine) || (scene && scene.pass) || 60;
+  document.getElementById('tPass').textContent = passLine + ' 分';
+  var doneN = 0;
+  try{
+    if(window.TRAIN && TRAIN.records){
+      doneN = TRAIN.records.filter(function(r){
+        if(r.learnerId !== ME) return false;
+        return fb ? r.taskId === fb.id : !r.taskId;
+      }).length;
+    }
+  }catch(e){ doneN = 0; }
+  document.getElementById('tRound').textContent = doneN + ' 次';
+  document.getElementById('tDeadline').textContent =
+    (fb && fb.dueAt) ? String(fb.dueAt).slice(0, 10) : '不限时';
+}
+
 function openChat(i, task){
   cur = i; step = 0; running = true; ended = false;
   dimScore = [42,42,42,42,42];
@@ -809,23 +845,7 @@ function openChat(i, task){
   $('scrChat').style.display='flex';
   $('chatTitle').innerHTML = curScene().name + '<small>' + curScene().sub + '</small>';
   $('backNum').textContent = '1';
-  $('tName').textContent = bound ? bound.title : curScene().task;
-  $('tPass').textContent = (curTaskPass || curScene().pass) + ' 分';
-  /* 任务卡三项动态化（P15 修 bug）：原先「训练场景」写死"微信沟通"、
-     「剩余练习次数」写死"3 次"、「截止时间」写死"10-08 18:00"（且从未更新）。
-     学员会看到早已过期的截止日期和永远不变的次数——假数据比留空更糟。 */
-  $('tScene').textContent = curScene().name;
-  var doneN = 0;
-  try{
-    if(window.TRAIN && TRAIN.records){
-      doneN = TRAIN.records.filter(function (r) {
-        if(r.learnerId !== ME) return false;
-        return curTaskId ? r.taskId === curTaskId : !r.taskId;
-      }).length;
-    }
-  }catch(e){ doneN = 0; }
-  $('tRound').textContent = doneN + ' 次';
-  $('tDeadline').textContent = (bound && bound.dueAt) ? String(bound.dueAt).slice(0, 10) : '不限时';
+  renderTaskCard(bound);
   $('chatBody').innerHTML = `<div class="time-div">今天 ${nowTime()}</div>`;
   $('tipBox').innerHTML = curScene().tips[0];
   $('msgInput').value=''; onInput();
@@ -1571,6 +1591,8 @@ document.addEventListener('keydown', function (e) {
 
 window.addEventListener('resize', scrollBottom);
 boot();
+/* 首屏任务卡（P15）：等首次任务/成绩同步落地后填一次，避免整卡"—" */
+setTimeout(function(){ try{ renderTaskCard(null); }catch(e){} }, 1200);
 
 /* 首次引导（P12）：新学员第一次打开给三步说明；点任意按钮写标记，之后不再出现 */
 function showGuideIfFirst(){
