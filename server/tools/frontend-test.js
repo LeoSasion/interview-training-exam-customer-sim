@@ -705,6 +705,25 @@ const LT = win.TRAIN;
   const adminSrcP14 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   const appdataSrcP14 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
 
+  /* ---- P17：场景被删后交卷不崩（曾 TypeError: Cannot read properties of null）----
+   * 真实崩溃：日志里 /session/xxx/finish 报 null.objectives ——
+   * 学员正练着、运营把场景下架，交卷就 500，成绩白练。
+   * 修复是降级出分（objectives 置空、passLine 兜底、返回 sceneMissing）。
+   * selftest 是纯 HTTP 的，造不出「场景已删」的会话，所以这里用源码断言防回退。 */
+  const svcSrcP17 = fs.readFileSync(path.join(ROOT, 'server/service.js'), 'utf8');
+  ok(svcSrcP17.indexOf('const sceneMissing = !scene;') >= 0, '交卷时检测场景缺失（不直接读 null.objectives）');
+  ok(svcSrcP17.indexOf('((scene && scene.objectives) || [])') >= 0, '目标按空数组降级（场景没了也能出分）');
+  ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
+  ok(svcSrcP17.indexOf('sceneMissing,') >= 0, '返回里带 sceneMissing 标记（前端可说明原因）');
+
+  /* ---- P17：次要文字对比度（WCAG AA）---- */
+  const shellCssP17 = fs.readFileSync(path.join(ROOT, 'assets/shell.css'), 'utf8');
+  ok(shellCssP17.indexOf('--txt3:#8C8C93') >= 0, 'shell.css 深色 --txt3 已提亮到 AA 达标（原 #6E6E73 仅 3.4）');
+  ok(shellCssP17.indexOf('--txt3:#6B6B6B') >= 0, 'shell.css 浅色 --txt3 已调深（原 #9A9A9A 仅 2.8）');
+  ok(learnSrc.indexOf('--txt3:#8C8C93') >= 0, '学员端深色 --txt3 同步提亮');
+  ok(learnSrc.indexOf('--txt3:#6B6B6B') >= 0, '学员端浅色 --txt3 同步调深');
+  ok(learnSrc.indexOf('color:#9A9A9A;cursor:pointer') < 0, '底部 tab 文字走主题变量（不再硬编码灰）');
+
   /* ---- P16-b：新窗口链接在 iframe 里被拦 → 明确提示而不是静默失败 ---- */
   ok(adminSrcP14.indexOf('window.self !== window.top') >= 0, '管理端检测 iframe 环境（预览面板）');
   ok(adminSrcP14.indexOf('预览面板中，新窗口会被拦截') >= 0, '新窗口被拦时给出可复制地址（不静默失败）');

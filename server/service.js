@@ -739,6 +739,10 @@ function finish(payload) {
   const { sessionId } = payload;
   const sess = getOrCreateSession(payload);
   const scene = getScene(sess.scene_id);
+  /* 场景可能已被删除/下线（学员正练着，运营把场景下架了）。
+   * 以前这里直接读 scene.objectives → 抛 TypeError，学员练完拿不到成绩（白练）。
+   * 现在降级出分：目标置空、达标线用兜底 60，并在返回里标 sceneMissing 让前端说明。 */
+  const sceneMissing = !scene;
   const rows = db.prepare('SELECT * FROM session_turns WHERE session_id = ? ORDER BY idx').all(sessionId);
 
   // 逐轮平均出各维终值
@@ -753,7 +757,7 @@ function finish(payload) {
     : 0;
 
   // 目标达成：任一轮达成即算达成
-  const objectives = (scene.objectives || []).map((o, i) => {
+  const objectives = ((scene && scene.objectives) || []).map((o, i) => {
     const hit = rows.filter((r) => {
       const arr = P(r.dim_scores, {});
       return typeof arr[o.dim] === 'number';
@@ -766,7 +770,8 @@ function finish(payload) {
   const avgConf = rows.length ? rows.reduce((a, r) => a + (r.confidence || 0), 0) / rows.length : 0;
 
   const id = payload.recordId || ('R-' + sessionId);
-  const passed = total >= (scene.passLine || 60);
+  const passLine = (scene && scene.passLine) || 60;
+  const passed = total >= passLine;
 
   db.prepare(`INSERT INTO records
     (id,learner_id,task_id,scene_id,score,passed,at,channel,rubric_version,confidence,
@@ -785,7 +790,7 @@ function finish(payload) {
 
   return {
     recordId: id, sessionId, learnerId: sess.learner_id, sceneId: sess.scene_id,
-    score: total, passLine: scene.passLine || 60, passed,
+    score: total, passLine, passed, sceneMissing,
     dimScores, objectives,
     turns: rows.map(turnRow),
     rubricVersion: config.rubricVersion,

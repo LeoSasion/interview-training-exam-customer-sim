@@ -1,0 +1,22 @@
+fix(P17): 修复交卷崩溃（场景被删）+ 两个主题的次要文字对比度不达标
+
+一、真实崩溃（从服务日志里挖出来的）
+日志：`[API] /api/v1/session/xxx/finish TypeError: Cannot read properties of null (reading 'objectives')`
+成因：学员正练着，运营把场景删除/下线 → 交卷时 `getScene()` 返回 null → 直接读 `scene.objectives` 抛错，
+      学员练完拿不到成绩（白练），前端只看到一个 500。
+修复：降级出分——objectives 置空、达标线兜底 60、返回里带 `sceneMissing: true` 让前端说明原因。
+验证：造一个指向 `SCENE-ALREADY-DELETED` 的会话调 finish → `ok:true, sceneMissing:true, passLine:60`（此前必 500）。
+
+二、次要文字对比度不达标（WCAG AA 要求正文 ≥ 4.5）
+实测（真机取 computedStyle 算相对亮度比）：
+- 深浅两套主题的 `--txt3` 都偏低：浅色 #9A9A9A 在白底 = **2.8**；深色 #6E6E73 在 #1C1C1E = **3.4**
+- 影响范围：任务卡标签（任务名称/训练场景/达标线）、页面提示文字、KPI 卡片标签、品牌副标题
+修复：浅色 → #6B6B6B（5.3）、深色 → #8C8C93（5.1），学员端自带令牌与 assets/shell.css 同步改
+（shell.css 一处管教练台+管理端两页）。
+顺带把底部 tab 的硬编码灰 `#9A9A9A` 改为 `var(--txt3)`、报告页分数单位同样改为变量。
+实测复验：学员端 深 5.1 / 浅 5.3；教练台 深 5.1 / 浅 5.3。
+
+保留项：微信原生「选中 tab」用 #07C160 绿字，在浅底上对比度 2.2——这是微信自己的设计，
+刻意不动（配色锚定微信是项目铁律）。
+
+断言 374（+9）：两处令牌值防回退、tab 不再硬编码、finish 四处降级保护。

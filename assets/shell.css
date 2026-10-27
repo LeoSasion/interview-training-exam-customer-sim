@@ -16,7 +16,8 @@
   --page-bg:#111113; --panel:#1C1C1E; --panel2:#2C2C2E; --panel3:#3A3A3C;
   --line:#2E2E30; --line2:#3D3D40;
   /* 文字：微信深色模式正文 #D9D9D9 + 两级次要灰 */
-  --txt:#E5E5E7; --txt2:#A0A0A5; --txt3:#6E6E73;
+  /* --txt3 原 #6E6E73：在 #1C1C1E 上对比度 3.4（低于 WCAG AA 4.5），提亮到 #8C8C93 ≈ 5.1 */
+  --txt:#E5E5E7; --txt2:#A0A0A5; --txt3:#8C8C93;
   /* 品牌绿（深色用提亮版，保证在 #1C1C1E 上对比度 ≥ 4.5:1） */
   --acc:#3EB575; --acc-hi:#52C98A; --acc-soft:rgba(62,181,117,.13); --acc-bd:rgba(62,181,117,.34); --acc-txt:#6FCF97;
   /* 语义色：微信红/橙 + 系统蓝，均走半透明软底以贴合深色 */
@@ -37,7 +38,8 @@
 html[data-theme="light"]{
   --page-bg:#EDEDED; --panel:#FFFFFF; --panel2:#F7F7F7; --panel3:#EFEFEF;
   --line:#E5E5E5; --line2:#DCDCDC;
-  --txt:#191919; --txt2:#5A5A5F; --txt3:#9A9A9A;
+  /* --txt3 原 #9A9A9A：白底上对比度 2.8，调深到 #6B6B6B ≈ 5.3 */
+  --txt:#191919; --txt2:#5A5A5F; --txt3:#6B6B6B;
   --acc:#07C160; --acc-hi:#06AD56; --acc-soft:rgba(7,193,96,.09); --acc-bd:rgba(7,193,96,.30); --acc-txt:#07913F;
   --red:#FA5151; --red-soft:rgba(250,81,81,.09); --red-bd:rgba(250,81,81,.28);
   --amber:#D98A00; --amber-soft:rgba(255,176,32,.14); --amber-bd:rgba(217,138,0,.30);
