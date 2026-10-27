@@ -815,7 +815,7 @@ const LT = win.TRAIN;
   check(coachSrcP14, /navigator\.clipboard\.writeText\(txt\)[\s\S]{0,200}?ta\.select\(\)/, '复制失败时降级为选中全文（iframe/无权限环境也能用）');
 
   /* ---- 场景复制（P14）：基于现有改一版，复制品必须走正常审核 ---- */
-  const svcSrcDup = fs.readFileSync(path.join(ROOT, 'server/service.js'), 'utf8');
+  const svcSrcDup = fs.readFileSync(path.join(ROOT, 'server/lib/scenes.js'), 'utf8');
   check(svcSrcDup, /function duplicateScene\(id, userId\)[\s\S]{0,900}?saveScene\(clone, userId\);/, '复制复用 saveScene（校验/版本/审计一条路径）');
   check(svcSrcDup, /clone = \{[\s\S]{0,400}?status: 'active'/, '复制体不传 id/code（由 saveScene 生成新编号）');
   check(syncSrcP9, /async function duplicateScene\(id\)/, '同步层有 duplicateScene');
