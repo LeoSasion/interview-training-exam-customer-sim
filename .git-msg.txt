@@ -1,0 +1,13 @@
+test(P17): 自测增加 SKIP 计数（环境依赖断言不再误报为 FAIL）
+
+问题：ASR 未启动时 2 条在线识别断言被静默跳过，结果行仍是 PASS 223（此前 225），
+看起来像「少了 2 条」；mock LLM 未启动时校准断言直接 FAIL，更像代码回归——
+实际都是环境没起，不是代码坏了。
+
+改法：
+- 新增 skip(name, why)：显式打印 ⊘ SKIP + 原因，计入 skipped
+- 校准断言：mock 跑不出样本时 SKIP（提示 node server/mock-llm.js 8999）
+- ASR 相关跳过改走 skip()
+- 结果行追加 SKIP 数：PASS 223 / FAIL 0 / SKIP 1
+
+现在「数量变化」一眼可解释，不再被当成回归。
