@@ -12,93 +12,15 @@ const dbm = require('./db');
 const { db, log, sceneRow, nowStamp, today, J, P } = dbm;
 const ai = require('./ai');
 const config = require('./config');
+/* 用户/权限/可见范围已下沉到 lib/core.js（P22）。
+ * 这里解构出来继续用，外部调用方式完全不变。 */
+const {
+  getUser, requireUser, assertCanEdit, assertCanReview,
+  scopeOf, scopedLearnerIds, inScope
+} = require('./lib/core');
 
 /* ================================================================== *
- * 用户与权限
- * ================================================================== */
-function getUser(userId) {
-  if (!userId) return null;
-  return db.prepare('SELECT * FROM users WHERE id = ?').get(userId) || null;
-}
-
-/**
- * 取操作人。
- * ⚠️ 这里**不再回落到管理员**——身份由路由层（server/auth.js）解析后写入
- *    body.userId / query.userId 传入。解析不到就是 401，避免"漏传 userId
- *    即获得超管权限"的越权口子。
- */
-function requireUser(userId) {
-  const u = getUser(userId);
-  if (!u) throw Object.assign(new Error('未登录或登录状态已失效'), { status: 401 });
-  return u;
-}
-
-function assertCanEdit(user) {
-  if (!user.can_edit && user.role !== 'admin') {
-    throw Object.assign(new Error(`角色「${user.role}」无场景编辑权限`), { status: 403 });
-  }
-}
-
-function assertCanReview(user, sceneId) {
-  if (!user.can_review && user.role !== 'admin') {
-    throw Object.assign(new Error(`角色「${user.role}」无审核权限`), { status: 403 });
-  }
-  // 审核角色分离：提交人不能审自己提交的内容
-  const au = db.prepare('SELECT * FROM scene_audit WHERE scene_id = ?').get(sceneId);
-  if (au && au.submit_by && au.submit_by === user.name) {
-    throw Object.assign(new Error('审核角色分离：提交人不能审核自己提交的场景'), { status: 403 });
-  }
-}
-
-/* ================================================================== *
- * 数据可见范围（P4）
- *   users.data_scope: all 全量 / dept 仅本部门 / mentor 仅本人带教
- *   users.scope_ref : scope=mentor 时匹配 learners.coach 的值
- *   —— 统一出口 scopedLearnerIds(user)：返回 null 表示不限制
- * ================================================================== */
-function scopeOf(user) {
-  const kind = (user && user.data_scope) || 'all';
-  return {
-    kind,
-    dept: (user && user.dept) || '',
-    ref: (user && user.scope_ref) || '',
-    label: kind === 'all' ? '全部数据'
-      : kind === 'dept' ? `本部数据 · ${(user && user.dept) || '未设部门'}`
-        : kind === 'mentor' ? `本人带教 · ${(user && user.scope_ref) || '未绑定导师名'}`
-          : '全部数据'
-  };
-}
-
-// 学员集合变动不频繁，做 5 秒进程内缓存，避免每次查询都打库
-const _scopeCache = new Map();
-function scopedLearnerIds(user) {
-  const sc = scopeOf(user);
-  if (sc.kind === 'all') return null;
-  const key = `${sc.kind}|${sc.dept}|${sc.ref}`;
-  const hit = _scopeCache.get(key);
-  if (hit && Date.now() - hit.at < 5000) return hit.ids;
-
-  let ids = [];
-  if (sc.kind === 'dept') {
-    if (sc.dept) ids = db.prepare('SELECT id FROM learners WHERE dept = ?').all(sc.dept).map((r) => r.id);
-  } else if (sc.kind === 'mentor') {
-    if (sc.ref) ids = db.prepare('SELECT id FROM learners WHERE coach = ?').all(sc.ref).map((r) => r.id);
-  } else {
-    // 未知范围类型按最保守处理：什么都看不到（而不是误放行）
-    ids = [];
-  }
-  _scopeCache.set(key, { at: Date.now(), ids });
-  return ids;
-}
-
-function inScope(user, learnerId) {
-  const ids = scopedLearnerIds(user);
-  return ids === null || ids.indexOf(String(learnerId)) !== -1;
-}
-
-/* ================================================================== *
- * 任务（P4）：下发 / 改期 / 改线 / 结束 / 删除
- *   指派关系落在 task_assignees，才能按学员反查「我的任务」。
+ * 用户 / 权限 / 可见范围 —— 已移至 lib/core.js（P22）
  * ================================================================== */
 function assertCanAssignTask(user) {
   // 任务下发属于内容运营动作，与场景编辑同权限

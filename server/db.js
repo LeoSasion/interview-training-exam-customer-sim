@@ -505,6 +505,33 @@ const MIGRATED_P5 = migrateP5();
 /* P14：修复历史记录空时间——放在模块加载时跑，因为 seedIfEmpty() 对老库 early-return，
  * 只写在播种入口里的话，已有的演示库永远不会被修（铁律 11 的同一个坑）。 */
 const MIGRATED_AT = migrateRecordAt();
+
+/**
+ * 查询索引（P22 技术债）
+ *
+ * 实测 EXPLAIN QUERY PLAN，三处关键查询都在扫全表：
+ *   records ORDER BY at DESC        → SCAN + TEMP B-TREE FOR ORDER BY（记录列表页）
+ *   sessions WHERE learner_id ORDER BY started_at → 同上（逐轮回读、会话清理）
+ *   tasks WHERE status=?            → SCAN（每次看板/教练台都要算进行中任务）
+ * records(task_id, learner_id) 也只吃到 learner_id 索引。
+ *
+ * 演示库只有 28 条记录所以无感，但百人团队 × 每人每周练几场，
+ * records 很快上到万级——这类债要趁数据量小的时候还。
+ * 全部 IF NOT EXISTS，老库会自动补上。
+ */
+function createIndexes() {
+  const stmts = [
+    'CREATE INDEX IF NOT EXISTS idx_rec_at ON records(at DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_rec_task ON records(task_id, learner_id)',
+    'CREATE INDEX IF NOT EXISTS idx_sess_learner ON sessions(learner_id, started_at)',
+    'CREATE INDEX IF NOT EXISTS idx_task_status ON tasks(status, due_at)'
+  ];
+  let n = 0;
+  stmts.forEach((sql) => { try { db.exec(sql); n++; } catch (e) { /* 表不存在等极端情况跳过 */ } });
+  return n;
+}
+const IDX_CREATED = createIndexes();
+if (IDX_CREATED) console.log('[db] 查询索引就绪：' + IDX_CREATED + ' 个');
 if (MIGRATED_AT) console.log('[db] P14 补全历史记录时间：' + MIGRATED_AT + ' 条');
 
 /* ================================================================== *
@@ -871,7 +898,7 @@ function sceneRow(r) {
   });
 }
 
-module.exports = { db, pragmas, seedIfEmpty, loadAppData, log, sceneRow, scopeLabel, nowStamp, today, J, P, migrateTasksP4, MIGRATED, migrateP5, MIGRATED_P5, migrateRecordAt, MIGRATED_AT, seedDemoCoachContent,
+module.exports = { db, pragmas, seedIfEmpty, loadAppData, log, sceneRow, scopeLabel, nowStamp, today, J, P, migrateTasksP4, MIGRATED, migrateP5, MIGRATED_P5, migrateRecordAt, MIGRATED_AT, createIndexes, IDX_CREATED, seedDemoCoachContent,
   // spreadExact 导出给自测：分摊算法的「精度」是 P7 的验收核心，
   // 必须能脱离数据库单独断言（sum === target*n 对任意 target/n 都成立）
   migrateP7, MIGRATED_P7, seedDemoDialogues, spreadExact };
