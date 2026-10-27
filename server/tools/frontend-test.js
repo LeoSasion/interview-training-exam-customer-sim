@@ -710,7 +710,7 @@ const LT = win.TRAIN;
    * 学员正练着、运营把场景下架，交卷就 500，成绩白练。
    * 修复是降级出分（objectives 置空、passLine 兜底、返回 sceneMissing）。
    * selftest 是纯 HTTP 的，造不出「场景已删」的会话，所以这里用源码断言防回退。 */
-  const svcSrcP17 = fs.readFileSync(path.join(ROOT, 'server/service.js'), 'utf8');
+  const svcSrcP17 = fs.readFileSync(path.join(ROOT, 'server/lib/records.js'), 'utf8');
   ok(svcSrcP17.indexOf('const sceneMissing = !scene;') >= 0, '交卷时检测场景缺失（不直接读 null.objectives）');
   ok(svcSrcP17.indexOf('((scene && scene.objectives) || [])') >= 0, '目标按空数组降级（场景没了也能出分）');
   ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
@@ -871,7 +871,7 @@ const LT = win.TRAIN;
   check(adminSrcP13, /function submitImport\(\)[\s\S]{0,600}?ADMIN_SYNC\.importLearners\(csv\)/, '提交走服务端导入（校验/去重都在服务端）');
   check(adminSrcP13, /带教人必须是系统里的用户姓名/, '界面明示「带教人必须是用户姓名」这条硬约束');
   check(syncSrcP9, /async function importLearners\(csv\)/, '同步层有 importLearners');
-  const svcSrcP13 = fs.readFileSync(path.join(ROOT, 'server/service.js'), 'utf8');
+  const svcSrcP13 = fs.readFileSync(path.join(ROOT, 'server/lib/learners.js'), 'utf8');
   ok(svcSrcP13.indexOf('function parseCsv') >= 0, '服务端自带 CSV 解析（零依赖，不引 xlsx 库）');
   ok(svcSrcP13.indexOf('\\uFEFF') >= 0, 'CSV 解析处理 BOM（Excel 另存为 CSV 的常见坑）');
   ok(svcSrcP13.indexOf('function deleteLearner') >= 0, '有删除学员能力（录错/离职），且有成绩时拒绝');

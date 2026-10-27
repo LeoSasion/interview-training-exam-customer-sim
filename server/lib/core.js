@@ -114,8 +114,34 @@ function inScope(user, learnerId) {
   return ids === null || ids.indexOf(String(learnerId)) !== -1;
 }
 
+/* ---------------- 记录/学员级范围校验 ----------------
+ * 两个都要用：做质检看的是记录、下发/导入看的是学员。集中在这里，
+ * 免得每个业务模块自己写一遍 inScope 判断（写漏就是越权）。 */
+function assertLearnerInScope(user, learnerId) {
+  const lid = String(learnerId == null ? '' : learnerId);
+  if (!lid) throw Object.assign(new Error('缺少学员 id'), { status: 400 });
+  if (!db.prepare('SELECT 1 FROM learners WHERE id = ?').get(lid)) {
+    throw Object.assign(new Error(`学员不存在：${lid}`), { status: 400 });
+  }
+  if (!inScope(user, lid)) {
+    throw Object.assign(new Error('该学员不在你的数据可见范围内'), { status: 403 });
+  }
+}
+
+function assertRecordScope(user, rec, what) {
+  const lid = String((rec && rec.learner_id) == null ? '' : (rec && rec.learner_id));
+  if (!lid) {
+    // what 由调用方给出（做质检 / 查看逐轮对话），否则报错文案会把
+    // 「看对话」说成「做质检」——错误信息误导排查方向比没信息更坏
+    throw Object.assign(new Error(`该成绩未归属学员（练习未带 learnerId），无法${what || '做质检'}`), { status: 403 });
+  }
+  if (!inScope(user, lid)) {
+    throw Object.assign(new Error('该成绩不在你的数据可见范围内'), { status: 403 });
+  }
+}
+
 module.exports = {
   getUser, requireUser, assertCanEdit, assertCanReview,
   scopeOf, scopedLearnerIds, inScope,
-  pageOf, pageMeta
+  pageOf, pageMeta, assertLearnerInScope, assertRecordScope
 };

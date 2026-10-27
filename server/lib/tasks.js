@@ -11,7 +11,11 @@
 
 const dbm = require('../db');
 const { db, log, nowStamp, J, P } = dbm;
-const { requireUser, assertCanEdit, scopedLearnerIds, inScope, pageOf, pageMeta } = require('./core');
+const {
+  getUser, requireUser, assertCanEdit, assertCanReview,
+  scopeOf, scopedLearnerIds, inScope, pageOf, pageMeta,
+  assertLearnerInScope, assertRecordScope
+} = require('./core');
 
 /** 延迟取场景（任务校验要用「场景必须已发布」，但场景模块不该互相 require） */
 function sceneOf(id) {

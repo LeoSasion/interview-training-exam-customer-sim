@@ -12,7 +12,11 @@
 
 const dbm = require('../db');
 const { db, log, sceneRow, nowStamp, today, J, P } = dbm;
-const { requireUser, assertCanEdit, assertCanReview } = require('./core');
+const {
+  getUser, requireUser, assertCanEdit, assertCanReview,
+  scopeOf, scopedLearnerIds, inScope, pageOf, pageMeta,
+  assertLearnerInScope, assertRecordScope
+} = require('./core');
 
 function listScenes(query) {
   let rows = db.prepare('SELECT * FROM scenes ORDER BY id').all().map(sceneRow);

@@ -390,10 +390,13 @@ curl -X POST http://127.0.0.1:8848/api/v1/goldset/calibrate \
 
 | 文件 | 行数 | 职责 |
 |---|---|---|
-| `lib/core.js` | 121 | 用户 / 权限（can_edit / can_review）/ 数据可见范围 / **分页工具** |
+| `lib/core.js` | 147 | 用户 / 权限 / 数据可见范围 / 分页 / 记录级范围校验 |
 | `lib/scenes.js` | 329 | 场景 CRUD / 版本 / 审批 / 校验 / 审计（内容治理闸门都在这） |
 | `lib/tasks.js` | 232 | 下发 / 改期 / 改线 / 结束 / 删除 |
-| `service.js` | 965 | 会话与评分、记录与逐轮、学员、辅导与质检、金标 |
+| `lib/learners.js` | 171 | 学员批量导入 / 删除 / 列表 |
+| `lib/records.js` | 336 | 会话创建 / 逐轮 / 交卷评分 / 成绩查询 / 逐轮回读 |
+| `lib/coach.js` | 282 | 带教留言 / 对话质检 / 手工改分 / 会话清理 |
+| `service.js` | **229** | 门面：汇总导出 + 用户与审计 |
 
 **外部调用方式零改动**：`index.js` 与 `module.exports` 保持原样，只是内部改为从 lib 解构。
 
@@ -406,6 +409,21 @@ curl -X POST http://127.0.0.1:8848/api/v1/goldset/calibrate \
 
 **所以拆完必须跑一遍真实接口自测**（`npm run test:server`），
 `node --check` 只能证明语法对，证明不了"模块真的能用"。
+
+### 三、为此加了一个模块完整性检查
+
+```bash
+npm run check:modules      # 或 node server/tools/check-modules.js
+```
+
+它不看语法，直接 `require` 每个模块并检查三件事：
+1. 每个 lib 能被 `require`（路径、循环引用）
+2. 导出的每个值不是 `undefined`（漏导出）
+3. `service.js` 的全部导出可用、数量没异常减少、`index.js` 能加载
+
+**已经用它抓住过 4 次「漏 import / 漏导出」**——都是 `node --check` 通过、
+服务能启动、但一调接口就 500 的那种。
+现在 `npm run test:all` 里已经带上它。
 
 ---
 
