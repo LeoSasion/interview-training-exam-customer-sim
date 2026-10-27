@@ -12,6 +12,27 @@
 const dbm = require('../db');
 const { db } = dbm;
 
+/* ---------------- 分页 ----------------
+ * 铁律 7：items 之外的四个字段只在这一处定义（页面/任务/审计共用同一形状）。 */
+function pageOf(query) {
+  const raw = query || {};
+  if (raw.limit === undefined && raw.offset === undefined) return null;
+  const limit = Number(raw.limit);
+  const offset = Number(raw.offset === undefined ? 0 : raw.offset);
+  if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
+    throw Object.assign(new Error('分页参数校验未通过：limit 须为 1~500 的整数'), { status: 400 });
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw Object.assign(new Error('分页参数校验未通过：offset 须为 >= 0 的整数'), { status: 400 });
+  }
+  return { limit, offset };
+}
+
+function pageMeta(total, page) {
+  if (!page) return { total, limit: total, offset: 0, hasMore: false };
+  return { total, limit: page.limit, offset: page.offset, hasMore: page.offset + page.limit < total };
+}
+
 /* ---------------- 用户 ---------------- */
 function getUser(userId) {
   if (!userId) return null;
@@ -95,5 +116,6 @@ function inScope(user, learnerId) {
 
 module.exports = {
   getUser, requireUser, assertCanEdit, assertCanReview,
-  scopeOf, scopedLearnerIds, inScope
+  scopeOf, scopedLearnerIds, inScope,
+  pageOf, pageMeta
 };
