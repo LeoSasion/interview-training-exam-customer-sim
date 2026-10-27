@@ -142,7 +142,13 @@ async function calibrate(opts) {
   } else {
     channel = config.llm.enabled ? 'llm' : 'keyword';
   }
-  const meaningful = channel === 'llm';   // 只有真实模型跑出的指标才有校准意义
+  /* 只有真实模型跑出的指标才有校准意义。
+   * ⚠️ 判"真实"不能只看 channel==='llm'：本地 mock-llm（127.0.0.1:8999）走的也是 llm 通道，
+   *    但它只是契约一致的模拟实现，pearson/mae 只能说明链路通。
+   *    所以要看 baseUrl / model 是不是 mock。 */
+  const isMockChannel = /localhost|127\.0\.0\.1|0\.0\.0\.0|mock/i
+    .test(String(config.llm.baseUrl || '') + ' ' + String(config.llm.model || ''));
+  const meaningful = channel === 'llm' && !isMockChannel;
 
   const limit = opts.limit ? Math.min(opts.limit, items.length) : items.length;
   const subset = items.slice(0, limit);
@@ -220,7 +226,10 @@ async function calibrate(opts) {
     model: channel === 'llm' ? config.llm.model : 'keyword-engine',
     channel,
     meaningful,
-    mode: meaningful ? 'live' : 'keyword(未配置 Key，指标无校准意义，仅验证链路可通)',
+    mock: isMockChannel,
+    mode: meaningful ? 'live'
+      : (isMockChannel ? 'mock(本地模拟通道：指标只证明链路通，不是模型准确率)'
+        : 'keyword(未配置 Key，指标无校准意义，仅验证链路可通)'),
     n: scored.length,
     pearson: p, mae: m,
     pearsonNote: p === null
@@ -242,7 +251,8 @@ function listRuns(limit) {
   return db.prepare('SELECT id,at,rubric_version,model,n,pearson,mae FROM gold_runs ORDER BY id DESC LIMIT ?')
     .all(limit || 20)
     .map((r) => {
-      const meaningful = r.model !== 'keyword-engine';
+      // 历史记录同样要看 model 名：mock-scorer-v1 也不能算"真实模型"
+      const meaningful = r.model !== 'keyword-engine' && !/mock/i.test(String(r.model || ''));
       return {
         id: r.id, at: r.at, rubricVersion: r.rubric_version, model: r.model,
         channel: meaningful ? 'llm' : 'keyword',

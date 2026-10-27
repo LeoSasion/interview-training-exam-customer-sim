@@ -14,10 +14,12 @@
     "test": "node data/__selftest.js",
     "test:server": "node server/tools/selftest.js",
     "test:frontend": "node server/tools/frontend-test.js",
-    "test:all": "node data/__selftest.js && node server/tools/check-modules.js && node server/tools/selftest.js && node server/tools/frontend-test.js",
+    "test:all": "node data/__selftest.js && node server/tools/check-modules.js && node server/tools/check-inline-handlers.js && node server/tools/selftest.js && node server/tools/frontend-test.js",
     "start:all": "node start-all.js",
     "test:e2e": "node server/tools/e2e-mobile.js",
-    "check:modules": "node server/tools/check-modules.js"
+    "check:modules": "node server/tools/check-modules.js",
+    "check:inline": "node server/tools/check-inline-handlers.js",
+    "calibrate": "node server/tools/calibrate.js"
   },
   "dependencies": {},
   "devDependencies": {},

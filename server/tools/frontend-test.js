@@ -716,6 +716,19 @@ const LT = win.TRAIN;
   ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
   ok(svcSrcP17.indexOf('sceneMissing,') >= 0, '返回里带 sceneMissing 标记（前端可说明原因）');
 
+  /* ---- P24：报告页「和上次相比」+ 校准的 mock 判定 ---- */
+  ok(learnSrc.indexOf('const prevSame') >= 0 && learnSrc.indexOf('和上次相比') >= 0,
+    '报告页有「和上次相比」（同场景口径，第一次练不显示）');
+  ok(learnSrc.indexOf('const DIM_IDS = [') >= 0,
+    '对比块按索引映射 d1..d5（学员端 DIMS 是名字数组，不是对象）');
+  const goldSrcP24 = fs.readFileSync(path.join(ROOT, 'server/goldset.js'), 'utf8');
+  ok(goldSrcP24.indexOf('isMockChannel') >= 0 && goldSrcP24.indexOf("const meaningful = channel === 'llm' && !isMockChannel;") >= 0,
+    '校准识别 mock 通道（本地 8999 不能当成"真实模型，可对外"）');
+  ok(goldSrcP24.indexOf("!/mock/i.test(String(r.model || ''))") >= 0,
+    '历史校准记录同样排除 mock 模型');
+  ok(fs.existsSync(path.join(ROOT, 'server/tools/calibrate.js')), '有脱离 HTTP 的直连校准脚本（换 Key 一条命令跑完）');
+  ok(fs.existsSync(path.join(ROOT, 'server/tools/check-inline-handlers.js')), '有内联事件处理器检查（防"点了没反应"）');
+
   /* ---- P20：任务卡行动入口 ---- */
   ok(learnSrc.indexOf('id="taskStartBtn"') >= 0, '任务卡有「开始练习」按钮（此前只是信息展示）');
   ok(learnSrc.indexOf('function startCurrentTask()') >= 0, '能从任务卡直接开练');

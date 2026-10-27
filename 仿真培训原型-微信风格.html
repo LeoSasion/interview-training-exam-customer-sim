@@ -162,6 +162,16 @@ body{
 .vdur{font-size:11px;color:rgba(255,255,255,.5);margin-top:6px;letter-spacing:.01em}
 /* 能力雷达（P14） */
 .radar-empty{font-size:12px;color:#8A8A8A;padding:14px 4px;text-align:center;line-height:1.7}
+/* 和上次相比（P24）：进步绿、退步红（绩效语义，不是股市配色） */
+.cmp-row{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:4px 0}
+.cmp-row span{flex:1;color:#4A4A4A}
+.cmp-row b{font-weight:500;color:#191919;min-width:36px;text-align:right}
+.cmp-row i{font-style:normal;font-size:11.5px;min-width:44px;text-align:right;letter-spacing:.01em}
+.cmp-row i.up{color:#07803F}
+.cmp-row i.down{color:#FA5151}
+.cmp-row i.flat{color:#8A8A8A}
+.cmp-total{border-bottom:1px solid rgba(128,128,128,.18);padding-bottom:7px;margin-bottom:3px}
+.cmp-total span{font-weight:500;color:#191919}
 /* 我的成长（P21）：学员此前只能看到"这场多少分"，看不到"这个月该走到哪" */
 .gstage{font-size:13px;font-weight:500;color:var(--txt);margin-bottom:3px}
 .gtag{font-size:10.5px;font-weight:400;padding:1px 7px;border-radius:999px;background:var(--acc-soft);color:var(--acc-txt)}
@@ -1594,6 +1604,36 @@ function finish(){
     </div>`;
   }).join('') || '<div class="rep-item" style="color:#8A8A8A">练习记录不足，建议重新完整走一遍。</div>';
 
+  /* 和上次相比（P24）
+   * 学员最想知道"我进步了吗"。口径：**同一场景**的上一场（不同场景难度不同，混着比不公平）；
+   * 第一次练这个场景就没有对比块，而不是拿"历史均分"硬凑一个数。 */
+  const prevSame = (window.TRAIN && TRAIN.records ? TRAIN.records : [])
+    .filter(r => r.learnerId === ME && r.sceneId === curScene().id)
+    .sort((a, b) => (String(a.finishedAt) < String(b.finishedAt) ? -1 : 1))
+    .pop();
+  const cmpHtml = (function () {
+    if (!prevSame) return '';
+    const cmpCls = (d) => (d > 2 ? 'up' : (d < -2 ? 'down' : 'flat'));
+    const cmpTxt = (d) => (Math.abs(d) <= 2 ? '持平' : (d > 0 ? '+' : '') + d);
+    /* ⚠️ 学员端的 DIMS 是「维度名字符串数组」，不是对象数组（helpers 里那份才是对象）——
+       所以不能取 d.id，要按索引映射到 d1..d5。 */
+    const DIM_IDS = ['d1', 'd2', 'd3', 'd4', 'd5'];
+    const dimRows = DIMS.map(function (d, i) {
+      const before = (prevSame.dimScores || {})[DIM_IDS[i]];
+      if (typeof before !== 'number') return '';
+      const diff = dimScore[i] - before;
+      return '<div class="cmp-row"><span>' + esc(d) + '</span><b>' + dimScore[i] +
+        '</b><i class="' + cmpCls(diff) + '">' + cmpTxt(diff) + '</i></div>';
+    }).join('');
+    if (!dimRows) return '';
+    const dt = total - (prevSame.score || 0);
+    return '<div class="rcard"><h3>和上次相比' +
+      '<small style="font-weight:400;color:#8A8A8A;font-size:11px;margin-left:6px">同场景 · ' +
+      esc(String(prevSame.finishedAt || '').slice(5, 10)) + '</small></h3>' +
+      '<div class="cmp-row cmp-total"><span>综合</span><b>' + total + '</b><i class="' +
+      cmpCls(dt) + '">' + cmpTxt(dt) + '</i></div>' + dimRows + '</div>';
+  })();
+
   // AI 通道说明条：让学员/评审一眼看出本场是真实模型评分还是降级
   const srcLine = aiMode === 'on'
     ? (aiLastTurn
@@ -1615,6 +1655,7 @@ function finish(){
         ${radarMini(ME)}
       </div>
     </div>
+    ${cmpHtml}
     <div class="rcard"><h3>关键对话点评</h3>${items}</div>
     <div class="rcard"><h3>AI 带教建议</h3>
       <div style="font-size:13px;line-height:1.8;color:#4A4A4A">
