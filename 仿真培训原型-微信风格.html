@@ -162,6 +162,17 @@ body{
 .vdur{font-size:11px;color:rgba(255,255,255,.5);margin-top:6px;letter-spacing:.01em}
 /* 能力雷达（P14） */
 .radar-empty{font-size:12px;color:#8A8A8A;padding:14px 4px;text-align:center;line-height:1.7}
+/* 我的成长（P21）：学员此前只能看到"这场多少分"，看不到"这个月该走到哪" */
+.gstage{font-size:13px;font-weight:500;color:var(--txt);margin-bottom:3px}
+.gtag{font-size:10.5px;font-weight:400;padding:1px 7px;border-radius:999px;background:var(--acc-soft);color:var(--acc-txt)}
+.glead{font-size:12px;color:var(--txt3);line-height:1.7;margin-bottom:10px}
+.gnext{margin-top:10px;padding:8px 10px;border-radius:8px;background:var(--acc-soft);
+  font-size:12px;line-height:1.7;color:var(--acc-txt)}
+/* 带教留言（P21）：真人说的话放在 AI 提示前面，权重更高 */
+.cnote{border-left:2px solid var(--acc);padding:1px 0 1px 10px;margin-bottom:10px}
+.cnote:last-child{margin-bottom:0}
+.cnote .cn-t{font-size:12.5px;line-height:1.75;color:var(--txt)}
+.cnote .cn-m{font-size:11px;color:var(--txt3);margin-top:3px;letter-spacing:.01em}
 /* 任务卡「开始练习」按钮（P20）：从"看信息"到"能行动" */
 .task-start{
   width:100%;margin-top:12px;height:38px;border:0;border-radius:9px;cursor:pointer;
@@ -608,6 +619,18 @@ body{
       <h2>实时能力评分</h2>
       <div id="dimList"></div>
     </div>
+    <div class="card" id="cnoteCard" style="display:none">
+      <h2>带教留言</h2>
+      <div id="cnoteList"></div>
+      <div class="hint">来自你的带教主管，练之前先看一眼。</div>
+    </div>
+
+    <div class="card" id="growthCard" style="display:none">
+      <h2>我的成长</h2>
+      <div id="growthBody"></div>
+      <div class="hint">按入职天数推算的阶段与目标，练完自动更新。</div>
+    </div>
+
     <div class="card">
       <h2>AI 带教提示</h2>
       <div class="tips" id="tipBox">
@@ -820,6 +843,57 @@ function renderObjs(){
  * 所以统一成一个函数：进会话时用绑定任务，首页用「最近一条进行中任务」，
  * 两处都不留空。
  */
+/**
+ * 带教留言（P21）
+ *
+ * 教练在辅导抽屉里写的内容，此前学员完全看不到——学员练完只知道分数，不知道为什么。
+ * 现在拉到并展示；**没有任何留言时整块隐藏**（不占位、不制造"我被忽视了"的暗示）。
+ */
+/**
+ * 我的成长（P21）
+ *
+ * 阶段/目标/下一步全部走 helpers.growthOf（与教练台同一份定义）。
+ * 学员此前只看到"这场 64 分"，看不到"我在第几周、这个月的目标是多少"。
+ */
+function renderGrowth(){
+  var card = document.getElementById('growthCard');
+  var box = document.getElementById('growthBody');
+  if (!card || !box) return;
+  var g = null;
+  try { g = (window.TRAIN && TRAIN.helpers && TRAIN.helpers.growthOf) ? TRAIN.helpers.growthOf(ME) : null; } catch (e) { g = null; }
+  if (!g) { card.style.display = 'none'; return; }   // 入职日期缺失就整块隐藏，不编阶段
+  var rows = g.focus.map(function (f) {
+    var cls = f.gap >= 0 ? '' : (f.gap > -10 ? 'a' : 'r');
+    return '<div class="gap"><div class="nm">' + esc(f.name) + '</div>' +
+      '<div class="bw"><div class="bar"><i class="' + cls + '" style="width:' + Math.min(100, f.v) + '%"></i></div></div>' +
+      '<div class="vl">' + f.v + '</div></div>';
+  }).join('');
+  box.innerHTML =
+    '<div class="gstage">' + esc(g.stage.name) +
+      '　<span class="gtag">入职第 ' + (g.days + 1) + ' 天 · 目标 ' + g.stage.target + '</span></div>' +
+    '<div class="glead">' + esc(g.stage.lead || '') + '</div>' + rows +
+    '<div class="gnext">' + esc(g.next) + '</div>';
+  card.style.display = 'block';
+}
+
+async function renderCoachNotes(){
+  var card = document.getElementById('cnoteCard');
+  var box = document.getElementById('cnoteList');
+  if (!card || !box) return;
+  var list = null;
+  try {
+    if (window.AIBOOT && AIBOOT.coachNotes) list = await AIBOOT.coachNotes(ME);
+  } catch (e) { list = null; }
+  if (!list || !list.length) { card.style.display = 'none'; return; }
+  box.innerHTML = list.slice(0, 3).map(function (n) {
+    return '<div class="cnote">' +
+      '<div class="cn-t">' + esc(n.text) + '</div>' +
+      '<div class="cn-m">' + esc(n.by || '带教主管') + ' · ' + esc(String(n.at || '').slice(0, 10)) + '</div>' +
+      '</div>';
+  }).join('');
+  card.style.display = 'block';
+}
+
 function renderTaskCard(bound){
   var fb = bound || null;
   if(!fb && typeof taskFeed === 'function'){
@@ -900,6 +974,41 @@ function openChat(i, task){
   $('tipBox').innerHTML = curScene().tips[0];
   $('msgInput').value=''; onInput();
   if(!DEMO) setTimeout(()=>clientSay(0), 700);
+}
+
+/**
+ * 报告页的「下一个任务」入口（P21）
+ *
+ * 练完一个任务后，此前只有「返回任务列表 / 再练一次」——学员得自己回去找下一个。
+ * 如果还有别的进行中任务，直接给一个按钮过去。
+ */
+function renderNextTaskBtn(){
+  var foot = document.querySelector('.rep-foot');
+  if (!foot) return;
+  var old = foot.querySelector('[data-next-task]');
+  if (old) old.remove();
+  var feed = [];
+  try { feed = (typeof taskFeed === 'function') ? taskFeed() : []; } catch (e) { feed = []; }
+  var next = feed.filter(function (t) { return t.status === 'running' && t.id !== curTaskId; })[0];
+  if (!next) return;
+  var btn = document.createElement('button');
+  btn.className = 'p';
+  btn.setAttribute('data-next-task', '1');
+  btn.textContent = '练下一个任务';
+  btn.title = next.title;
+  btn.onclick = function () { startTaskById(next.id); };
+  foot.appendChild(btn);
+}
+
+/** 按任务 id 直接开练（供报告页「下一个任务」用） */
+function startTaskById(tid){
+  var feed = [];
+  try { feed = (typeof taskFeed === 'function') ? taskFeed() : []; } catch (e) { feed = []; }
+  var t = feed.filter(function (x) { return x.id === tid; })[0];
+  if (!t) { toast2('这个任务已经不在了'); return; }
+  var idx = SCENES.findIndex(function (sc) { return sc.id === t.sceneId; });
+  if (idx < 0) { toast2('该任务关联的场景已下线，请联系带教主管'); return; }
+  openChat(idx, t);
 }
 
 function backToList(){
@@ -1140,8 +1249,12 @@ async function judgeInner(text){
   // 目标下标要钳到目标清单范围内（与 judgeLocal 的 map[Math.min(want, len-1)] 保持一致）
   const objIdx = Math.min(want, Math.max(0, (curScene().obj || []).length - 1));
   if(ok && !objDone[objIdx]) objDone[objIdx] = true;
+  /* 点评要能解释"为什么没命中"（P21）：把本轮考察点与对应维度一起存下来，
+     否则学员只看到"未命中考察点"，不知道考察的是什么。 */
+  const _objRef = (curScene().obj || [])[objIdx] || null;
   reviewed.push({ q: lastCustomerText || (curScene().script[want] ? curScene().script[want].t : ''),
-                  a: text, ok, feedback: aiFeedback[want] || '' });
+                  a: text, ok, feedback: aiFeedback[want] || '',
+                  objText: _objRef ? _objRef.text : '', objDim: _objRef ? _objRef.dim : '' });
   initDims(); renderObjs();
 
   // 下一步：等待本轮的 AI 客户回复已就绪（aiCustomerText 由 await 完成后写入），再让客户说话
@@ -1459,12 +1572,27 @@ function finish(){
       <div class="cmt">${cmt}</div></div>`;
   }).join('');
 
-  const items = reviewed.slice(0,6).map(r=>`
-    <div class="rep-item">
+  const items = reviewed.slice(0,6).map(r=>{
+    /* 未命中时要说清"这轮要什么"（P21）。此前只有一句"未命中本轮考察点"，
+       学员看完仍然不知道自己哪句话不对——评分变成数字而不是反馈。 */
+    let why = r.feedback || '';
+    if (!why) {
+      if (r.ok) why = '命中本轮考察点，回答方向正确。';
+      else {
+        const di = r.objDim ? DIMS.findIndex(d => d.id === r.objDim) : -1;
+        const dn = di >= 0 ? DIMS[di].name : '';
+        const dv = di >= 0 ? dimScore[di] : null;
+        why = '这轮要的是「' + (r.objText || '本轮目标') + '」' +
+          (dn ? '，对应能力「' + dn + '」（本场 ' + dv + ' 分）' : '') +
+          '——你的回答没有落在这个点上。';
+      }
+    }
+    return `<div class="rep-item">
       <div class="q">客户：${esc(r.q)}</div>
       <div class="a ${r.ok?'good':'bad'}"><div class="dot"></div><div class="tx">你：${esc(r.a)}<br>
-        <span style="color:#8A8A8A">${r.feedback ? esc(r.feedback) : (r.ok?'命中本轮考察点，回答方向正确。':'未命中本轮考察点，建议对照目标清单复盘。')}</span></div></div>
-    </div>`).join('') || '<div class="rep-item" style="color:#8A8A8A">练习记录不足，建议重新完整走一遍。</div>';
+        <span style="color:#8A8A8A">${esc(why)}</span></div></div>
+    </div>`;
+  }).join('') || '<div class="rep-item" style="color:#8A8A8A">练习记录不足，建议重新完整走一遍。</div>';
 
   // AI 通道说明条：让学员/评审一眼看出本场是真实模型评分还是降级
   const srcLine = aiMode === 'on'
@@ -1496,6 +1624,7 @@ function finish(){
       </div>
     </div>`;
   $('reportScreen').classList.add('on');
+  try { renderNextTaskBtn(); } catch (e) {}
 }
 
 /* 结束会话 → 服务端落库（失败不影响报告展示） */
@@ -1643,6 +1772,8 @@ window.addEventListener('resize', scrollBottom);
 boot();
 /* 首屏任务卡（P15）：等首次任务/成绩同步落地后填一次，避免整卡"—" */
 setTimeout(function(){ try{ renderTaskCard(null); }catch(e){} }, 1200);
+setTimeout(function(){ try{ renderCoachNotes(); }catch(e){} }, 1400);
+setTimeout(function(){ try{ renderGrowth(); }catch(e){} }, 1500);
 
 /* 首次引导（P12）：新学员第一次打开给三步说明；点任意按钮写标记，之后不再出现 */
 function showGuideIfFirst(){

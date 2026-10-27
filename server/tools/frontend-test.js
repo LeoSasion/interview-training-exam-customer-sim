@@ -838,8 +838,10 @@ const LT = win.TRAIN;
   check(adminSrcP14, /'report:red'\)/, '「整体达标率」可点看高风险学员（谁拖后腿）');
 
   /* ---- 成长路径（P14）：按入职天数分阶段 + 下一步练什么 ---- */
-  check(coachSrcP14, /var STAGES = \[[\s\S]{0,400}?maxDay: 7[\s\S]{0,800}?maxDay: 9999/, '成长阶段表（周/月分档，最多 5 档）');
-  check(coachSrcP14, /function stageOf\(l\)[\s\S]{0,300}?l\.joinDate \|\| l\.onboardAt/, '阶段按入职日期推算（缺日期时如实说明）');
+  ok(appdataSrcP14.indexOf('GROWTH_STAGES: [') >= 0 && appdataSrcP14.indexOf("name: '第 3 月+ · 综合实战'") >= 0,
+    '成长阶段表下沉到 helpers（教练台与学员端共用一处，P21）');
+  ok(appdataSrcP14.indexOf('growthOf: function (learnerId)') >= 0 && appdataSrcP14.indexOf('if (!jd) return null;') >= 0,
+    '阶段按入职日期推算（缺日期如实返回 null，不编阶段）');
   check(coachSrcP14, /replace\(\/\-\/g, '\/'\)/, '日期解析做兼容处理（Safari 对 2026-09-15 解析不稳）');
   check(coachSrcP14, /recScenes = T\.scenes\.filter\(function \(sc\) \{[\s\S]{0,160}?stg\.dims\.indexOf\(o\.dim\)/, '「下一步练什么」按阶段重点维度匹配场景');
   check(coachSrcP14, /自动生成，仅供带教参考/, '规则生成的内容如实标注来源（不冒充 AI 判断）');

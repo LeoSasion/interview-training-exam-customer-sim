@@ -1194,38 +1194,17 @@
    * 并推荐「下一步练什么」。全部规则驱动（不引 AI）——目的是把
    * 「新人不知道现在该练什么」变成一句明确的话，而不是再堆一堆分数。
    */
-  var STAGES = [
-    { key: 'w1', maxDay: 7, name: '第 1 周 · 开场与破冰', dims: ['d1'], target: 60 },
-    { key: 'w2', maxDay: 14, name: '第 2 周 · 需求挖掘', dims: ['d2'], target: 65 },
-    { key: 'm1', maxDay: 30, name: '第 1 月 · 异议处理与方案', dims: ['d3', 'd4'], target: 70 },
-    { key: 'm2', maxDay: 60, name: '第 2 月 · 促成推进', dims: ['d5'], target: 75 },
-    { key: 'm3', maxDay: 9999, name: '第 3 月+ · 综合实战', dims: ['d1', 'd2', 'd3', 'd4', 'd5'], target: 78 }
-  ];
-
+  /* 阶段定义与推算已下沉到 helpers.growthOf（P21）——
+   * 学员端也要显示同一份成长信息，两边各写一套必然分叉。 */
   function stageOf(l) {
-    var jd = l.joinDate || l.onboardAt || '';
-    // 兼容 '2026-09-15' 与 '2026/09/15'：Safari 对横线格式的 new Date 解析不稳
-    var t = new Date(String(jd).replace(/-/g, '/'));
-    if (isNaN(t.getTime())) return null;
-    var days = Math.floor((Date.now() - t.getTime()) / 86400000);
-    if (days < 0) days = 0;
-    for (var i = 0; i < STAGES.length; i++) {
-      if (days <= STAGES[i].maxDay) return Object.assign({ days: days }, STAGES[i]);
-    }
-    return Object.assign({ days: days }, STAGES[STAGES.length - 1]);
+    var g = H.growthOf(l.id);
+    return g ? Object.assign({ days: g.days }, g.stage) : null;
   }
 
   function growthHtml(l, st) {
-    var stg = stageOf(l);
-    if (!stg) return '<div class="muted" style="font-size:12.5px">入职日期缺失，无法推算成长阶段。</div>';
-    var dims = H.dimAvgOf(l.id);
-    var byId = {};
-    dims.forEach(function (d) { byId[d.id] = d.v; });
-    var focus = stg.dims.map(function (id) {
-      var d = T.dims[H.dimIndex(id)];
-      return { id: id, name: d ? d.name : id, v: byId[id] || 0, gap: (byId[id] || 0) - stg.target };
-    });
-    var weakest = focus.slice().sort(function (a, b) { return a.v - b.v; })[0];
+    var g = H.growthOf(l.id);
+    if (!g) return '<div class="muted" style="font-size:12.5px">入职日期缺失，无法推算成长阶段。</div>';
+    var stg = g.stage, focus = g.focus, weakest = g.weakest, stageDays = g.days;
 
     // 推荐下一步练什么：把该阶段重点维度映射到场景（场景 objectives 里带该维度）
     var recScenes = T.scenes.filter(function (sc) {
@@ -1252,14 +1231,14 @@
       }).join('')
       : '<div class="muted" style="font-size:12.5px">暂无匹配该阶段重点的场景，可在「场景库」新建或复制一个。</div>';
 
-    var lead = stg.days <= 7 ? '刚入职，先把「敢开口、能破冰」练稳，别急着背话术。'
-      : stg.days <= 14 ? '进入第 2 周，重点从「开口」转到「问对问题」——先问清再用方案。'
-      : stg.days <= 30 ? '第 1 个月是关键期：价格与客诉这两类异议能稳住，就算过了新手关。'
-      : stg.days <= 60 ? '第 2 个月看促成：能不能在对话里自然推进下一步动作。'
+    var lead = stageDays <= 7 ? '刚入职，先把「敢开口、能破冰」练稳，别急着背话术。'
+      : stageDays <= 14 ? '进入第 2 周，重点从「开口」转到「问对问题」——先问清再用方案。'
+      : stageDays <= 30 ? '第 1 个月是关键期：价格与客诉这两类异议能稳住，就算过了新手关。'
+      : stageDays <= 60 ? '第 2 个月看促成：能不能在对话里自然推进下一步动作。'
       : '已进入实战期，建议按「最弱维度」逐个专项复训，并让主管做一次对话质检。';
 
     return '<div style="font-size:12.5px;line-height:1.9">' +
-      '<div><b>' + esc(stg.name) + '</b>　<span class="tag b" style="font-size:10px">入职第 ' + (stg.days + 1) + ' 天</span>' +
+      '<div><b>' + esc(stg.name) + '</b>　<span class="tag b" style="font-size:10px">入职第 ' + (stageDays + 1) + ' 天</span>' +
       '　<span class="muted">本阶段目标：重点维度 ≥ ' + stg.target + '</span></div>' +
       '<div class="muted" style="margin:4px 0 8px">' + esc(lead) + '</div>' +
       rows +

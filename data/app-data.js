@@ -447,6 +447,53 @@
         records: done
       };
     },
+    /* 成长阶段（P21）：教练台与学员端共用这一处定义——
+     * 两边各写一套必然分叉（P14 已经吃过"两套算法"的亏）。
+     * 阶段按入职天数切，dims 是该阶段的重点维度，target 是阶段目标分。 */
+    GROWTH_STAGES: [
+      { key: 'w1', maxDay: 7, name: '第 1 周 · 开场与破冰', dims: ['d1'], target: 60,
+        lead: '刚入职，先把「敢开口、能破冰」练稳，别急着背话术。' },
+      { key: 'w2', maxDay: 14, name: '第 2 周 · 需求挖掘', dims: ['d2'], target: 65,
+        lead: '进入第 2 周，重点从「开口」转到「问对问题」——先问清再用方案。' },
+      { key: 'm1', maxDay: 30, name: '第 1 月 · 异议处理与方案', dims: ['d3', 'd4'], target: 70,
+        lead: '第 1 个月是关键期：价格与客诉这两类异议能稳住，就算过了新手关。' },
+      { key: 'm2', maxDay: 60, name: '第 2 月 · 促成推进', dims: ['d5'], target: 75,
+        lead: '第 2 个月看促成：能不能在对话里自然推进下一步动作。' },
+      { key: 'm3', maxDay: 9999, name: '第 3 月+ · 综合实战', dims: ['d1', 'd2', 'd3', 'd4', 'd5'], target: 78,
+        lead: '已进入实战期，建议按「最弱维度」逐个专项复训，并让主管做一次对话质检。' }
+    ],
+
+    /**
+     * 某学员当前的成长阶段 + 重点维度进度 + 一句下一步建议。
+     * @returns {{days:number, stage:object, focus:Array, weakest:object|null, next:string}|null}
+     *          入职日期缺失时返回 null（调用方如实说"无法推算"，不要编一个阶段）
+     */
+    growthOf: function (learnerId) {
+      var l = (window.TRAIN && window.TRAIN.learnerById) ? window.TRAIN.learnerById(learnerId) : null;
+      var jd = l && (l.joinDate || l.onboardAt);
+      if (!jd) return null;
+      var t = new Date(String(jd).replace(/-/g, '/'));
+      if (isNaN(t.getTime())) return null;
+      var days = Math.floor((Date.now() - t.getTime()) / 86400000);
+      if (days < 0) days = 0;
+      var stage = H.GROWTH_STAGES[H.GROWTH_STAGES.length - 1];
+      for (var i = 0; i < H.GROWTH_STAGES.length; i++) {
+        if (days <= H.GROWTH_STAGES[i].maxDay) { stage = H.GROWTH_STAGES[i]; break; }
+      }
+      var dims = H.dimAvgOf(learnerId);
+      var byId = {};
+      dims.forEach(function (d) { byId[d.id] = d; });
+      var focus = stage.dims.map(function (id) {
+        var d = byId[id] || { name: id, v: 0, n: 0 };
+        return { id: id, name: d.name, v: d.v, n: d.n, gap: d.v - stage.target };
+      });
+      var weakest = focus.slice().sort(function (a, b) { return a.v - b.v; })[0] || null;
+      var next = (weakest && weakest.gap < 0)
+        ? '下一步优先补「' + weakest.name + '」（' + weakest.v + ' 分，距本阶段目标差 ' + Math.abs(weakest.gap) + ' 分）。'
+        : '本阶段重点维度都已达标，可以进入下一阶段的场景了。';
+      return { days: days, stage: stage, focus: focus, weakest: weakest, next: next };
+    },
+
     /* 某批学员的逐维均分（P15）：雷达/周报的「对照线」必须与当前可见范围一致。
      * 教练在「我带的学员」视图下，若对照的是全库均分（含别人的学员），
      * 这个对比就失真了——同一屏里一半数字是"我的"、一半是"全公司的"。 */

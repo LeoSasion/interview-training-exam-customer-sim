@@ -288,7 +288,8 @@ on('DELETE', /^\/api\/v1\/tasks\/([^/]+)$/, async (c) => svc.deleteTask(c.params
 /* ---- 教练动作（P5）：辅导记录 / 对话质检 ----
  * 这两件事是**带教主管的本职**，所以不卡 can_edit / can_review，
  * 只要求可解析出身份（staff），范围校验在 service 层按数据可见范围做。 */
-on('GET', /^\/api\/v1\/coach-notes$/, async (c) => svc.listCoachNotes(c.query, c.user));
+/* 学员也能读自己的带教留言（P21）：辅导要闭环，学员必须看得到教练写了什么 */
+on('GET', /^\/api\/v1\/coach-notes$/, async (c) => svc.listCoachNotes(c.query, c.user), 'practice');
 on('POST', /^\/api\/v1\/coach-notes$/, async (c) => svc.saveCoachNote(c.body, c.user.id));
 on('DELETE', /^\/api\/v1\/coach-notes\/([^/]+)$/, async (c) => svc.deleteCoachNote(c.params[0], c.user.id));
 on('GET', /^\/api\/v1\/qc$/, async (c) => ({ items: svc.listQc(c.user) }));

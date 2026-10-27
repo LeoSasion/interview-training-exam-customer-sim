@@ -135,6 +135,24 @@
   }
 
   /**
+   * 学员端：读「自己的带教留言」（P21）
+   *
+   * 教练在抽屉里写的辅导，此前学员完全看不到——学员只知道扣了几分，不知道为什么。
+   * 服务端已放开为 practice 可读，但**必须带 learnerId**（当前学员身份是 ?as= 模拟的）。
+   * @returns {Array|null} null = 拉取失败（与「确实没有留言」的空数组区分）
+   */
+  async function coachNotes(learnerId) {
+    if (!learnerId) return null;
+    try {
+      if (state.status === 'unknown') await probe();
+      if (state.status !== 'live') return null;
+      var r = await req('/coach-notes?learnerId=' + encodeURIComponent(learnerId), { method: 'GET' }, 8000);
+      if (r.body && r.body.ok) return r.body.data.items || [];
+    } catch (e) { /* 静默降级：学员端没有留言区也能正常练习 */ }
+    return null;
+  }
+
+  /**
    * 学员端：读「已发布场景池」（此接口同样允许匿名）
    * 只回学员端渲染与判分需要的字段（服务端已剥离 audit/versions/owner/publish）。
    * @returns {Array|null} 服务端不可用 / 未就绪时返回 null，调用方保留本地种子场景
@@ -182,7 +200,7 @@
   }
 
   root.AIBOOT = {
-    probe: probe, turn: turn, finish: finish, api: api, tasks: tasks, scenes: scenes,
+    probe: probe, turn: turn, finish: finish, api: api, tasks: tasks, scenes: scenes, coachNotes: coachNotes,
     asr: asr, asrAvail: asrAvail,
     newSessionId: newSessionId,
     get status() { return state.status; },

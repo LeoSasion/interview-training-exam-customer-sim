@@ -1212,6 +1212,15 @@ function qcRow(r) {
 function listCoachNotes(query, user) {
   query = query || {};
   const where = [], args = [];
+  /* 学员（practice）：只能看「自己」的带教留言——教练写了辅导，学员必须能读到，
+   * 否则辅导的价值断在中间（学员只知道扣了几分，不知道为什么）。
+   * ⚠️ 当前学员身份是前端 ?as= 模拟的（users 表没有 learner_id 绑定），
+   * 所以这里只能"信任前端传的 learnerId 并只返回这一人"；
+   * 生产环境应给 users 加 learner_id 字段，登录后强制用自己的，忽略传参。 */
+  const isLearner = !!(user && user.role === 'practice');
+  if (isLearner && !query.learnerId) {
+    throw Object.assign(new Error('学员查询带教留言需指定 learnerId'), { status: 400 });
+  }
   if (query.learnerId) { where.push('learner_id = ?'); args.push(String(query.learnerId)); }
   // 全文包含检索（P9）：LIKE 通配符（% _ \）先转义，用户输入的 % 不会变成"匹配任意串"
   const q = String(query.q || '').trim();
@@ -1219,7 +1228,8 @@ function listCoachNotes(query, user) {
     where.push("text LIKE ? ESCAPE '\\'");
     args.push('%' + q.replace(/[\\%_]/g, (m) => '\\' + m) + '%');
   }
-  const scopeIds = user ? scopedLearnerIds(user) : null;
+  // 学员按上面的 learnerId 精确过滤，不再走「教练可见范围」那套
+  const scopeIds = (user && !isLearner) ? scopedLearnerIds(user) : null;
   if (scopeIds !== null) {
     if (!scopeIds.length) return { items: [], total: 0, limit: 0, offset: 0, hasMore: false };
     where.push(`learner_id IN (${scopeIds.map(() => '?').join(',')})`);

@@ -1013,6 +1013,51 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     return k === 'good' ? '' : (k === 'mid' ? 'a' : 'r');
   }
 
+  /**
+   * 周环比（P21）
+   *
+   * 看板上「达标率 68%」单看无法判断好坏——主管看不出该松一口气还是该开会。
+   * 这里按「数据里最新一天往前 7 天」算本周/上周（与教练周报同一口径），
+   * 给三个 KPI 各补一行对照。演示数据是历史日期，按自然周会算出空白，所以取「最新一天」。
+   */
+  /** KPI 的环比小字：本周 vs 上周（数据缺失时如实说「暂无对比」） */
+  function deltaFoot(kind) {
+    var w = weekDelta();
+    if (!w || !w.curN) return '';
+    if (kind === '场次') {
+      return '　<b>本周 ' + w.curN + '</b>（上周 ' + w.prevN + '）';
+    }
+    if (kind === '均分') {
+      return '　<b>本周 ' + w.avgNow + '</b>（上周 ' + w.avgPrev + '）';
+    }
+    var d = w.rateNow - w.ratePrev;
+    return '　<b>本周 ' + w.rateNow + '%</b>（上周 ' + w.ratePrev + '%）';
+  }
+
+  function weekDelta() {
+    var all = T.records.filter(function (r) { return r.finishedAt; }).map(function (r) {
+      return { d: String(r.finishedAt).slice(0, 10), score: Number(r.score) || 0, passed: !!r.passed };
+    }).sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+    if (!all.length) return null;
+    var latest = all[all.length - 1].d;
+    function shift(src, n) {
+      var d = new Date(String(src).replace(/-/g, '/'));
+      d.setDate(d.getDate() + n);
+      var p2 = function (x) { return String(x).padStart(2, '0'); };
+      return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+    }
+    var inR = function (x, a, b) { return x.d >= a && x.d <= b; };
+    var cur = all.filter(function (x) { return inR(x, shift(latest, -6), latest); });
+    var prev = all.filter(function (x) { return inR(x, shift(latest, -13), shift(latest, -7)); });
+    function rate(a) { return a.length ? Math.round(a.filter(function (x) { return x.passed; }).length / a.length * 100) : 0; }
+    function avg(a) { return a.length ? Math.round(a.reduce(function (t, x) { return t + x.score; }, 0) / a.length) : 0; }
+    return {
+      curN: cur.length, prevN: prev.length,
+      rateNow: rate(cur), ratePrev: rate(prev),
+      avgNow: avg(cur), avgPrev: avg(prev)
+    };
+  }
+
   function renderDash() {
     var o = H.overview();
     var sortedDims = o.dimAvg.slice().sort(function (a, b) { return b.avg - a.avg; });
@@ -1026,9 +1071,11 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     $('kpiRow').innerHTML =
       kpiCard('在职学员数', o.learnerCount, '人', '覆盖 ' + depts().length + ' 个部门 · ' + T.meta.owner, o.learnerCount, 'report:all') +
       kpiCard('进行中任务', o.runningTasks, '个', '任务总数 ' + T.tasks.length + ' 个', o.runningTasks) +
-      kpiCard('累计练习场次', o.totalRecords, '场', '人均 ' + (o.totalRecords / o.learnerCount).toFixed(1) + ' 场', o.totalRecords) +
-      kpiCard('平均分', o.avgScore, '分', '全部练习综合均分', o.avgScore, 'report:all') +
-      kpiCard('整体达标率', o.passRate, '%', '以各任务达标线为准 · 点高风险看谁拖后腿', o.passRate, 'report:red');
+      kpiCard('累计练习场次', o.totalRecords, '场',
+        '人均 ' + (o.totalRecords / o.learnerCount).toFixed(1) + ' 场' + deltaFoot('场次'), o.totalRecords) +
+      kpiCard('平均分', o.avgScore, '分', '综合均分' + deltaFoot('均分'), o.avgScore, 'report:all') +
+      kpiCard('整体达标率', o.passRate, '%',
+        deltaFoot('达标率') + ' · 点高风险看谁拖后腿', o.passRate, 'report:red');
     [].forEach.call($('kpiRow').querySelectorAll('.n'), function (n) {
       countUp(n, parseInt(n.getAttribute('data-to'), 10) || 0);
     });
@@ -1327,9 +1374,34 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     afterAssign(id, task.code, scene.taskName, false);
   }
 
+  /* 记住上一次下发配置（P21）：每周例行下发同一套场景时，不必每次重选。
+     只记场景/达标线/截止/备注，**不记学员**（每次要发给谁本来就不一样）。 */
+  var WIZ_LAST_KEY = 'wiz-last';
+  function rememberWizard() {
+    try {
+      localStorage.setItem(WIZ_LAST_KEY, JSON.stringify({
+        sceneId: WIZ.sceneId || '', passLine: WIZ.passLine || '',
+        dueAt: WIZ.dueAt || '', note: WIZ.note || ''
+      }));
+    } catch (e) { /* 存储不可用时静默跳过 */ }
+  }
+  function restoreWizard() {
+    var last = null;
+    try { last = JSON.parse(localStorage.getItem(WIZ_LAST_KEY) || 'null'); } catch (e) { last = null; }
+    if (!last || typeof last !== 'object') return null;
+    // 上次的截止日如果已经过了，就别预填——否则一打开向导就是"已逾期"
+    if (last.dueAt && String(last.dueAt).slice(0, 10) < nowStamp().slice(0, 10)) last.dueAt = '';
+    return last;
+  }
+
   /* 下发完成后的收尾（重置向导 / 跳任务列表 / 高亮新行 / 提示） */
   function afterAssign(id, code, title, onServer) {
-    WIZ = { step: 1, sceneId: null, sel: {}, passLine: '', dueAt: '', note: '' };
+    rememberWizard();
+    var _last = restoreWizard() || {};
+    WIZ = {
+      step: 1, sceneId: _last.sceneId || null, sel: {},
+      passLine: _last.passLine || '', dueAt: _last.dueAt || '', note: _last.note || ''
+    };
     TASK_F = 'running';
     goto('tasks');
     var seg = $('taskSeg').querySelector('[data-f="running"]');
