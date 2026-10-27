@@ -716,6 +716,15 @@ const LT = win.TRAIN;
   ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
   ok(svcSrcP17.indexOf('sceneMissing,') >= 0, '返回里带 sceneMissing 标记（前端可说明原因）');
 
+  /* ---- P18：提交防重（双击会写出两条数据）---- */
+  const adminSrcP18 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
+  ok(adminSrcP18.indexOf('function busyGuard(key, btn)') >= 0, '有提交防重 busyGuard');
+  ok(adminSrcP18.indexOf("busyGuard('wiz-submit'") >= 0, '「立即下发」加了防重（实测双击曾生成 2 个同名任务）');
+  ok(adminSrcP18.indexOf("busyGuard('ed-save'") >= 0, '「保存场景」加了防重');
+  ok(adminSrcP18.indexOf("busyGuard('imp-submit'") >= 0, '「导入学员」加了防重');
+  ok(adminSrcP18.indexOf("busyGuard('ed-submit'") >= 0, '「提交审核」加了防重');
+  ok(adminSrcP18.indexOf("btn.textContent = '处理中…'") >= 0, '请求期间按钮显示「处理中…」（用户知道点到了）');
+
   /* ---- P18：长文本与窄窗口布局 ---- */
   const shellCssP18 = fs.readFileSync(path.join(ROOT, 'assets/shell.css'), 'utf8');
   ok(shellCssP18.indexOf('min-width:0}') >= 0, '顶栏容器加收缩约束（1280px 下曾整页横向溢出 132px）');

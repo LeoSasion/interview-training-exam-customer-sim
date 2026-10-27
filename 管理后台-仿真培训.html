@@ -875,6 +875,33 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     if (ta) setTimeout(function () { ta.focus(); }, 40);
   }
 
+  /**
+   * 提交防重（P18）
+   *
+   * 实测：连发两次「立即下发」直接生成 2 个同名任务（学员会收到两条一模一样的）；
+   * 场景保存、导入、提交审核同理。这里做客户端提交锁：请求期间禁用按钮并显示「处理中…」，
+   * 2.5 秒后自动恢复（本地请求通常 <100ms，足够覆盖双击窗口）。
+   */
+  var __busy = {};
+  function busyGuard(key, btn) {
+    if (__busy[key]) return false;
+    __busy[key] = true;
+    var oldTxt = null;
+    if (btn && btn.tagName === 'BUTTON') {
+      oldTxt = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '处理中…';
+    }
+    setTimeout(function () {
+      __busy[key] = false;
+      if (btn && btn.tagName === 'BUTTON') {
+        btn.disabled = false;
+        if (oldTxt != null) btn.textContent = oldTxt;
+      }
+    }, 2500);
+    return true;
+  }
+
   function toast(msg) {
     var n = $('toast');
     n.textContent = msg;
@@ -3022,7 +3049,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     if (act === 'import-learners') { openImport(); return; }
     if (act === 'imp-close') { closeImport(); return; }
     if (act === 'imp-sample') { importSample(); return; }
-    if (act === 'imp-submit') { submitImport(); return; }
+    if (act === 'imp-submit') { if (busyGuard('imp-submit', e.target.closest('[data-act]'))) submitImport(); return; }
     if (act === 'reload-ideas') { loadIdeas().then(function () { toast('待建场景池已刷新'); }); return; }
     var ic = e.target.closest('[data-idea-claim]');
     if (ic) { claimIdea(ic.getAttribute('data-idea-claim')); return; }
@@ -3159,7 +3186,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
       toast('已放弃修改，恢复为上次保存的内容');
       return;
     }
-    if (act === 'ed-save') { saveScene(); return; }
+    if (act === 'ed-save') { if (busyGuard('ed-save', e.target.closest('[data-act]'))) saveScene(); return; }
     if (act === 'ed-obj-add') {
       var sco = sceneById2(ED.curId);
       sco.objectives.push({ text: '', dim: DIMS[0].id });
@@ -3209,7 +3236,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
         function () { rollback(rv); }, { title: '回滚版本', okText: '确认回滚' });
       return;
     }
-    if (act === 'ed-submit') { submitReview(); return; }
+    if (act === 'ed-submit') { if (busyGuard('ed-submit', e.target.closest('[data-act]'))) submitReview(); return; }
     if (act === 'ed-approve') { approveScene(); return; }
     if (act === 'ed-reject') { rejectScene(); return; }
     if (act === 'ed-offline') {
@@ -3256,7 +3283,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     }
     if (act === 'wiz-prev') { WIZ.step = Math.max(1, WIZ.step - 1); renderWizard(); return; }
     if (act === 'wiz-next') { wizNext(); return; }
-    if (act === 'wiz-submit') { submitWizard(); return; }
+    if (act === 'wiz-submit') { if (busyGuard('wiz-submit', e.target.closest('[data-act]'))) submitWizard(); return; }
   });
 
   document.addEventListener('input', function (e) {
