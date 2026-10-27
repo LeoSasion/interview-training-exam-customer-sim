@@ -370,6 +370,45 @@ curl -X POST http://127.0.0.1:8848/api/v1/goldset/calibrate \
 
 ---
 
+## 五·补五、P22 技术债清偿
+
+### 一、补了 4 个查询索引（有实测依据）
+
+`EXPLAIN QUERY PLAN` 显示三处关键查询在扫全表：
+
+| 查询 | 之前 | 之后 |
+|---|---|---|
+| `records ORDER BY at DESC`（记录列表） | SCAN + **TEMP B-TREE FOR ORDER BY** | `SCAN USING INDEX idx_rec_at` |
+| `sessions WHERE learner_id ORDER BY started_at` | 同上 | `SEARCH USING INDEX idx_sess_learner` |
+| `tasks WHERE status=?`（每次算进行中） | SCAN | `SEARCH USING INDEX idx_task_status` |
+| `records WHERE task_id AND learner_id` | 只吃到 learner_id | `idx_rec_task` 覆盖 |
+
+演示库 28 条无感，但百人团队 × 每人每周几场，records 上到万级就是实打实的差别。
+全部 `IF NOT EXISTS`，老库启动时自动补（日志会打「查询索引就绪：4 个」）。
+
+### 二、service.js 按领域拆分（1563 → 965 行）
+
+| 文件 | 行数 | 职责 |
+|---|---|---|
+| `lib/core.js` | 121 | 用户 / 权限（can_edit / can_review）/ 数据可见范围 / **分页工具** |
+| `lib/scenes.js` | 329 | 场景 CRUD / 版本 / 审批 / 校验 / 审计（内容治理闸门都在这） |
+| `lib/tasks.js` | 232 | 下发 / 改期 / 改线 / 结束 / 删除 |
+| `service.js` | 965 | 会话与评分、记录与逐轮、学员、辅导与质检、金标 |
+
+**外部调用方式零改动**：`index.js` 与 `module.exports` 保持原样，只是内部改为从 lib 解构。
+
+### ⚠️ 拆模块的两个坑（都踩过）
+
+1. **自由变量不会在解析阶段报错**。`lib/tasks.js` 用了 `pageOf/pageMeta`（当时还在 service.js），
+   `node --check` 通过、服务能启动，但一调任务接口就 `ReferenceError` → 全 500。
+   分页是任务/记录/审计共用工具，已下沉到 core。
+2. **漏 import 同理**。`lib/tasks.js` 漏了 `requireUser`，任务写接口全 500。
+
+**所以拆完必须跑一遍真实接口自测**（`npm run test:server`），
+`node --check` 只能证明语法对，证明不了"模块真的能用"。
+
+---
+
 ## 六、接口一览
 
 所有接口前缀 `/api/v1`，成功返回 `{ok:true,data:...}`，失败返回 `{ok:false,error,...}`。
