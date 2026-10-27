@@ -78,7 +78,14 @@ button{font-family:inherit;cursor:pointer}
   background:color-mix(in srgb,var(--page-bg) 82%,transparent);
   backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);
 }
-.topbar-in{max-width:1320px;margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:16px}
+.topbar-in{max-width:1320px;margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:16px;min-width:0}
+/* 顶栏收缩（P18）：1280px 窗口下品牌副标题 + 7 个 tab 放不下，
+   整页出现横向滚动条（实测溢出 132px）。给容器和品牌加收缩约束，
+   导航改成内部横向滚动——页面不再整体被撑宽。 */
+.topbar-in > *{min-width:0}
+.brand{flex:0 1 auto;min-width:0}
+.brand > div{min-width:0;overflow:hidden}
+.brand small{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wrap-wide .topbar-in{max-width:1560px}
 .brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;letter-spacing:-.2px}
 .brand .logo{
@@ -87,7 +94,9 @@ button{font-family:inherit;cursor:pointer}
   box-shadow:0 2px 8px rgba(7,193,96,.35), inset 0 1px 0 rgba(255,255,255,.25);
 }
 .brand small{display:block;font-size:11px;font-weight:400;color:var(--txt3);letter-spacing:0;margin-top:-1px;white-space:nowrap}
-.nav-tabs{display:flex;gap:2px;margin-left:14px}
+.nav-tabs{display:flex;gap:2px;margin-left:14px;flex:1 1 auto;min-width:0;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none}
+.nav-tabs::-webkit-scrollbar{height:0;display:none}
 .nav-tabs a{
   padding:7px 13px;border-radius:var(--r-xs);font-size:13.5px;color:var(--txt2);
   transition:background .18s,color .18s;white-space:nowrap;position:relative;

@@ -108,6 +108,11 @@
 .eff-delta.up{color:#2E7D46}
 .eff-delta.down{color:#B3383A}
 .eff-note{font-size:11px;color:var(--txt3);margin-top:4px;line-height:1.5}
+  /* 学员列表姓名列（P18）：部门/岗位过长时截断，否则行高被撑到 2 倍以上
+     （实测 20 字部门 + 长岗位 → 46px 变 108px）。完整值挂在 title 上悬停可看。 */
+  #stuBody td:nth-child(2) .stu-id{min-width:0;max-width:180px}
+  #stuBody td:nth-child(2) .stu-id > div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -1086,8 +1091,8 @@
       var last = st.last;
       return '<tr data-go-coach="' + l.id + '" style="cursor:pointer">' +
         '<td data-noclick="1"><input type="checkbox" class="stuPick" data-lid="' + l.id + '" aria-label="选择 ' + esc(l.name) + '"></td>' +
-        '<td><div class="flex">' + ava(l) + '<div><div style="font-weight:500">' + esc(l.name) + '</div>' +
-        '<div style="font-size:11.5px;color:var(--txt3)">' + esc(l.dept) + ' · ' + esc(l.position) + '</div></div></div></td>' +
+        '<td><div class="flex">' + ava(l) + '<div class="stu-id"><div style="font-weight:500" title="' + esc(l.name) + '">' + esc(l.name) + '</div>' +
+        '<div style="font-size:11.5px;color:var(--txt3)" title="' + esc(l.dept + ' · ' + l.position) + '">' + esc(l.dept) + ' · ' + esc(l.position) + '</div></div></div></td>' +
         '<td>' + esc(l.mentor) + '</td>' +
         '<td class="num">' + st.count + '</td>' +
         '<td class="num">' + st.avg + '</td>' +

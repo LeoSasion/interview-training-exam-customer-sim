@@ -716,6 +716,17 @@ const LT = win.TRAIN;
   ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
   ok(svcSrcP17.indexOf('sceneMissing,') >= 0, '返回里带 sceneMissing 标记（前端可说明原因）');
 
+  /* ---- P18：长文本与窄窗口布局 ---- */
+  const shellCssP18 = fs.readFileSync(path.join(ROOT, 'assets/shell.css'), 'utf8');
+  ok(shellCssP18.indexOf('min-width:0}') >= 0, '顶栏容器加收缩约束（1280px 下曾整页横向溢出 132px）');
+  ok(shellCssP18.indexOf('.nav-tabs{display:flex;gap:2px;margin-left:14px;flex:1 1 auto') >= 0,
+    '导航改为内部横向滚动（不再把整页撑宽）');
+  ok(shellCssP18.indexOf('.brand small{max-width:230px') >= 0, '品牌副标题超长时截断');
+  const coachSrcP18 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  ok(coachSrcP18.indexOf('#stuBody td:nth-child(2) .stu-id') >= 0, '学员列表姓名列限宽（长部门不再把行高撑到 108px）');
+  ok(coachSrcP18.indexOf('class="stu-id">') >= 0 && coachSrcP18.indexOf('title="') >= 0,
+    '姓名/部门挂了 title（截断后仍可悬停看全）');
+
   /* ---- P17：次要文字对比度（WCAG AA）---- */
   const shellCssP17 = fs.readFileSync(path.join(ROOT, 'assets/shell.css'), 'utf8');
   ok(shellCssP17.indexOf('--txt3:#8C8C93') >= 0, 'shell.css 深色 --txt3 已提亮到 AA 达标（原 #6E6E73 仅 3.4）');
