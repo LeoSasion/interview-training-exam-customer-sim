@@ -1013,7 +1013,7 @@
       var why = x.risk === 'red'
         ? '最近一次未达标，且历史均分 ' + x.st.avg + ' 分低于 65'
         : (last && !last.passed ? '最近一次 ' + last.score + ' 分未达标' : '历史均分 ' + x.st.avg + ' 分偏低');
-      return '<div class="item" data-go-coach="' + x.l.id + '">' +
+      return '<div class="item" data-go-coach="' + x.l.id + '" tabindex="0" role="button">' +
         ava(x.l) +
         '<div class="mid"><div class="t1">' + esc(x.l.name) + riskTag(x.risk) + '</div>' +
         '<div class="t2">' + esc(why) + '</div></div>' +
@@ -1089,7 +1089,8 @@
       }
       var trendCls = trend.charAt(0) === '↑' ? 'color:var(--acc-txt)' : (trend.charAt(0) === '↓' ? 'color:var(--red)' : 'color:var(--txt3)');
       var last = st.last;
-      return '<tr data-go-coach="' + l.id + '" style="cursor:pointer">' +
+      return '<tr data-go-coach="' + l.id + '" tabindex="0" role="button" ' +
+        'style="cursor:pointer" aria-label="打开 ' + esc(l.name) + ' 的辅导抽屉">' +
         '<td data-noclick="1"><input type="checkbox" class="stuPick" data-lid="' + l.id + '" aria-label="选择 ' + esc(l.name) + '"></td>' +
         '<td><div class="flex">' + ava(l) + '<div class="stu-id"><div style="font-weight:500" title="' + esc(l.name) + '">' + esc(l.name) + '</div>' +
         '<div style="font-size:11.5px;color:var(--txt3)" title="' + esc(l.dept + ' · ' + l.position) + '">' + esc(l.dept) + ' · ' + esc(l.position) + '</div></div></div></td>' +
@@ -1143,16 +1144,49 @@
   }
 
   /* ------------------------- 学员辅导抽屉 ------------------------- */
+  /**
+   * 焦点陷阱（P19）：抽屉打开时 Tab 不出抽屉，关闭后焦点回到触发按钮。
+   * 此前教练台没有任何焦点管理，键盘用户关掉抽屉后会"迷失"在页面顶部。
+   */
+  var __drawerRelease = null;
+  function trapFocus(container) {
+    var last = document.activeElement;
+    var SEL = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),' +
+      'select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    function focusables() {
+      return Array.prototype.slice.call(container.querySelectorAll(SEL))
+        .filter(function (el) { return el.offsetParent !== null || el === document.activeElement; });
+    }
+    function onKey(e) {
+      if (e.key !== 'Tab') return;
+      var els = focusables();
+      if (!els.length) return;
+      var first = els[0], lastEl = els[els.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); lastEl.focus(); }
+      else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); first.focus(); }
+    }
+    container.addEventListener('keydown', onKey);
+    var init = focusables()[0];
+    if (init) setTimeout(function () { try { init.focus(); } catch (e) {} }, 40);
+    return function release() {
+      container.removeEventListener('keydown', onKey);
+      if (last && last.focus) { try { last.focus(); } catch (e) {} }
+    };
+  }
+
   function openDrawer(title, html) {
     $('#drTitle').textContent = title;
     $('#drBody').innerHTML = html;
     $('#mask').classList.add('on');
     $('#drawer').classList.add('on');
     $('#drBody').scrollTop = 0;
+    if (__drawerRelease) __drawerRelease();
+    __drawerRelease = trapFocus($('#drawer'));
   }
   function closeDrawer() {
     $('#mask').classList.remove('on');
     $('#drawer').classList.remove('on');
+    if (__drawerRelease) { __drawerRelease(); __drawerRelease = null; }
   }
 
   /**
@@ -2034,6 +2068,18 @@
   /* 新窗口链接在 iframe / 预览面板里会被浏览器拦（无提示、没反应）。
    * 这里拦住点击，明确告诉用户原因并给出可复制的地址，而不是让人以为链接坏了。
    * 真实浏览器（非 iframe）不拦截，保持原行为。 */
+  /* 行级键盘可达（P19）：<tr>/<div class="item"> 默认不可聚焦，
+     keyboard 用户此前只能靠鼠标打开辅导抽屉。加了 tabindex 后，
+     这里让 Enter / Space 等价于点击（行内按钮不拦，它自己会响应）。 */
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var el = e.target;
+    if (!el || !el.getAttribute) return;
+    if (!el.hasAttribute('data-go-coach')) return;   // 只在行/卡片自身上生效
+    if (e.key === ' ') e.preventDefault();
+    el.click();
+  });
+
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a[target="_blank"]');
     if (!a) return;

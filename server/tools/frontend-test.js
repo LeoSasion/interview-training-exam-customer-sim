@@ -716,6 +716,20 @@ const LT = win.TRAIN;
   ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
   ok(svcSrcP17.indexOf('sceneMissing,') >= 0, '返回里带 sceneMissing 标记（前端可说明原因）');
 
+  /* ---- P19：键盘可达性 ---- */
+  const adminSrcP19 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
+  const shellCssP19 = fs.readFileSync(path.join(ROOT, 'assets/shell.css'), 'utf8');
+  ok(shellCssP19.indexOf(':focus-visible{outline:2px solid var(--acc)') >= 0, '后台两页有焦点环（此前 Tab 一圈看不出焦点在哪）');
+  ok(learnSrc.indexOf(':focus-visible{outline:2px solid var(--acc)') >= 0, '学员端有焦点环（语音/电话/发送图标此前完全看不出焦点）');
+  ok(learnSrc.indexOf('.ibox:focus-within') >= 0, '聊天输入框用父容器焦点环（内层 outline:0 不打架）');
+  ok(adminSrcP19.indexOf('function trapFocus(container, opts)') >= 0, '管理端有焦点陷阱');
+  ok(adminSrcP19.indexOf('var releaseTrap = trapFocus(box') >= 0, '页内确认框接入焦点陷阱（Tab 不跑到背后）');
+  const coachSrcP19 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  ok(coachSrcP19.indexOf('function trapFocus(container)') >= 0, '教练台有焦点陷阱');
+  ok(coachSrcP19.indexOf('__drawerRelease = trapFocus(') >= 0, '抽屉打开挂陷阱、关闭释放并归位');
+  ok(coachSrcP19.indexOf('tabindex="0" role="button"') >= 0, '学员行可聚焦（<tr> 默认不可聚焦，键盘用户此前只能点鼠标）');
+  ok(coachSrcP19.indexOf("if (!el.hasAttribute('data-go-coach')) return;") >= 0, 'Enter/Space 等价点击行（键盘可打开辅导抽屉）');
+
   /* ---- P18：提交防重（双击会写出两条数据）---- */
   const adminSrcP18 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   ok(adminSrcP18.indexOf('function busyGuard(key, btn)') >= 0, '有提交防重 busyGuard');

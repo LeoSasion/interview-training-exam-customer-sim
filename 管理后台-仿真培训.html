@@ -855,7 +855,8 @@ tr.flash td{animation:flashRow 2.2s ease-out}
       '</div>';
     document.body.appendChild(mask);
     document.body.appendChild(box);
-    function close() { mask.remove(); box.remove(); }
+    var releaseTrap = trapFocus(box, { initial: opts.input != null ? '#ucInput' : '[data-uc-ok]' });
+    function close() { releaseTrap(); mask.remove(); box.remove(); }
     box.querySelector('[data-uc-cancel]').onclick = close;
     mask.onclick = close;
     box.querySelector('[data-uc-ok]').onclick = function () {
@@ -871,8 +872,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
         box.querySelector('[data-uc-ok]').click();
       }
     });
-    var ta = box.querySelector('#ucInput');
-    if (ta) setTimeout(function () { ta.focus(); }, 40);
+    // 初始焦点交给 trapFocus（输入框优先，否则确认按钮）
   }
 
   /**
@@ -882,6 +882,38 @@ tr.flash td{animation:flashRow 2.2s ease-out}
    * 场景保存、导入、提交审核同理。这里做客户端提交锁：请求期间禁用按钮并显示「处理中…」，
    * 2.5 秒后自动恢复（本地请求通常 <100ms，足够覆盖双击窗口）。
    */
+  /**
+   * 焦点陷阱（P19）
+   *
+   * 弹层/抽屉打开时 Tab 不该跑到背后的页面上（键盘用户会在"看不见的按钮"之间跳），
+   * 关闭后焦点要回到打开它的元素，否则会迷失在页面顶部。
+   */
+  function trapFocus(container, opts) {
+    opts = opts || {};
+    var last = document.activeElement;
+    var SEL = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),' +
+      'select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    function focusables() {
+      return Array.prototype.slice.call(container.querySelectorAll(SEL))
+        .filter(function (el) { return el.offsetParent !== null || el === document.activeElement; });
+    }
+    function onKey(e) {
+      if (e.key !== 'Tab') return;
+      var els = focusables();
+      if (!els.length) return;
+      var first = els[0], lastEl = els[els.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); lastEl.focus(); }
+      else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); first.focus(); }
+    }
+    container.addEventListener('keydown', onKey);
+    var init = opts.initial ? container.querySelector(opts.initial) : focusables()[0];
+    if (init) setTimeout(function () { init.focus(); }, 40);
+    return function release() {
+      container.removeEventListener('keydown', onKey);
+      if (last && last.focus) { try { last.focus(); } catch (e) { /* 元素已移除 */ } }
+    };
+  }
+
   var __busy = {};
   function busyGuard(key, btn) {
     if (__busy[key]) return false;
@@ -925,16 +957,21 @@ tr.flash td{animation:flashRow 2.2s ease-out}
   /* ------------------------------------------------------------------ *
    * 抽屉
    * ------------------------------------------------------------------ */
+  var __drawerRelease = null;
   function openDrawer(title, body, foot) {
     $('drTitle').textContent = title;
     $('drBody').innerHTML = body;
     $('drFoot').innerHTML = foot || '';
     $('mask').classList.add('on');
     $('drawer').classList.add('on');
+    // 抽屉打开时 Tab 不出抽屉；关闭后焦点回到打开它的按钮（P19）
+    if (__drawerRelease) __drawerRelease();
+    __drawerRelease = trapFocus($('drawer'));
   }
   function closeDrawer() {
     $('mask').classList.remove('on');
     $('drawer').classList.remove('on');
+    if (__drawerRelease) { __drawerRelease(); __drawerRelease = null; }
   }
 
   /* ------------------------------------------------------------------ *

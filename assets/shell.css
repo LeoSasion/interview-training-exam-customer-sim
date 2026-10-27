@@ -315,3 +315,11 @@ html[data-theme="light"] .mask{background:rgba(20,30,50,.28)}
 .flex{display:flex;align-items:center;gap:10px}
 .flex-b{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .grow{flex:1;min-width:0}
+
+/* ─────────────────────────────────────────────────────────────
+ * 键盘可达性（P19）
+ * 三个后台页面此前没有任何焦点样式：Tab 走一圈完全看不出焦点在哪。
+ * 用 :focus-visible —— 只在键盘操作时显示，鼠标点击不打扰。
+ * ───────────────────────────────────────────────────────────── */
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:var(--r-xs,6px)}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 2px var(--acc-soft)}

@@ -368,6 +368,15 @@ body{
   }
   .mobilefab.open{background:rgba(0,0,0,.72)}
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * 键盘可达性（P19）
+ * 微信风格里按钮多为圆形小图标（语音/电话/发送），
+ * 键盘用户此前完全看不到焦点落在哪个图标上。
+ * ───────────────────────────────────────────────────────────── */
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+/* 聊天输入框自身 outline:0，用父容器焦点环补上 */
+.ibox:focus-within{box-shadow:inset 0 0 0 1.5px var(--acc)}
 </style>
 </head>
 <body>
