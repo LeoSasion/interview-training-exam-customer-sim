@@ -716,6 +716,12 @@ const LT = win.TRAIN;
   ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
   ok(svcSrcP17.indexOf('sceneMissing,') >= 0, '返回里带 sceneMissing 标记（前端可说明原因）');
 
+  /* ---- P20：任务卡行动入口 ---- */
+  ok(learnSrc.indexOf('id="taskStartBtn"') >= 0, '任务卡有「开始练习」按钮（此前只是信息展示）');
+  ok(learnSrc.indexOf('function startCurrentTask()') >= 0, '能从任务卡直接开练');
+  ok(learnSrc.indexOf('curCardTask = (fb && scene) ? fb : null;') >= 0, '找不到对应场景时不给死路按钮');
+  ok(learnSrc.indexOf('该任务关联的场景已下线') >= 0, '场景已下线时给明确提示（不静默失效）');
+
   /* ---- P19：键盘可达性 ---- */
   const adminSrcP19 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
   const shellCssP19 = fs.readFileSync(path.join(ROOT, 'assets/shell.css'), 'utf8');

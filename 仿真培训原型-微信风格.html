@@ -162,6 +162,14 @@ body{
 .vdur{font-size:11px;color:rgba(255,255,255,.5);margin-top:6px;letter-spacing:.01em}
 /* 能力雷达（P14） */
 .radar-empty{font-size:12px;color:#8A8A8A;padding:14px 4px;text-align:center;line-height:1.7}
+/* 任务卡「开始练习」按钮（P20）：从"看信息"到"能行动" */
+.task-start{
+  width:100%;margin-top:12px;height:38px;border:0;border-radius:9px;cursor:pointer;
+  background:var(--acc);color:#fff;font-size:13.5px;font-family:inherit;font-weight:500;
+  letter-spacing:.01em;transition:filter .18s;
+}
+.task-start:hover{filter:brightness(1.06)}
+.task-start:active{filter:brightness(.94)}
 .radar-wrap{color:#3EB575}
 .radar-wrap svg{color:inherit}
 .radar-lg{text-align:center;font-size:11px;color:#8A8A8A;margin-top:2px}
@@ -417,6 +425,8 @@ body{
       <div class="kv"><span>达标线</span><span id="tPass">—</span></div>
       <div class="kv"><span>本任务已练</span><span id="tRound">—</span></div>
       <div class="kv"><span>截止时间</span><span id="tDeadline">—</span></div>
+      <!-- 任务卡不只是"说明书"：看到任务就该能一键开练（P20） -->
+      <button class="task-start" id="taskStartBtn" style="display:none" onclick="startCurrentTask()">开始练习</button>
     </div>
 
     <div class="card">
@@ -650,7 +660,8 @@ const ME = (function(){
   }catch(e){ return 'L01'; }
 })();
 let curTaskId = '';      // 当前这场训练归属的任务（成绩带 taskId，后台任务进度才能推进）
-let curTaskPass = null;  // 任务可覆盖场景默认达标线
+let curTaskPass = null;
+let curCardTask = null;   // 任务卡当前展示的任务（供「开始练习」直接开练）  // 任务可覆盖场景默认达标线
 let serverTasks = null;  // 服务端任务快照；null = 离线，回退本地数据
 
 function myName(){
@@ -842,6 +853,26 @@ function renderTaskCard(bound){
   document.getElementById('tRound').textContent = doneN + ' 次';
   document.getElementById('tDeadline').textContent =
     (fb && fb.dueAt) ? String(fb.dueAt).slice(0, 10) : '不限时';
+  // 有任务且能找到对应场景时，才给「开始练习」——否则按钮是死路
+  curCardTask = (fb && scene) ? fb : null;
+  var startBtn = document.getElementById('taskStartBtn');
+  if (startBtn) {
+    if (curCardTask) {
+      startBtn.style.display = 'block';
+      startBtn.textContent = '开始练习';
+      startBtn.title = '进入「' + scene.name + '」练习这个任务';
+    } else {
+      startBtn.style.display = 'none';
+    }
+  }
+}
+
+/** 从任务卡直接开练（P20）：省掉"自己去列表里找对应会话"这一步 */
+function startCurrentTask(){
+  if (!curCardTask) return;
+  var idx = SCENES.findIndex(function (s) { return s.id === curCardTask.sceneId; });
+  if (idx < 0) { toast2('该任务关联的场景已下线，请联系带教主管'); return; }
+  openChat(idx, curCardTask);
 }
 
 function openChat(i, task){
