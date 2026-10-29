@@ -721,6 +721,66 @@ const LT = win.TRAIN;
   ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
   ok(svcSrcP17.indexOf('sceneMissing,') >= 0, '返回里带 sceneMissing 标记（前端可说明原因）');
 
+  /* ---- P29：辅导双向（学员可回复带教留言）---- */
+  const coachLibP29 = fs.readFileSync(path.join(ROOT, 'server/lib/coach.js'), 'utf8');
+  const dbSrcP29 = fs.readFileSync(path.join(ROOT, 'server/db.js'), 'utf8');
+  const idxSrcP29 = fs.readFileSync(path.join(ROOT, 'server/index.js'), 'utf8');
+  const syncSrcP29 = fs.readFileSync(path.join(ROOT, 'assets/admin-server-sync.js'), 'utf8');
+  ok(dbSrcP29.indexOf('function migrateNoteReply()') >= 0 && dbSrcP29.indexOf('ADD COLUMN reply_to') >= 0,
+    'coach_notes 有幂等迁移加 reply_to（老库自动补列）');
+  ok(coachLibP29.indexOf('function replyCoachNote(input)') >= 0, '学员回复有独立服务函数');
+  ok(coachLibP29.indexOf('parent.learner_id !== learnerId') >= 0,
+    '回复校验归属（只能回自己的留言，防跨人）');
+  ok(coachLibP29.indexOf('不支持多级回复') >= 0, '只允许一层回复（不变成聊天室）');
+  ok(idxSrcP29.indexOf('learner\\/coach-notes\\/reply') >= 0, '学员回复走独立 practice 路由');
+  ok(idxSrcP29.indexOf("on('POST', /^\\/api\\/v1\\/coach-notes$/, async (c) => svc.saveCoachNote(c.body, c.user.id));") >= 0,
+    '教练写留言仍是 staff 接口（没被匿名放开）');
+  ok(learnSrc.indexOf('function toggleReply(') >= 0 && learnSrc.indexOf('function sendReply(') >= 0,
+    '学员端有回复交互（展开输入 + 发送）');
+  ok(learnSrc.indexOf('cn-rep') >= 0, '学员端把已有回复挂回父留言下显示');
+  const coachSrcP29 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  ok(coachSrcP29.indexOf('note-rep') >= 0 && coachSrcP29.indexOf('学员回复') >= 0,
+    '教练抽屉里能看到学员回复（高亮块）');
+
+  /* ---- P30：学员练习记录 + 历史逐轮回看 ---- */
+  const recLibP30 = fs.readFileSync(path.join(ROOT, 'server/lib/records.js'), 'utf8');
+  const bridgeSrcP30 = fs.readFileSync(path.join(ROOT, 'assets/ai-bridge.js'), 'utf8');
+  ok(recLibP30.indexOf('function learnerTurns(id, learnerId)') >= 0 &&
+    recLibP30.indexOf("(rec.learner_id || '') !== lid") >= 0,
+    '学员读逐轮按记录归属校验（读不到别人的）');
+  ok(idxSrcP29.indexOf('function requireLearnerIdForAnonymous(c)') >= 0,
+    '无凭据请求强制带 learnerId（open 模式下匿名会被兜底成 admin，必须堵住）');
+  ok(idxSrcP29.indexOf("c.authSource === 'fallback'") >= 0, '按 authSource 识别"无凭据"请求');
+  ok(bridgeSrcP30.indexOf('async function records(learnerId, limit)') >= 0 &&
+    bridgeSrcP30.indexOf('async function learnerTurns(recId, learnerId)') >= 0,
+    'bridge 提供练习记录与逐轮读取');
+  ok(learnSrc.indexOf('async function renderHistory()') >= 0 && learnSrc.indexOf('async function openHistory(') >= 0,
+    '学员端有练习记录列表与历史回看');
+  ok(learnSrc.indexOf('id="histScreen"') >= 0 && learnSrc.indexOf('function closeHistory()') >= 0,
+    '历史回看是独立覆盖层（不污染当前报告页状态）');
+  ok(learnSrc.indexOf('id="histCard"') >= 0, '右栏有练习记录卡（无记录时整卡隐藏）');
+
+  /* ---- P31：从真实对话生成场景草稿 ---- */
+  const draftSrcP31 = fs.readFileSync(path.join(ROOT, 'server/lib/scene-draft.js'), 'utf8');
+  const adminSrcP31 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
+  ok(draftSrcP31.indexOf('function normalize(raw, dims)') >= 0, '模型输出归一化后才进编辑器');
+  ok(draftSrcP31.indexOf('CATEGORIES.indexOf') >= 0 && draftSrcP31.indexOf('dimIds.indexOf(dim)') >= 0,
+    '分类与维度都做白名单校验（脏结构不会渲染炸表单）');
+  ok(draftSrcP31.indexOf('if (!config.llm.enabled)') >= 0 && draftSrcP31.indexOf('未配置模型 Key') >= 0,
+    '没有模型时明确报错而不是编一份草稿');
+  ok(draftSrcP31.indexOf("kind !== 'empty' && kind !== 'parse'") >= 0,
+    '空返回/坏 JSON 自动重试一次（deepseek-flash 实测偶发空 content）');
+  ok(idxSrcP29.indexOf("/^\\/api\\/v1\\/scenes\\/draft$/") >= 0, '/scenes/draft 路由已注册');
+  ok(idxSrcP29.indexOf("/^\\/api\\/v1\\/scenes\\/draft$/") < idxSrcP29.indexOf("/^\\/api\\/v1\\/scenes\\/([^/]+)$/"),
+    '/scenes/draft 排在 /scenes/:id 之前（铁律 13）');
+  ok(syncSrcP29.indexOf('async function sceneDraft(chat)') >= 0, 'sync 层暴露 sceneDraft');
+  ok(adminSrcP31.indexOf('data-act="scene-draft"') >= 0 && adminSrcP31.indexOf('function adoptDraft(d)') >= 0,
+    '管理端有入口且能把草稿放进编辑器');
+  ok(adminSrcP31.indexOf("if (act === 'scene-draft') { openDraftDrawer(); return; }") >= 0,
+    '入口已接入事件分发（否则按钮点了没反应）');
+  ok(adminSrcP31.indexOf("status: 'draft'") >= 0,
+    '草稿存为待审核（不会绕过审核闸门直接下发）');
+
   /* ---- P27：学员可提前结束练习 ---- */
   ok(learnSrc.indexOf('function endPractice(') >= 0, '学员可提前结束练习（此前只能刷新，成绩丢失）');
   ok(learnSrc.indexOf('endPractice()') >= 0 && learnSrc.indexOf('再点一次右上角') >= 0,

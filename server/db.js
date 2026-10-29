@@ -504,6 +504,23 @@ const MIGRATED_P5 = migrateP5();
 
 /* P14：修复历史记录空时间——放在模块加载时跑，因为 seedIfEmpty() 对老库 early-return，
  * 只写在播种入口里的话，已有的演示库永远不会被修（铁律 11 的同一个坑）。 */
+/**
+ * 迁移（P29）：coach_notes 增加 reply_to —— 学员可以回复教练的留言
+ *
+ * 原来辅导是单向的（教练写 → 学员看）。学员想说"我试了，但客户直接打断我"
+ * 却无处可发，而这句话对教练判断场景设计是否有问题极其关键。
+ * 回复也存成一条 coach_notes（type='学员回复'），用 reply_to 指向被回复的留言，
+ * 不新建表——列表、权限、可见范围全部复用现有那一套。
+ */
+function migrateNoteReply() {
+  try {
+    const cols = db.prepare('PRAGMA table_info(coach_notes)').all().map((c) => c.name);
+    if (!cols.length || cols.indexOf('reply_to') >= 0) return 0;
+    db.exec("ALTER TABLE coach_notes ADD COLUMN reply_to TEXT DEFAULT ''");
+    return 1;
+  } catch (e) { return 0; }
+}
+
 const MIGRATED_AT = migrateRecordAt();
 
 /**
@@ -530,6 +547,7 @@ function createIndexes() {
   stmts.forEach((sql) => { try { db.exec(sql); n++; } catch (e) { /* 表不存在等极端情况跳过 */ } });
   return n;
 }
+const NOTE_REPLY_MIGRATED = migrateNoteReply();
 const IDX_CREATED = createIndexes();
 if (IDX_CREATED) console.log('[db] 查询索引就绪：' + IDX_CREATED + ' 个');
 if (MIGRATED_AT) console.log('[db] P14 补全历史记录时间：' + MIGRATED_AT + ' 条');
@@ -898,7 +916,8 @@ function sceneRow(r) {
   });
 }
 
-module.exports = { db, pragmas, seedIfEmpty, loadAppData, log, sceneRow, scopeLabel, nowStamp, today, J, P, migrateTasksP4, MIGRATED, migrateP5, MIGRATED_P5, migrateRecordAt, MIGRATED_AT, createIndexes, IDX_CREATED, seedDemoCoachContent,
+module.exports = { db, pragmas, seedIfEmpty, loadAppData, log, sceneRow, scopeLabel, nowStamp, today, J, P, migrateTasksP4, MIGRATED, migrateP5, MIGRATED_P5, migrateRecordAt, MIGRATED_AT, createIndexes, IDX_CREATED, migrateNoteReply,
+  seedDemoCoachContent,
   // spreadExact 导出给自测：分摊算法的「精度」是 P7 的验收核心，
   // 必须能脱离数据库单独断言（sum === target*n 对任意 target/n 都成立）
   migrateP7, MIGRATED_P7, seedDemoDialogues, spreadExact };

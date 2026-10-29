@@ -224,6 +224,23 @@
   }
 
   /** 审批动作：submit / approve / reject / offline / rollback */
+  /**
+   * 场景草稿生成（P31）：把真实客户对话交给模型，拿回可编辑的场景草稿。
+   *
+   * 后端只生成、不落库——运营在编辑器里改完仍要「提交审核 → 审批通过」才能下发。
+   * @returns {{ok:boolean, data?:object, error?:string}}
+   */
+  async function sceneDraft(chat) {
+    try {
+      var r = await req('/scenes/draft', {
+        method: 'POST',
+        body: JSON.stringify({ chat: String(chat || '') })
+      }, 70000);
+      if (r.body && r.body.ok) return { ok: true, data: r.body.data };
+      return { ok: false, error: (r.body && r.body.error) || ('HTTP ' + r.http), status: r.http };
+    } catch (e) { return { ok: false, error: e.message }; }
+  }
+
   async function act(id, action, extra) {
     var map = { submit: 'submit', approve: 'approve', reject: 'reject', offline: 'offline', rollback: 'rollback' };
     var verb = map[action];
@@ -596,6 +613,7 @@
   root.ADMIN_SYNC = {
     probe: probe, pull: pull, save: save, act: act, remove: remove,
     versions: versions, auditLog: auditLog, calibrate: calibrate, cleanupSessions: cleanupSessions,
+    sceneDraft: sceneDraft,
     patchRecordScore: patchRecordScore, importLearners: importLearners, duplicateScene: duplicateScene,
     sceneIdeas: sceneIdeas, createSceneIdea: createSceneIdea, setSceneIdeaStatus: setSceneIdeaStatus,
     tasks: tasks, tasksOf: tasksOf, saveTask: saveTask,

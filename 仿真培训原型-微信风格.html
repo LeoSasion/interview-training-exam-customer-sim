@@ -183,6 +183,43 @@ body{
 .cnote:last-child{margin-bottom:0}
 .cnote .cn-t{font-size:12.5px;line-height:1.75;color:var(--txt)}
 .cnote .cn-m{font-size:11px;color:var(--txt3);margin-top:3px;letter-spacing:.01em}
+/* 练习记录（P30）：一行一场，右侧分数；点击进历史回看 */
+.hist-item{display:flex;align-items:center;gap:10px;padding:9px 0;
+  border-bottom:1px dashed rgba(128,128,128,.22);cursor:pointer}
+.hist-item:last-child{border-bottom:0}
+.hist-item:hover .hi-t{color:var(--acc-txt)}
+.hist-item .hi-main{flex:1;min-width:0}
+.hist-item .hi-t{font-size:12.5px;color:var(--txt);font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-item .hi-m{font-size:11px;color:var(--txt3);margin-top:2px}
+.hist-item .hi-s{font-size:16px;font-weight:600;color:var(--txt);font-variant-numeric:tabular-nums}
+.hist-item .hi-s.no{color:#C0392B}
+.hist-item .hi-ok{color:#07803F}
+/* 历史回看的逐轮块 */
+.hrev{font-size:12.5px;line-height:1.7;padding:9px 0;border-bottom:1px dashed rgba(128,128,128,.18)}
+.hrev:last-child{border-bottom:0}
+.hrev .rq{color:var(--txt3)}
+.hrev .ra{margin-top:4px;color:var(--txt)}
+.hrev .rs{font-size:11px;color:var(--txt3);margin-top:3px}
+.dimrow{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0}
+.dimrow span{flex:1;color:var(--txt)}
+.dimrow b{min-width:32px;text-align:right;font-variant-numeric:tabular-nums}
+/* 学员回复（P29）：缩进 + 细边框，视觉上从属于上面的教练留言 */
+.cnote .cn-rep{margin:7px 0 0 8px;padding-left:8px;border-left:2px solid rgba(128,128,128,.25)}
+.cnote .cn-rep .cn-t{font-size:12px;color:var(--txt)}
+/* 「回复」是个小文字按钮：不抢主内容，但要能点 */
+.cn-reply{margin-left:8px;border:0;background:none;padding:0;font-family:inherit;
+  font-size:11px;color:var(--acc-txt);cursor:pointer;text-decoration:underline dotted}
+.cn-box{margin-top:7px}
+.cn-box textarea{width:100%;box-sizing:border-box;min-height:52px;resize:vertical;
+  border:1px solid rgba(128,128,128,.3);border-radius:7px;padding:7px 9px;
+  font-family:inherit;font-size:12.5px;line-height:1.6;color:var(--txt);background:transparent}
+.cn-box textarea:focus{outline:none;border-color:var(--acc)}
+.cn-box .cn-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.cn-box button{font-family:inherit;font-size:12px;height:28px;padding:0 12px;border-radius:7px;
+  cursor:pointer;border:1px solid rgba(128,128,128,.3);background:transparent;color:var(--txt)}
+.cn-box button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:500}
+.cn-box button:disabled{opacity:.55;cursor:default}
 /* 任务卡「开始练习」按钮（P20）：从"看信息"到"能行动" */
 .task-start{
   width:100%;margin-top:12px;height:38px;border:0;border-radius:9px;cursor:pointer;
@@ -617,6 +654,23 @@ body{
           </div>
         </div>
 
+        <!-- ===== 历史回看（P30）：练习记录点开后的只读视图 =====
+             复用 .report 的覆盖层与 .rcard 卡片，不新造一套视觉；
+             刻意不复用「训练报告」页——那页绑定的是当前会话状态（running/curTaskId），
+             历史数据塞进去会把"再练一次、返回任务列表"这些动作搞乱。 -->
+        <div class="report" id="histScreen">
+          <div class="rep-nav">
+            <div class="back" onclick="closeHistory()">
+              <svg width="11" height="19" viewBox="0 0 11 19"><path d="M9.5 1.5L2 9.5l7.5 8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="ttl" id="histTitle">历史记录</div>
+          </div>
+          <div class="rep-body" id="histBody"></div>
+          <div class="rep-foot">
+            <button class="s" onclick="closeHistory()">返回</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -643,6 +697,12 @@ body{
       <h2>我的成长</h2>
       <div id="growthBody"></div>
       <div class="hint">按入职天数推算的阶段与目标，练完自动更新。</div>
+    </div>
+
+    <div class="card" id="histCard" style="display:none">
+      <h2>练习记录</h2>
+      <div id="histList"></div>
+      <div class="hint">点一条可以回看当时的逐轮对话——「那次为什么只有 50 分」有答案。</div>
     </div>
 
     <div class="card">
@@ -868,6 +928,109 @@ function renderObjs(){
  * 现在拉到并展示；**没有任何留言时整块隐藏**（不占位、不制造"我被忽视了"的暗示）。
  */
 /**
+ * 练习记录（P30）
+ *
+ * 之前学员只能看到「最近一次报告」+ 成长汇总，想回看"上周五那场为什么只有 50 分"没入口。
+ * 这里列出自己的历史练习（服务端 /records 对匿名学员强制要求 learnerId，只返回本人）。
+ * 没有记录就整卡隐藏——空列表只会让人以为功能坏了。
+ */
+async function renderHistory(){
+  var card = document.getElementById('histCard');
+  var box = document.getElementById('histList');
+  if (!card || !box) return;
+  var list = null;
+  try {
+    if (window.AIBOOT && AIBOOT.records) list = await AIBOOT.records(ME, 8);
+  } catch (e) { list = null; }
+  if (!list || !list.length) { card.style.display = 'none'; return; }
+  box.innerHTML = list.map(function (r) {
+    var sc = (window.TRAIN && TRAIN.sceneById) ? TRAIN.sceneById(r.sceneId) : null;
+    var nm = sc ? sc.name : (r.sceneId || '练习');
+    var md = String(r.at || '').slice(5, 10).replace('-', '/');
+    return '<div class="hist-item" role="button" tabindex="0" ' +
+        'onclick="openHistory(\'' + esc(r.id) + '\')" ' +
+        'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openHistory(\'' + esc(r.id) + '\')}" ' +
+        'aria-label="回看 ' + esc(nm) + ' 这一场">' +
+      '<div class="hi-main"><div class="hi-t">' + esc(nm) + '</div>' +
+      '<div class="hi-m">' + esc(md) + ' · ' + (r.passed ? '<span class="hi-ok">已达标</span>' : '未达标') +
+      (r.turnCount ? ' · ' + r.turnCount + ' 轮' : '') + '</div></div>' +
+      '<div class="hi-s' + (r.passed ? '' : ' no') + '">' + (Number(r.score) || 0) + '</div>' +
+      '</div>';
+  }).join('');
+  card.style.display = 'block';
+}
+
+/**
+ * 打开某一场的逐轮回看（P30）
+ *
+ * 数据走 /learner/records/:id/turns（服务端按记录归属校验，读不到别人的）。
+ * 只读：不给"再练一次"之类的动作，避免和历史数据语义混淆。
+ */
+async function openHistory(recId){
+  var scr = document.getElementById('histScreen');
+  var body = document.getElementById('histBody');
+  if (!scr || !body) return;
+  body.innerHTML = '<div class="rcard" style="color:#8A8A8A">读取中…</div>';
+  scr.classList.add('on');
+  var d = null;
+  try {
+    if (window.AIBOOT && AIBOOT.learnerTurns) d = await AIBOOT.learnerTurns(recId, ME);
+  } catch (e) { d = null; }
+  if (!d) {
+    body.innerHTML = '<div class="rcard">读不到这一场的记录（可能已被清理，或服务未连接）。</div>';
+    return;
+  }
+  var sc = (window.TRAIN && TRAIN.sceneById) ? TRAIN.sceneById(d.sceneId) : null;
+  document.getElementById('histTitle').textContent = '回看 · ' + (sc ? sc.name : '练习');
+
+  var DIM_IDS = ['d1', 'd2', 'd3', 'd4', 'd5'];
+  var dims = (d.dimScores || {});
+  var dimRows = DIMS.map(function (name, i) {
+    var v = dims[DIM_IDS[i]];
+    if (typeof v !== 'number') return '';
+    return '<div class="dimrow"><span>' + esc(name) + '</span>' +
+      '<div class="bw" style="flex:1;max-width:120px"><div class="bar"><i class="' +
+      (v >= 75 ? '' : (v >= 60 ? 'a' : 'r')) + '" style="width:' + Math.min(100, v) + '%"></i></div></div>' +
+      '<b>' + v + '</b></div>';
+  }).join('');
+
+  var turns = (d.turns || []).map(function (t, i) {
+    var lt = t.learnerText || t.learner_text || '';
+    var cr = t.customerReply || t.customer_reply || '';
+    return '<div class="hrev">' +
+      '<div class="rq">客户：' + esc(cr) + '</div>' +
+      '<div class="ra">你：' + esc(lt) + '</div>' +
+      '<div class="rs">第 ' + (i + 1) + ' 轮 · 本轮 ' + (Number(t.score) || 0) + ' 分' +
+      (t.objectiveDim ? ' · 考察 ' + esc(dimName(t.objectiveDim)) : '') + '</div>' +
+      '</div>';
+  }).join('');
+
+  body.innerHTML =
+    '<div class="rcard" style="text-align:center;padding:22px 16px">' +
+      '<div style="font-size:44px;font-weight:600;line-height:1.1;color:' + (d.passed ? '#07803F' : '#C0392B') + '">' + (Number(d.score) || 0) + '</div>' +
+      '<div style="font-size:12.5px;color:#8A8A8A;margin-top:6px">' +
+        esc(String(d.at || '').slice(0, 10)) + ' · ' + (d.passed ? '已达标' : '未达标') +
+        ' · 共 ' + (d.turns || []).length + ' 轮</div>' +
+    '</div>' +
+    (dimRows ? '<div class="rcard"><h3>五维得分</h3>' + dimRows + '</div>' : '') +
+    '<div class="rcard"><h3>逐轮对话</h3>' +
+      (turns || '<div style="color:#8A8A8A;font-size:12.5px">这一场没有保存逐轮对话。</div>') +
+    '</div>';
+}
+
+function closeHistory(){
+  var scr = document.getElementById('histScreen');
+  if (scr) scr.classList.remove('on');
+}
+
+/** 维度 id → 中文名（历史回看用；DIMS 是名字数组，顺序即 d1..d5） */
+function dimName(id){
+  var ids = ['d1', 'd2', 'd3', 'd4', 'd5'];
+  var i = ids.indexOf(id);
+  return i >= 0 ? DIMS[i] : id;
+}
+
+/**
  * 我的成长（P21）
  *
  * 阶段/目标/下一步全部走 helpers.growthOf（与教练台同一份定义）。
@@ -903,13 +1066,83 @@ async function renderCoachNotes(){
     if (window.AIBOOT && AIBOOT.coachNotes) list = await AIBOOT.coachNotes(ME);
   } catch (e) { list = null; }
   if (!list || !list.length) { card.style.display = 'none'; return; }
-  box.innerHTML = list.slice(0, 3).map(function (n) {
-    return '<div class="cnote">' +
+
+  /* 学员回复（P29）：回复也存成一条留言（type=学员回复，replyTo 指向父留言），
+     这里按 replyTo 分组挂回父留言下面——不新建表、不新建接口，复用同一份数据。 */
+  var byParent = {};
+  list.forEach(function (n) {
+    if (n.replyTo) (byParent[n.replyTo] = byParent[n.replyTo] || []).push(n);
+  });
+  var parents = list.filter(function (n) { return !n.replyTo; }).slice(0, 3);
+  if (!parents.length) { card.style.display = 'none'; return; }
+
+  box.innerHTML = parents.map(function (n) {
+    var reps = (byParent[n.id] || []).sort(function (a, b) {
+      return String(a.at || '') < String(b.at || '') ? -1 : 1;
+    });
+    var repHtml = reps.map(function (r) {
+      return '<div class="cn-rep">' +
+        '<div class="cn-t">' + esc(r.text) + '</div>' +
+        '<div class="cn-m">我 · ' + esc(String(r.at || '').slice(5, 10)) + '</div>' +
+        '</div>';
+    }).join('');
+    /* 已经回复过就不再显示「回复」——只允许一层（服务端同样只允许一层），
+       否则会变成聊天室，而系统没有已读/未读模型。 */
+    var canReply = !reps.length;
+    var btn = canReply
+      ? '<button class="cn-reply" onclick="toggleReply(' + "'" + esc(n.id) + "'" + ')">回复</button>'
+      : '';
+    var editor = canReply
+      ? ('<div class="cn-box" id="cnbox-' + esc(n.id) + '" style="display:none">' +
+          '<textarea id="cntext-' + esc(n.id) + '" maxlength="500" ' +
+            'placeholder="说说你试过之后的情况，主管能看到"></textarea>' +
+          '<div class="cn-acts">' +
+            '<button onclick="toggleReply(' + "'" + esc(n.id) + "'" + ')">取消</button>' +
+            '<button class="pri" id="cnsend-' + esc(n.id) + '" onclick="sendReply(' + "'" + esc(n.id) + "'" + ')">发送</button>' +
+          '</div>' +
+        '</div>')
+      : '';
+    return '<div class="cnote" id="cnote-' + esc(n.id) + '">' +
       '<div class="cn-t">' + esc(n.text) + '</div>' +
-      '<div class="cn-m">' + esc(n.by || '带教主管') + ' · ' + esc(String(n.at || '').slice(0, 10)) + '</div>' +
+      '<div class="cn-m">' + esc(n.by || '带教主管') + ' · ' + esc(String(n.at || '').slice(0, 10)) + btn + '</div>' +
+      repHtml + editor +
       '</div>';
   }).join('');
   card.style.display = 'block';
+}
+
+/** 展开/收起某条留言的回复输入框 */
+function toggleReply(noteId){
+  var box = document.getElementById('cnbox-' + noteId);
+  if (!box) return;
+  var open = box.style.display !== 'none';
+  box.style.display = open ? 'none' : 'block';
+  if (!open) {
+    var ta = document.getElementById('cntext-' + noteId);
+    if (ta) { try { ta.focus(); } catch (e) {} }
+  }
+}
+
+/**
+ * 发送学员回复（P29）
+ *
+ * 归属与层级由服务端校验（只能回自己的留言、只允许一层）。
+ * 但失败必须给明确提示，否则学员点了发送没反应会以为系统坏了。
+ */
+async function sendReply(noteId){
+  var ta = document.getElementById('cntext-' + noteId);
+  var btn = document.getElementById('cnsend-' + noteId);
+  if (!ta) return;
+  var text = (ta.value || '').trim();
+  if (!text) { toast2('先写点什么再发送'); try { ta.focus(); } catch (e) {} return; }
+  if (!window.AIBOOT || !AIBOOT.replyCoachNote) { toast2('离线模式下不能回复，连上服务后再试'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = '发送中…'; }
+  var ok = null;
+  try { ok = await AIBOOT.replyCoachNote(ME, noteId, text); } catch (e) { ok = null; }
+  if (btn) { btn.disabled = false; btn.textContent = '发送'; }
+  if (!ok) { toast2('发送失败，稍后再试'); return; }
+  toast2('已回复，带教主管能看到');
+  try { await renderCoachNotes(); } catch (e) {}
 }
 
 function renderTaskCard(bound){
@@ -1870,6 +2103,7 @@ boot();
 setTimeout(function(){ try{ renderTaskCard(null); }catch(e){} }, 1200);
 setTimeout(function(){ try{ renderCoachNotes(); }catch(e){} }, 1400);
 setTimeout(function(){ try{ renderGrowth(); }catch(e){} }, 1500);
+setTimeout(function(){ try{ renderHistory(); }catch(e){} }, 1600);
 
 /* 首次引导（P12）：新学员第一次打开给三步说明；点任意按钮写标记，之后不再出现 */
 function showGuideIfFirst(){

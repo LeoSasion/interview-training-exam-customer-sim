@@ -681,9 +681,20 @@ async function login(account, password) {
   ok('带教账号只看到本人带教的学员（' + coLr.length + ' 人）',
     coLr.length > 0 && coLr.length < allN && coLr.every((l) => l.coach === '周敏'));
 
-  // 匿名 / 无身份不得读到 staff 数据（enforce 下由 8d 覆盖；open 模式回落演示身份，属预期）
-  const anonRec = await call('GET', '/records');
-  ok('open 模式未带 token 时回落演示身份（这是刻意保留的本地演示路径）', anonRec.status === 200);
+  /* 匿名读成绩（P30 收紧）
+   * 原来这条断言是「open 模式无 token 也返回 200」——那意味着**任何人能拉全库成绩**：
+   * open 模式下 auth.resolve 会把无凭据请求兜底成 admin，范围过滤随之失效。
+   * 学员端恰好走无凭据路径（练习不需要登录），所以这条必须堵：
+   *   不带 learnerId → 400；带了 → 只返回该学员本人。 */
+  const anonAll = await call('GET', '/records');
+  eq('无凭据读全库成绩被拒（缺 learnerId → 400）', anonAll.status, 400);
+  const anonMine = await call('GET', '/records?learnerId=L01');
+  const anonMineItems = (data(anonMine) || {}).items || [];
+  ok('无凭据带 learnerId 只读到自己（' + anonMineItems.length + ' 条）',
+    anonMine.status === 200 && anonMineItems.length > 0 &&
+    anonMineItems.every((r) => r.learnerId === 'L01'));
+  const anonNotes = await call('GET', '/coach-notes');
+  eq('无凭据读全库辅导留言被拒（缺 learnerId → 400）', anonNotes.status, 400);
 
   /* ---- 8c-2. P5：教练动作（辅导记录 / 质检结论） ---- */
   console.log('  ─────────────────────────────────────────');

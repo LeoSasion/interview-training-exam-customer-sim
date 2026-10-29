@@ -25,7 +25,8 @@ function noteRow(r) {
   return {
     id: r.id, learnerId: r.learner_id, recordId: r.record_id || '',
     type: r.type || '一对一辅导', text: r.text || '',
-    by: r.by_name || '', byId: r.by_id || '', at: r.at || ''
+    by: r.by_name || '', byId: r.by_id || '', at: r.at || '',
+    replyTo: r.reply_to || ''
   };
 }
 
@@ -78,6 +79,16 @@ function listCoachNotes(query, user) {
 }
 
 /** 新增 / 更新一条辅导记录 */
+/** 插入一条留言（教练留言 / 学员回复共用，避免两处 SQL 各写一遍） */
+function insertNote(f) {
+  const id = String(f.id || ((f.replyTo ? 'NR-' : 'N-') + Date.now()));
+  db.prepare(`INSERT INTO coach_notes (id,learner_id,record_id,type,text,by_name,by_id,at,reply_to)
+    VALUES (?,?,?,?,?,?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET text=excluded.text, record_id=excluded.record_id, type=excluded.type`)
+    .run(id, f.learnerId, f.recordId || '', f.type, f.text, f.by, f.byId || '', nowStamp(), f.replyTo || '');
+  return noteRow(db.prepare('SELECT * FROM coach_notes WHERE id = ?').get(id));
+}
+
 function saveCoachNote(input, userId) {
   const user = requireUser(userId);
   const learnerId = String((input && input.learnerId) || '');
@@ -87,16 +98,54 @@ function saveCoachNote(input, userId) {
   if (!text) throw Object.assign(new Error('辅导记录内容不能为空'), { status: 400 });
   if (text.length > 1000) throw Object.assign(new Error('辅导记录过长（上限 1000 字）'), { status: 400 });
 
-  const id = String((input && input.id) || ('N-' + Date.now()));
-  const by = user.staff_name || user.name;
-  db.prepare(`INSERT INTO coach_notes (id,learner_id,record_id,type,text,by_name,by_id,at)
-    VALUES (?,?,?,?,?,?,?,?)
-    ON CONFLICT(id) DO UPDATE SET text=excluded.text, record_id=excluded.record_id, type=excluded.type`)
-    .run(id, learnerId, String((input && input.recordId) || ''),
-      String((input && input.type) || '一对一辅导'), text, by, user.id, nowStamp());
-
+  const row = insertNote({
+    id: input && input.id, learnerId, recordId: String((input && input.recordId) || ''),
+    type: String((input && input.type) || '一对一辅导'), text,
+    by: user.staff_name || user.name, byId: user.id
+  });
   log(user.id, 'coach.note', learnerId, text.slice(0, 60));
-  return noteRow(db.prepare('SELECT * FROM coach_notes WHERE id = ?').get(id));
+  return row;
+}
+
+/**
+ * 学员回复带教留言（P29）——辅导闭环的最后一步
+ *
+ * 之前辅导是单向的（教练写 → 学员看）。学员想说"我试了，但客户直接打断我"
+ * 却无处可发，而这句话恰恰能告诉教练「场景设计可能有问题」。
+ *
+ * ⚠️ 身份模型与 listCoachNotes 一致：学员端用 ?as= 模拟身份、走匿名 practice 档，
+ * 所以这里只能信任前端传的 learnerId。为此加三条硬校验把风险收窄：
+ *   1. learnerId 必须真实存在（防写垃圾数据）
+ *   2. replyTo 指向的留言必须属于这个学员（防跨人回复 / 伪造归属）
+ *   3. 只允许一层（不给"回复的回复"开口子，否则变成聊天室，且没有已读/未读模型）
+ */
+function replyCoachNote(input) {
+  const learnerId = String((input && input.learnerId) || '');
+  const replyTo = String((input && input.replyTo) || '');
+  if (!learnerId) throw Object.assign(new Error('缺少学员 id'), { status: 400 });
+  if (!replyTo) throw Object.assign(new Error('缺少所回复的留言 id（replyTo）'), { status: 400 });
+
+  const learner = db.prepare('SELECT id,name FROM learners WHERE id = ?').get(learnerId);
+  if (!learner) throw Object.assign(new Error('学员不存在'), { status: 400 });
+
+  const parent = db.prepare('SELECT * FROM coach_notes WHERE id = ?').get(replyTo);
+  if (!parent || parent.learner_id !== learnerId) {
+    throw Object.assign(new Error('该留言不存在或不属于你'), { status: 403 });
+  }
+  if (parent.reply_to) {
+    throw Object.assign(new Error('只能回复带教主管的留言（不支持多级回复）'), { status: 400 });
+  }
+
+  const text = String((input && input.text) || '').trim();
+  if (!text) throw Object.assign(new Error('回复内容不能为空'), { status: 400 });
+  if (text.length > 500) throw Object.assign(new Error('回复过长（上限 500 字）'), { status: 400 });
+
+  const row = insertNote({
+    learnerId, recordId: String(parent.record_id || ''), type: '学员回复', text,
+    by: learner.name || '学员', byId: '', replyTo
+  });
+  log('learner:' + learnerId, 'coach.note.reply', learnerId, text.slice(0, 60));
+  return row;
 }
 
 /** 删除辅导记录：只能删自己写的（管理员例外），且必须在可见范围内 */
@@ -278,7 +327,7 @@ function setManualScore(id, score, reason, userId, revoke) {
 
 
 module.exports = {
-  noteRow, qcRow, listCoachNotes, saveCoachNote, deleteCoachNote,
+  noteRow, qcRow, listCoachNotes, saveCoachNote, replyCoachNote, deleteCoachNote,
   QC_STATE, listQc, setQc, clearQc,
   cleanupSessions, sweepStaleSessions, setManualScore
 };

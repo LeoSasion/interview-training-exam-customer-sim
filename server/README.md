@@ -576,7 +576,8 @@ server/
 │   ├── tasks.js        任务下发 / 改期 / 改线 / 结束 / 删除（236）
 │   ├── learners.js     学员导入 / 删除 / 列表（175）
 │   ├── records.js      会话 / 逐轮 / 交卷评分 / 成绩查询（338）
-│   └── coach.js        辅导留言 / 对话质检 / 手工改分 / 会话清理（284）
+│   ├── coach.js        辅导留言（含学员回复）/ 对话质检 / 手工改分 / 会话清理（330）
+│   └── scene-draft.js  从真实客户对话生成场景草稿（P31，需真实模型）
 ├── goldset.js      金标集导入 + Pearson/MAE 校准
 ├── backup.js       SQLite 一致性快照（VACUUM INTO）+ 保留策略
 ├── mock-llm.js     本地 OpenAI 兼容模拟模型（无 Key 验证用）

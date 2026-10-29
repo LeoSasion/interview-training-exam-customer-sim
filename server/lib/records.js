@@ -236,8 +236,26 @@ function listRecords(query, user) {
     where.push("task_id IS NOT NULL AND task_id != ''");
   }
 
-  // 数据范围：非全量账号只看得到自己范围内的学员记录
-  const scopeIds = user ? scopedLearnerIds(user) : null;
+  /* 学员（practice）只能读自己（P30）：学员端要做"练习记录"列表，
+   * 但学员不是 users 记录、没有可见范围（scopedLearnerIds 对 practice 恒空），
+   * 所以必须显式带 learnerId 并跳过范围过滤——与 /coach-notes 同一套身份模型。
+   * 不带 learnerId 直接 400，避免"学员能拉全库成绩"。 */
+  /* ⚠️ 匿名（user 为 null）必须按学员处理。
+   * /records 放开到 practice 档后，匿名请求的 user 就是 null——
+   * 若只判 role === 'practice'，匿名会被当成"无范围限制的账号"，
+   * 直接返回全库成绩（实测确实发生了：不带 learnerId 返回 200 + 全部记录）。
+   * 所以这里把"没有 user"也算作学员，强制要求 learnerId。 */
+  const isLearner = !user || user.role === 'practice';
+  if (isLearner) {
+    const lid = String(query.learnerId || '');
+    if (!lid) throw Object.assign(new Error('学员查询练习记录需指定 learnerId'), { status: 400 });
+    if (!db.prepare('SELECT 1 FROM learners WHERE id = ?').get(lid)) {
+      throw Object.assign(new Error('学员不存在'), { status: 400 });
+    }
+  }
+
+  // 数据范围：非全量账号只看得到自己范围内的学员记录（学员按上面的 learnerId 精确过滤）
+  const scopeIds = (user && !isLearner) ? scopedLearnerIds(user) : null;
   if (scopeIds !== null) {
     if (!scopeIds.length) return [];
     where.push(`learner_id IN (${scopeIds.map(() => '?').join(',')})`);
@@ -299,6 +317,35 @@ function listRecords(query, user) {
  * 带教主管看自己名下学员的对话是本职，不是编辑动作。
  * 无主成绩（练习未带 learnerId）一律 403，理由见 assertRecordScope 注释。
  */
+/**
+ * 学员读自己某条成绩的逐轮对话（P30）
+ *
+ * 与 listTurns 的差别只在权限：教练走可见范围，学员走"记录归属 == 我的 learnerId"。
+ * 独立函数而不是给 listTurns 加分支，是因为 listTurns 拿的是 staff 的 userId，
+ * 学员是匿名的（c.user 为 null），签名根本对不上。
+ */
+function learnerTurns(id, learnerId) {
+  const rid = String(id == null ? '' : id);
+  const lid = String(learnerId || '');
+  if (!lid) throw Object.assign(new Error('缺少学员 id'), { status: 400 });
+  const rec = db.prepare('SELECT * FROM records WHERE id = ?').get(rid);
+  if (!rec) throw Object.assign(new Error('成绩记录不存在'), { status: 404 });
+  if ((rec.learner_id || '') !== lid) {
+    throw Object.assign(new Error('该成绩不属于你'), { status: 403 });
+  }
+  return {
+    recordId: rid,
+    learnerId: rec.learner_id || '',
+    sceneId: rec.scene_id || '',
+    score: rec.score,
+    passed: !!rec.passed,
+    at: rec.at || '',
+    dimScores: P(rec.dim_scores, {}),
+    objectives: P(rec.objectives, []),
+    turns: (P(rec.evidence, []) || []).map(evidenceTurn).filter(Boolean)
+  };
+}
+
 function listTurns(id, userId) {
   const user = requireUser(userId);
   const rid = String(id == null ? '' : id);
@@ -334,5 +381,5 @@ function deleteRecord(id, userId) {
 
 module.exports = {
   getOrCreateSession, turnRow, turn, evidenceTurn, finish,
-  listRecords, listTurns, deleteRecord
+  listRecords, listTurns, learnerTurns, deleteRecord
 };

@@ -45,7 +45,7 @@ const { listLearners, importLearners, deleteLearner } = require('./lib/learners'
 /* 会话与成绩模块已下沉到 lib/records.js（P23） */
 const {
   getOrCreateSession, turnRow, turn, evidenceTurn, finish,
-  listRecords, listTurns, deleteRecord
+  listRecords, listTurns, learnerTurns, deleteRecord
 } = require('./lib/records');
 
 function listUsers() {
@@ -109,9 +109,12 @@ function listAuditLog(query, user) {
  *   - 写辅导记录、做质检是**带教主管的本职** → 不卡 can_edit（教练没有这个权限位）
  *   这里只卡一件事：**数据可见范围**（只能读/写自己看得到的学员）。
  * ================================================================== */
+/* 场景草稿生成（P31）：从真实客户对话提炼场景，需真实模型 */
+const { generateSceneDraft } = require('./lib/scene-draft');
+
 /* 辅导与质检模块已下沉到 lib/coach.js（P23） */
 const {
-  noteRow, qcRow, listCoachNotes, saveCoachNote, deleteCoachNote,
+  noteRow, qcRow, listCoachNotes, saveCoachNote, replyCoachNote, deleteCoachNote,
   QC_STATE, listQc, setQc, clearQc,
   cleanupSessions, sweepStaleSessions, setManualScore
 } = require('./lib/coach');
@@ -220,10 +223,11 @@ module.exports = {
   listVersions, rollback, canAssign,
   submitReview, approveScene, rejectScene, offlineScene,
   getTask, saveTask, setTaskStatus, deleteTask, taskProgressOf, TASK_STATUS,
-  assertLearnerInScope, assertRecordScope, listCoachNotes, saveCoachNote, deleteCoachNote, listQc, setQc, clearQc, QC_STATE,
+  assertLearnerInScope, assertRecordScope, listCoachNotes, saveCoachNote, replyCoachNote,
+  deleteCoachNote, listQc, setQc, clearQc, QC_STATE, generateSceneDraft,
   // turnRow 一并导出：自测要断言「返回的 turns / 落库的 evidence / 逐轮接口」
   // 三处字段集完全一致，必须能拿到同一个映射函数来比对（铁律 8）
-  turnRow, turn, finish, listRecords, listTurns, deleteRecord,
+  turnRow, turn, finish, listRecords, listTurns, learnerTurns, deleteRecord,
   listLearners, listTasks, listUsers, listAuditLog, stats, cleanupSessions, sweepStaleSessions, setManualScore,
   listIdeas, createIdea, setIdeaStatus, deleteIdea, importLearners, deleteLearner, duplicateScene
 };

@@ -430,6 +430,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
         </div>
         <div class="btn-row">
           <button class="btn sm ghost" data-act="reload-scenes" title="服务端在线时，从服务端重新拉取场景库（含他人改动）">↻ 从服务端刷新</button>
+          <button class="btn sm ghost" data-act="scene-draft" title="贴一段真实客户对话，模型起草场景，再进编辑器改">✨ 从对话生成</button>
           <button class="btn sm ghost" data-act="editor-new">＋ 新建场景</button>
         </div>
       </div>
@@ -458,6 +459,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
           <p>培训运营自助维护场景：元信息 / 训练目标 / 剧本轮次 / 语音条脚本 / 评分关键词。保存后立即在「场景库」与「任务下发」中生效，无需改代码。</p>
         </div>
         <div class="btn-row">
+          <button class="btn sm ghost" data-act="scene-draft" title="贴一段真实客户对话，模型起草场景，再进编辑器改">✨ 从对话生成</button>
           <button class="btn sm ghost" data-act="editor-new">＋ 新建场景</button>
           <button class="btn sm ghost" data-act="editor-duplicate" id="edDupBtn">复制当前场景</button>
           <button class="btn sm ghost" data-act="editor-export">导出 JSON</button>
@@ -2406,6 +2408,105 @@ tr.flash td{animation:flashRow 2.2s ease-out}
   }
 
   /* 基于第一个场景造一个结构合法的空白场景 */
+  /* ============ 从真实对话生成场景草稿（P31） ============
+   *
+   * 建场景一直是运营的瓶颈：手写人设 + 5~6 轮剧本 + 每轮考察点，约 40 分钟一个。
+   * 而运营手上最多的素材是真实客户聊天记录——那些对话自带客户语气、顾虑和异议类型。
+   * 这里把它变成"粘一段对话 → 出可编辑草稿"，运营只做审核和微调。
+   *
+   * 边界：草稿只进编辑器，**不入库、不发布**。要下发仍须走「提交审核 → 审批通过」，
+   * 所以这个入口不会绕过内容治理闸门。
+   */
+  function openDraftDrawer() {
+    openDrawer('从真实对话生成场景草稿',
+      '<div class="hint" style="margin-top:0">把一段<b>真实客户聊天记录</b>粘进来（微信群、CRM、通话记录都行）。' +
+      '模型会起草场景名、客户画像、台词轮次和训练目标；生成后进编辑器，随便改。</div>' +
+      '<textarea class="txa" id="draftChat" style="min-height:190px;margin-top:10px" ' +
+      'placeholder="客户：小张啊，你们上次送的酸奶有三箱临期只剩5天，损耗谁承担？&#10;我：李店长我马上查一下&#10;客户：还有你们比隔壁贵两毛五一瓶，我一个月卖八百多瓶…"></textarea>' +
+      '<div class="hint" id="draftMsg">至少 30 字。客户原话越完整，草稿越贴近真实场景。</div>',
+      '<button class="btn sm ghost" id="draftCancel">取消</button>' +
+      '<button class="btn pri" id="draftGo">生成草稿</button>');
+    var cancel = document.getElementById('draftCancel');
+    var go = document.getElementById('draftGo');
+    if (cancel) cancel.onclick = closeDrawer;
+    if (go) go.onclick = runSceneDraft;
+  }
+
+  async function runSceneDraft() {
+    var ta = document.getElementById('draftChat');
+    var msg = document.getElementById('draftMsg');
+    var btn = document.getElementById('draftGo');
+    if (!ta || !btn || !msg) return;
+    var chat = (ta.value || '').trim();
+    if (chat.length < 30) {
+      msg.textContent = '对话太短了（至少 30 字）。贴一段完整的来回效果最好。';
+      return;
+    }
+    if (!window.ADMIN_SYNC || !ADMIN_SYNC.sceneDraft) {
+      msg.textContent = '未加载同步层，无法调用模型（请确认服务端已启动）。';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = '生成中…';
+    msg.textContent = '模型正在阅读对话并起草，通常 10–20 秒…';
+    var res = await ADMIN_SYNC.sceneDraft(chat);
+    btn.disabled = false;
+    btn.textContent = '生成草稿';
+    if (!res || !res.ok) {
+      msg.textContent = '生成失败：' + ((res && res.error) || '未知错误');
+      return;
+    }
+    var d = (res.data && res.data.draft) || null;
+    if (!d) { msg.textContent = '模型没有返回可用草稿，请换一段对话重试。'; return; }
+    showDraftResult(d, (res.data && res.data.warnings) || []);
+  }
+
+  /** 生成结果先给运营看一眼（含模型的自我提醒），确认后再进编辑器 */
+  function showDraftResult(d, warnings) {
+    var warnHtml = (warnings && warnings.length)
+      ? '<div class="tipbox" style="margin-top:12px"><b>需要你留意：</b><br>· ' + warnings.map(esc).join('<br>· ') + '</div>'
+      : '<div class="hint" style="margin-top:12px;color:#07803F">结构检查通过，没有需要提醒的问题。</div>';
+    openDrawer('草稿已生成',
+      '<div class="card" style="padding:13px">' +
+        '<div style="font-size:14.5px;font-weight:600;margin-bottom:6px">' + esc(d.name) + '</div>' +
+        '<div style="font-size:12.5px;color:var(--txt3);line-height:1.7">' + esc(d.brief) + '</div>' +
+        '<div class="kv" style="margin-top:9px"><span>客户画像</span><span>' + esc(d.persona || '—') + '</span></div>' +
+        '<div class="kv"><span>分类 / 难度 / 达标线</span><span>' + esc(d.category) + ' · ' + esc(d.difficulty) + ' · ' + d.passLine + ' 分</span></div>' +
+        '<div class="kv"><span>训练目标 / 台词</span><span>' + d.objectives.length + ' 条 / ' + d.script.length + ' 轮</span></div>' +
+      '</div>' + warnHtml +
+      '<div class="hint">草稿保存为「待审核」状态，不会直接下发。核对台词与原对话是否一致，再提交审核。</div>',
+      '<button class="btn sm ghost" id="draftBack">重新生成</button>' +
+      '<button class="btn pri" id="draftAdopt">放进编辑器</button>');
+    var back = document.getElementById('draftBack');
+    var adopt = document.getElementById('draftAdopt');
+    if (back) back.onclick = openDraftDrawer;
+    if (adopt) adopt.onclick = function () { adoptDraft(d); };
+  }
+
+  /** 把草稿变成场景对象并进编辑器（沿用「新建场景」同一条路径，保证状态一致） */
+  function adoptDraft(d) {
+    var ns = blankScene();
+    ns.name = d.name || ns.name;
+    ns.brief = d.brief || '';
+    /* 场景对象没有 persona 字段，客户画像放 subtitle——渲染端与编辑器都读它 */
+    ns.subtitle = d.persona ? ('客户画像：' + d.persona) : (ns.subtitle || '');
+    ns.category = d.category || ns.category;
+    ns.difficulty = d.difficulty || ns.difficulty;
+    ns.passLine = (typeof d.passLine === 'number') ? d.passLine : ns.passLine;
+    ns.avatarText = String(ns.name || '新').slice(0, 1) || '新';
+    ns.objectives = (d.objectives || []).map(function (o) { return { text: o.text, dim: o.dim }; });
+    ns.script = (d.script || []).map(function (x) { return { t: x.t, v: x.v }; });
+    ns.voicePool = d.voicePool || [];
+    SCENES.push(ns);
+    setAudit(ns.id, { status: 'draft', submitBy: '', submitAt: '', rejectReason: '' });
+    STORE.versions[ns.id] = [];
+    ED.curId = ns.id; ED.dirty = true;
+    persist();
+    closeDrawer();
+    goto('editor');
+    toast('草稿已放入编辑器「' + ns.name + '」，改完记得提交审核');
+  }
+
   function blankScene() {
     var tpl = SCENES[0] || {};
     return {
@@ -3256,6 +3357,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     }
 
     /* ============ 场景编辑器 ============ */
+    if (act === 'scene-draft') { openDraftDrawer(); return; }
     if (act === 'editor-new') {
       var ns = blankScene();
       SCENES.push(ns);

@@ -232,6 +232,10 @@ on('GET', /^\/api\/v1\/scenes$/, async (c) => ({ items: svc.listScenes(c.query) 
 on('GET', /^\/api\/v1\/scenes\/published$/, async () => ({
   items: svc.listPublishedScenes(), version: 'published'
 }), 'practice');
+/* 场景草稿生成（P31）：粘贴真实客户对话 → 可编辑的场景草稿。
+ * ⚠️ 必须排在 /scenes/:id 之前（铁律 13：路由按注册顺序首个匹配）。
+ * 只生成草稿、**不落库**——运营在编辑器改完仍要走提交审核，绕过不了 canAssign 闸门。 */
+on('POST', /^\/api\/v1\/scenes\/draft$/, async (c) => svc.generateSceneDraft(c.body, c.user.id));
 on('GET', /^\/api\/v1\/scenes\/([^/]+)$/, async (c) => {
   const s = svc.getScene(c.params[0]);
   if (!s) throw Object.assign(new Error('场景不存在'), { status: 404 });
@@ -289,8 +293,16 @@ on('DELETE', /^\/api\/v1\/tasks\/([^/]+)$/, async (c) => svc.deleteTask(c.params
  * 这两件事是**带教主管的本职**，所以不卡 can_edit / can_review，
  * 只要求可解析出身份（staff），范围校验在 service 层按数据可见范围做。 */
 /* 学员也能读自己的带教留言（P21）：辅导要闭环，学员必须看得到教练写了什么 */
-on('GET', /^\/api\/v1\/coach-notes$/, async (c) => svc.listCoachNotes(c.query, c.user), 'practice');
+on('GET', /^\/api\/v1\/coach-notes$/, async (c) => {
+  requireLearnerIdForAnonymous(c);
+  return svc.listCoachNotes(c.query, c.user);
+}, 'practice');
 on('POST', /^\/api\/v1\/coach-notes$/, async (c) => svc.saveCoachNote(c.body, c.user.id));
+/* 学员回复带教留言（P29）：辅导闭环的最后一步。
+ * 走独立路由而不是把 /coach-notes 放开给 practice —— 后者是 staff 写入接口，
+ * 匿名放开等于任何人可代任意学员写辅导记录。这里只允许"回复已有留言"，
+ * 归属由服务端按 replyTo 反查校验，越权面收窄到最小。 */
+on('POST', /^\/api\/v1\/learner\/coach-notes\/reply$/, async (c) => svc.replyCoachNote(c.body), 'practice');
 on('DELETE', /^\/api\/v1\/coach-notes\/([^/]+)$/, async (c) => svc.deleteCoachNote(c.params[0], c.user.id));
 on('GET', /^\/api\/v1\/qc$/, async (c) => ({ items: svc.listQc(c.user) }));
 on('POST', /^\/api\/v1\/records\/([^/]+)\/qc$/, async (c) => {
@@ -318,7 +330,22 @@ on('DELETE', /^\/api\/v1\/records\/([^/]+)$/, async (c) => svc.deleteRecord(c.pa
 /* ---- 数据查询（全部按登录身份的数据范围过滤） ----
  * 五个列表接口统一分页口径（P9）：不带 limit/offset 返回全量（audit 默认最近 100 条）；
  * 带则校验 limit∈[1,500] / offset>=0，返回 { items, total, limit, offset, hasMore }。 */
-on('GET', /^\/api\/v1\/records$/, async (c) => svc.listRecords(c.query, c.user));
+/* 学员也要能读自己的练习记录（P30）。
+ * ⚠️ 无凭据请求在 open 模式下会被 auth.resolve 兜底成 admin（既有设计，方便演示），
+ * 于是"匿名"拿到的其实是全量权限——学员端恰好走无凭据路径，前端一旦漏传 learnerId，
+ * 就会把全库成绩渲到某个学员屏幕上。这里加一道硬闸：无凭据必须指明学员。 */
+function requireLearnerIdForAnonymous(c) {
+  if (c.authSource === 'fallback' && !c.query.learnerId) {
+    throw Object.assign(new Error('无凭据请求需指定 learnerId（学员只能读自己）'), { status: 400 });
+  }
+}
+on('GET', /^\/api\/v1\/records$/, async (c) => {
+  requireLearnerIdForAnonymous(c);
+  return svc.listRecords(c.query, c.user);
+}, 'practice');
+/* 学员读自己某条成绩的逐轮对话：匿名 practice 档，按记录归属校验 */
+on('GET', /^\/api\/v1\/learner\/records\/([^/]+)\/turns$/,
+  async (c) => svc.learnerTurns(c.params[0], c.query.learnerId), 'practice');
 /* 学员批量导入（P13）：CSV → learners，零依赖（Excel 另存为 CSV 即可） */
 on('DELETE', /^\/api\/v1\/admin\/learners\/([^/]+)$/, async (c) =>
   svc.deleteLearner(c.params[0], c.user && c.user.id));

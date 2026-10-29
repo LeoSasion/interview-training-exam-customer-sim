@@ -153,6 +153,64 @@
   }
 
   /**
+   * 学员端：回复带教留言（P29）
+   *
+   * 走独立路由 /learner/coach-notes/reply —— 学员身份是 ?as= 模拟的匿名 practice，
+   * 服务端按 replyTo 反查归属校验（只能回复自己的留言、只允许一层）。
+   * @returns {object|null} 成功返回新留言，失败返回 null（调用方给明确提示）
+   */
+  async function replyCoachNote(learnerId, replyTo, text) {
+    if (!learnerId || !replyTo || !text) return null;
+    try {
+      if (state.status === 'unknown') await probe();
+      if (state.status !== 'live') return null;
+      var r = await req('/learner/coach-notes/reply', {
+        method: 'POST',
+        body: JSON.stringify({ learnerId: learnerId, replyTo: replyTo, text: text })
+      }, 12000);
+      if (r.body && r.body.ok) return r.body.data || null;
+    } catch (e) { /* 静默降级：回复失败不影响练习 */ }
+    return null;
+  }
+
+  /**
+   * 学员端：读自己某条成绩的逐轮对话（P30）
+   *
+   * 独立路由 /learner/records/:id/turns —— 学员匿名，服务端按记录归属校验。
+   * @returns {object|null} null = 拉取失败
+   */
+  async function learnerTurns(recId, learnerId) {
+    if (!recId || !learnerId) return null;
+    try {
+      if (state.status === 'unknown') await probe();
+      if (state.status !== 'live') return null;
+      var r = await req('/learner/records/' + encodeURIComponent(recId) +
+        '/turns?learnerId=' + encodeURIComponent(learnerId), { method: 'GET' }, 8000);
+      if (r.body && r.body.ok) return r.body.data || null;
+    } catch (e) { /* 静默降级 */ }
+    return null;
+  }
+
+  /**
+   * 学员端：读自己的练习记录（P30）
+   *
+   * 服务端 /records 对 staff 有可见范围约束，学员走 practice 档也要带 learnerId。
+   * @returns {Array|null} null = 拉取失败（与"确实没练过"的空数组区分）
+   */
+  async function records(learnerId, limit) {
+    if (!learnerId) return null;
+    try {
+      if (state.status === 'unknown') await probe();
+      if (state.status !== 'live') return null;
+      var r = await req('/records?learnerId=' + encodeURIComponent(learnerId) +
+        '&limit=' + (limit || 20), { method: 'GET' }, 8000);
+      if (r.body && r.body.ok) return r.body.data.items || [];
+    } catch (e) { /* 静默降级 */ }
+    return null;
+  }
+
+
+  /**
    * 学员端：读「已发布场景池」（此接口同样允许匿名）
    * 只回学员端渲染与判分需要的字段（服务端已剥离 audit/versions/owner/publish）。
    * @returns {Array|null} 服务端不可用 / 未就绪时返回 null，调用方保留本地种子场景
@@ -200,7 +258,9 @@
   }
 
   root.AIBOOT = {
-    probe: probe, turn: turn, finish: finish, api: api, tasks: tasks, scenes: scenes, coachNotes: coachNotes,
+    probe: probe, turn: turn, finish: finish, api: api, tasks: tasks, scenes: scenes,
+    coachNotes: coachNotes, replyCoachNote: replyCoachNote, records: records,
+    learnerTurns: learnerTurns,
     asr: asr, asrAvail: asrAvail,
     newSessionId: newSessionId,
     get status() { return state.status; },

@@ -73,6 +73,11 @@
 .note-item:last-child{border-bottom:0}
 .note-item .bd{flex:1;min-width:0}
 .note-item .bt{font-size:13px;line-height:1.7;white-space:pre-wrap}
+/* 学员回复（P29）：浅色块 + 左侧强调线，和教练的留言区分开 */
+.note-rep{margin-top:9px;padding:8px 10px;border-radius:8px;background:var(--acc-soft);
+  border-left:2px solid var(--acc)}
+.note-rep .bt{font-size:12.5px;color:var(--txt)}
+.note-rep .bm{font-size:11px;color:var(--txt3);margin-top:3px}
 .note-item .bm{font-size:11.5px;color:var(--txt3);margin-top:5px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 
 .tipbox{font-size:12.5px;line-height:1.75;color:var(--txt2);background:var(--panel2);
@@ -1429,14 +1434,28 @@
     /* --- 辅导记录 --- */
     var myNotes = notes.filter(function (n) { return n.learnerId === lid; });
     var myId = IDENT ? IDENT.id : '';
-    var noteHtml = myNotes.length
-      ? myNotes.slice().reverse().map(function (n) {
-        // 只有本人写的（或管理员）才给删除按钮
+    /* 学员回复（P29）：回复也是一条留言（type=学员回复，replyTo 指向父留言），
+       挂到对应留言下面并高亮——这是教练最需要看的东西：
+       学员说"我试了但不管用"，往往意味着场景/话术设计本身要调。 */
+    var repsBy = {};
+    myNotes.forEach(function (n) {
+      if (n.replyTo) (repsBy[n.replyTo] = repsBy[n.replyTo] || []).push(n);
+    });
+    var parentNotes = myNotes.filter(function (n) { return !n.replyTo; });
+    var noteHtml = parentNotes.length
+      ? parentNotes.slice().reverse().map(function (n) {
         var canDel = !n.byId || n.byId === myId || (IDENT && IDENT.role === 'admin');
+        var reps = (repsBy[n.id] || []).slice().sort(function (a, b) {
+          return String(a.at || '') < String(b.at || '') ? -1 : 1;
+        }).map(function (r) {
+          return '<div class="note-rep"><div class="bt">' + esc(r.text) + '</div>' +
+            '<div class="bm"><span>' + esc(r.by) + ' · ' + esc(fmtDate(r.at)) + '</span>' +
+            '<span class="tag a">学员回复</span></div></div>';
+        }).join('');
         return '<div class="note-item"><div class="bd"><div class="bt">' + esc(n.text) + '</div>' +
           '<div class="bm"><span>' + esc(n.by) + ' · ' + esc(n.at) + '</span><span class="tag">' + esc(n.type) + '</span>' +
           (canDel ? '<button class="btn sm ghost" data-del-note="' + esc(n.id) + '">删除</button>' : '') +
-          '</div></div></div>';
+          '</div>' + reps + '</div></div>';
       }).join('')
       : '<div class="muted" style="font-size:12.5px">暂无辅导记录</div>';
 
