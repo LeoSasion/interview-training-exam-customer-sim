@@ -721,6 +721,18 @@ const LT = win.TRAIN;
   ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
   ok(svcSrcP17.indexOf('sceneMissing,') >= 0, '返回里带 sceneMissing 标记（前端可说明原因）');
 
+  /* ---- P27：学员可提前结束练习 ---- */
+  ok(learnSrc.indexOf('function endPractice(') >= 0, '学员可提前结束练习（此前只能刷新，成绩丢失）');
+  ok(learnSrc.indexOf('endPractice()') >= 0 && learnSrc.indexOf('再点一次右上角') >= 0,
+    '对话页右上角有结束入口，且二次点击确认（不用 confirm——预览面板会拦）');
+
+  /* ---- P28：评分用的客户发言必须是学员实际看到的那句 ---- */
+  ok(learnSrc.indexOf('customerText: lastCustomerText ||') >= 0,
+    '评分上下文用实际显示的客户发言（客户回复由模型生成，剧本原文会与其错位）');
+  ok(learnSrc.indexOf('customerText: curScene().script[want].t') < 0,
+    '不再把剧本原文当客户发言传给评分（第二轮起会与屏幕内容不一致）');
+  ok(learnSrc.indexOf("aiChannel === 'mock'") >= 0, '报告页按通道如实标注（模拟通道不写成 AI 评分）');
+
   /* ---- P26：三端口径一致性（参赛自查报告里的 P0/P1）---- */
   /* 每块自己读需要的源文件（P26）：跨块复用 const 会在"块插到前面"时踩 TDZ，
      这个坑已经踩过 7 次，规矩定死——本块用到的文件都在本块开头读。 */

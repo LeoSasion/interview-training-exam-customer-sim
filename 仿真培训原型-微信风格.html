@@ -1235,7 +1235,13 @@ async function judgeInner(text){
         sceneId: curScene().id,
         channel: voiceMode ? 'voice' : 'text',
         learnerText: text,
-        customerText: curScene().script[want] ? curScene().script[want].t : ''
+        /* ⚠️ 必须传「学员实际看到的那句」（P28）
+         * 客户回复是模型生成的（npcReply），存在 lastCustomerText 里；
+         * 原来这里传的是剧本原文 script[want].t —— 从第二轮起，
+         * 模型评分依据的"客户发言"和学员屏幕上显示的就**不是同一句**，
+         * 会出现"客户明明说了 X，为什么说我没回应"的错判。
+         * 优先用实际显示的，没有才回落剧本。 */
+        customerText: lastCustomerText || (curScene().script[want] ? curScene().script[want].t : '')
       });
       if(r.ok){
         const d = r.data;
