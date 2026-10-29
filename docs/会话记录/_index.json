@@ -1,0 +1,38 @@
+[
+  {
+    "name": "2026-10-05_2026-10-06_03d3f74e.md",
+    "f": "03d3f74e-f92b-4a3b-b180-f1a891e0fd94.jsonl",
+    "startD": "2026-10-05",
+    "endD": "2026-10-06",
+    "userCount": 25,
+    "turns": 992,
+    "firstQuery": "@image#1:c3aa6fb31017a13cf1a6ac26af71a788.png 这种系统通常叫什么？有没有比较好的开源项目？借鉴一下，发一下它们的预览图或网页 给我看看"
+  },
+  {
+    "name": "2026-10-29_2026-10-29_31e4ae40.md",
+    "f": "31e4ae40-a3ac-4f26-82d7-0e8902137ae2.jsonl",
+    "startD": "2026-10-29",
+    "endD": "2026-10-29",
+    "userCount": 1,
+    "turns": 4,
+    "firstQuery": "整理一下项目文件、文档 的归类，清理垃圾。（包括内容的精简、删除啰嗦或已过期的事实）"
+  },
+  {
+    "name": "2026-10-07_2026-10-27_56438846.md",
+    "f": "56438846-e2a0-492b-93d8-483580fb38d7.jsonl",
+    "startD": "2026-10-07",
+    "endD": "2026-10-27",
+    "userCount": 35,
+    "turns": 836,
+    "firstQuery": "继续完善开发这套系统"
+  },
+  {
+    "name": "2026-10-06_2026-10-07_cee0f2de.md",
+    "f": "cee0f2de-1654-47b7-b02c-7517e8a818f5.jsonl",
+    "startD": "2026-10-06",
+    "endD": "2026-10-07",
+    "userCount": 4,
+    "turns": 72,
+    "firstQuery": "本地仓库在 D:\\wbproject\\新员工培训系统，已提交 5340a04、标签 v7.0.0、52 个文件，工作区干净，\n远端已预置为 git@github.com:LeoSasion/newhire-training-sim.git。\n请先读 .workbuddy/memory/交接-GitHub远端推送.md，然后帮我把仓库推到 GitHub。\n注意：GitHub 连接器是无建仓权限的集成令牌（create_repository 会 403 Resource not accessible by integration），\n且工具时有时无；代码内容只能走 git 推送，不能走 push_files（会把 PNG 重编码损坏）。目前缺的是 git 凭据。"
+  }
+]

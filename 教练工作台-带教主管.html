@@ -400,7 +400,11 @@
   var SYNC = window.ADMIN_SYNC || null;   // 可选加载：服务未启动时为 null，全部逻辑自动走离线
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return [].slice.call(document.querySelectorAll(s)); };
-  var NOW = new Date('2026/10/05 20:00');
+  /* 演示"今天"（P26）：与学员端、管理端共用 TRAIN.helpers.nowDate()。
+     此前这里写死 2026/10/05、学员端写死 2026-10-05、管理端用真实时间，
+     同一个任务在两页会说"剩 5 天"和"已逾期 19 天"。 */
+  var NOW = (window.TRAIN && TRAIN.helpers && TRAIN.helpers.nowDate)
+    ? TRAIN.helpers.nowDate() : new Date();
 
   /* ---------------- 身份与数据范围 ----------------
    * 离线时用演示教练（周敏）跑通全部界面；服务端在线时身份以 **token / 服务端返回** 为准，
@@ -442,9 +446,13 @@
     var cls = key === 'red' ? 'r' : (key === 'yellow' ? 'a' : 'g');
     return '<span class="tag ' + cls + '"><i class="dot ' + cls + '"></i>' + r.label + '</span>';
   }
+    /* 统一口径（P26）：只比日期不比时分。此前管理端用毫秒差 Math.floor、
+     * 学员端用日期差，同一个「截止 10-10 18:00」的任务会显示 4 天 / 5 天。 */
   function daysLeft(dueStr) {
     var d = new Date(String(dueStr).replace(/-/g, '/'));
-    var diff = Math.ceil((d - NOW) / 86400000);
+    var dueDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var today = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+    var diff = Math.round((dueDay - today) / 86400000);
     if (diff < 0) return { text: '已逾期 ' + Math.abs(diff) + ' 天', cls: 'r', overdue: true };
     if (diff === 0) return { text: '今日截止', cls: 'a', overdue: false };
     return { text: '剩余 ' + diff + ' 天', cls: '', overdue: false };
@@ -514,9 +522,15 @@
     $('#srvTag').textContent = !SYNC ? '未加载同步层' : (online ? (SYNC.loggedIn ? '服务端已连接 · 已登录' : '服务端已连接 · 演示身份') : '离线模式（本地数据）');
     $('#srvTag').className = 'tag ' + (online ? (SYNC.loggedIn ? 'g' : 'b') : '');
 
-    var who = IDENT ? (IDENT.name || IDENT.staffName) : COACH;
+    /* 右上角身份（P26）：此前 name 和 role 都可能是「系统管理员」，
+       拼出来是「系统管理员 · 系统管理员」。同名时改用账号区分。 */
+    var person = IDENT ? (IDENT.staffName || IDENT.name) : COACH;
     var role = IDENT ? ({ admin: '系统管理员', operator: '培训运营', reviewer: '带教主管', coach: '区域教练' }[IDENT.role] || IDENT.role) : '区域教练';
-    setWho(IDENT ? (IDENT.staffName || IDENT.name) : COACH, who + ' · ' + role);
+    var acct = IDENT && IDENT.account ? IDENT.account : '';
+    var whoLabel = (person === role)
+      ? (acct ? role + ' · ' + acct : role)
+      : (person + ' · ' + role);
+    setWho(person, whoLabel);
 
     $('#btnLogin').hidden = !(online && !SYNC.loggedIn);
 
@@ -854,13 +868,28 @@
     $('#ovSub').textContent = '演示数据基准日 ' + fmtDate(T.meta.updatedAt) + ' · 你带教 ' + myLearners().length +
       ' 名学员 · 进行中任务 ' + running.length + ' 个';
 
+    /* 全体口径算一次，KPI 里两处复用（P26） */
+    var ov = H.overview();
+
+    /* 达标率与全体的对照（P26）
+     * 此前是硬编码 `passRate >= 70 ? 高于 : 低于整体水平` —— 既没跟整体比，
+     * 阈值（70）也和实际整体（68%）无关，评委一问就露。现在真算差值。 */
+    var passNote = (function () {
+      var all = ov.passRate;
+      var diff = passRate - all;
+      if (Math.abs(diff) <= 1) return '与全体持平（全体 ' + all + '%）';
+      return (diff > 0 ? '<b class="up">高于</b>全体 ' : '<b class="down">低于</b>全体 ') +
+        Math.abs(diff) + ' 个百分点（全体 ' + all + '%）';
+    })();
+
     $('#kpiRow').innerHTML = [
       kpi('我的学员', myLearners().length, '人',
         '其中高风险 <b class="down"' + (risk.red ? ' data-kpi-go="students:red" style="cursor:pointer;text-decoration:underline dotted" title="只看高风险"' : '') + '>' + risk.red + '</b> 人',
         'students:all'),
       kpi('累计练习', recs.length, '场', '人均 ' + (myLearners().length ? (recs.length / myLearners().length).toFixed(1) : 0) + ' 场'),
-      kpi('平均分', avg, '分', '全体均分 ' + H.overview().avgScore + ' 分'),
-      kpi('达标率', passRate, '%', passRate >= 70 ? '高于整体水平' : '低于整体水平'),
+      /* 主数是「我这组」，脚注明确写「全体」——两个数字是刻意对照，不是口径打架 */
+      kpi('平均分', avg, '分', '本组均分 · 全体 ' + ov.avgScore + ' 分'),
+      kpi('达标率', passRate, '%', passNote),
       kpi('待完成人次', pending, '人次', overdue ? '其中 <b class="down">' + overdue + '</b> 人次已逾期' : '暂无逾期')
     ].join('');
 

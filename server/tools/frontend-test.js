@@ -716,6 +716,28 @@ const LT = win.TRAIN;
   ok(svcSrcP17.indexOf('const passLine = (scene && scene.passLine) || 60;') >= 0, '达标线兜底 60（不因场景缺失而崩）');
   ok(svcSrcP17.indexOf('sceneMissing,') >= 0, '返回里带 sceneMissing 标记（前端可说明原因）');
 
+  /* ---- P26：三端口径一致性（参赛自查报告里的 P0/P1）---- */
+  /* 每块自己读需要的源文件（P26）：跨块复用 const 会在"块插到前面"时踩 TDZ，
+     这个坑已经踩过 7 次，规矩定死——本块用到的文件都在本块开头读。 */
+  const appSrcP26 = fs.readFileSync(path.join(ROOT, 'data/app-data.js'), 'utf8');
+  const adminSrcP26 = fs.readFileSync(path.join(ROOT, '管理后台-仿真培训.html'), 'utf8');
+  ok(appSrcP26.indexOf('nowDate: function ()') >= 0 && appSrcP26.indexOf('demoNow') >= 0,
+    '共享数据源提供统一的"今天"（三端必须共用，否则同一任务说法不一）');
+  ok(learnSrc.indexOf('TRAIN.helpers.nowDate') >= 0 && learnSrc.indexOf('const today = new Date(2026,9,5)') < 0,
+    '学员端剩余天数走统一时间（不再硬编码 2026-10-05）');
+  const coachSrcP26 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
+  ok(coachSrcP26.indexOf("var NOW = new Date('2026/10/05 20:00')") < 0, '教练台不再写死 NOW');
+  ok(coachSrcP26.indexOf('TRAIN.helpers.nowDate') >= 0, '教练台 NOW 取自共享时间');
+  ok(adminSrcP26.indexOf('TRAIN.helpers.nowDate') >= 0, '管理端截止判断取自共享时间');
+  ok(coachSrcP26.indexOf("passRate >= 70 ? '高于整体水平'") < 0,
+    '教练台达标率不再硬编码阈值（改为与真实全体对比）');
+  ok(coachSrcP26.indexOf('var ov = H.overview();') >= 0, '教练台 KPI 复用同一份全体口径');
+  ok(appSrcP26.indexOf("version: 'V1.0'") >= 0, '版本号统一为 V1.0（原先页面 v0.2 / package 14.0.0 三套）');
+  ok(coachSrcP26.indexOf('person === role') >= 0, '教练台右上角身份不再出现"角色 · 角色"重复');
+  const bridgeSrcP26 = fs.readFileSync(path.join(ROOT, 'assets/ai-bridge.js'), 'utf8');
+  ok(bridgeSrcP26.indexOf('isMock') >= 0, 'AI 状态角标区分 mock 与真实模型（不再把 mock 说成已启用）');
+  ok(learnSrc.indexOf("aiChannel === 'mock'") >= 0, '报告页按通道如实标注（模拟通道不写成 AI 评分）');
+
   /* ---- P24：报告页「和上次相比」+ 校准的 mock 判定 ---- */
   ok(learnSrc.indexOf('const prevSame') >= 0 && learnSrc.indexOf('和上次相比') >= 0,
     '报告页有「和上次相比」（同场景口径，第一次练不显示）');

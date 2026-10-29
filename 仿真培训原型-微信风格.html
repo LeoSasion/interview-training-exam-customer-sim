@@ -833,7 +833,11 @@ function renderTasks(){
 /* 相对原型演示基准日 2026-10-05 计算剩余天数（负数为已逾期） */
 function leftDays(dueAt){
   const due = new Date(String(dueAt).replace(/-/g,'/'));
-  const today = new Date(2026,9,5);      // 基准日：2026-10-05
+  /* 基准日走 TRAIN.helpers.nowDate()（P26）——与教练台、管理端同一个"今天"，
+     否则同一任务学员端说"剩 5 天"、管理端说"已逾期 19 天"。 */
+  const now = (window.TRAIN && TRAIN.helpers && TRAIN.helpers.nowDate)
+    ? TRAIN.helpers.nowDate() : new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
   return Math.round((dueDay - today) / 86400000);
 }
@@ -1141,6 +1145,10 @@ function sendText(){
 
 /* AI 通道状态：'unknown' 未探测 / 'off' 离线走本地引擎 / 'on' 走服务端 AI */
 let aiMode = 'unknown';
+/* 评分通道细分（P26）：'llm' 真实模型 / 'mock' 本地模拟 / 'keyword' 服务端关键词 / 'unknown'
+   只看 aiMode 会把 mock 说成"AI 评分"，评委问"接的哪个模型"就答不上。 */
+let aiChannel = 'unknown';
+let aiModelName = '';
 let aiSessionId = null;      // 与后端会话一一对应，用于多轮上下文与落库
 let aiLastTurn = null;       // 最近一轮服务端返回（用于报告页展示模型点评/置信度）
 let aiFeedback = {};         // 轮次 -> 模型点评
@@ -1156,6 +1164,13 @@ if(window.AIBOOT){
   AIBOOT.probe().then(ok=>{
     aiMode = ok ? 'on' : 'off';
     if(ok){
+      /* 判据与后端一致：baseUrl/model 含本地地址或 mock 字样 → 模拟通道 */
+      const info = AIBOOT.info || {};
+      const llm = info.llm || {};
+      const isMock = /localhost|127\.0\.0\.1|0\.0\.0\.0|mock/i
+        .test(String(llm.baseUrl || '') + ' ' + String(llm.model || ''));
+      aiChannel = llm.configured ? (isMock ? 'mock' : 'llm') : 'keyword';
+      aiModelName = llm.model || '';
       aiSessionId = AIBOOT.newSessionId();
       console.log('[AI] 已连接服务端：' + AIBOOT.base + '，本场会话 ' + aiSessionId);
     } else {
@@ -1635,11 +1650,19 @@ function finish(){
   })();
 
   // AI 通道说明条：让学员/评审一眼看出本场是真实模型评分还是降级
-  const srcLine = aiMode === 'on'
-    ? (aiLastTurn
-        ? `本场为 <b>AI 评分</b>（模型置信度 ${(aiLastTurn.confidence!=null?(aiLastTurn.confidence*100).toFixed(0)+'%':'-')}）${aiLastTurn.source==='llm'?'':' · 服务端已降级为关键词引擎'}`
-        : '本场为 <b>AI 评分</b>通道')
-    : '本场为 <b>本地关键词引擎</b>评分（离线模式），未连接 AI 服务';
+  /* 评分通道如实说明（P26）：mock 不能写成"AI 评分"，否则被追问模型名时无法自圆 */
+  const srcLine = (function () {
+    if (aiMode !== 'on') return '本场为 <b>本地关键词引擎</b>评分（离线模式），未连接评分服务';
+    if (aiChannel === 'llm') {
+      return '本场为 <b>AI 评分</b>' + (aiModelName ? '（模型 ' + aiModelName + '）' : '') +
+        (aiLastTurn && aiLastTurn.confidence != null
+          ? '，置信度 ' + (aiLastTurn.confidence * 100).toFixed(0) + '%' : '');
+    }
+    if (aiChannel === 'mock') {
+      return '本场为 <b>模拟评分通道</b>（本地 mock，用于演示链路），非真实模型评分';
+    }
+    return '本场为 <b>服务端关键词引擎</b>评分（未配置模型 Key）';
+  })();
 
   $('repBody').innerHTML = `
     <div class="rcard score-hero">

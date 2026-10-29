@@ -234,13 +234,26 @@
     document.body.appendChild(el);
 
     window.AIBOOT.probe().then(function (ok) {
-      var i = window.AIBOOT.info;
-      if (ok) {
-        el.textContent = i.llm.configured ? '● AI 评分已启用' : '● 服务已连接（降级模式）';
-        el.style.background = i.llm.configured ? 'rgba(7,193,96,.88)' : 'rgba(242,169,59,.9)';
-      } else {
+      var i = window.AIBOOT.info || {};
+      var llm = i.llm || {};
+      if (!ok) {
         el.textContent = '● 离线模式（本地评分）';
         el.style.background = 'rgba(0,0,0,.62)';
+        return;
+      }
+      /* 四种通道要分清楚（P26）：只看 configured 会把本地 mock 说成"AI 已启用"，
+         评委一问"接的哪个模型"就露。判据与后端一致：baseUrl/model 含本地地址或 mock 字样。 */
+      var isMock = /localhost|127\.0\.0\.1|0\.0\.0\.0|mock/i
+        .test(String(llm.baseUrl || '') + ' ' + String(llm.model || ''));
+      if (llm.configured && !isMock) {
+        el.textContent = '● AI 评分已启用' + (llm.model ? ' · ' + llm.model : '');
+        el.style.background = 'rgba(7,193,96,.88)';
+      } else if (isMock) {
+        el.textContent = '○ 模拟评分通道（本地 mock）';
+        el.style.background = 'rgba(242,169,59,.9)';
+      } else {
+        el.textContent = '● 服务已连接 · 关键词评分';
+        el.style.background = 'rgba(242,169,59,.9)';
       }
     });
   }

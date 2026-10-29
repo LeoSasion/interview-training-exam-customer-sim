@@ -1,8 +1,8 @@
 {
   "name": "newhire-sim-training",
-  "version": "14.0.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "新员工仿真培训系统 —— 纯前端离线原型 + 零依赖 Node 服务层（真实大模型双角色评分 / SQLite 落库 / 任务闭环 / 权限与数据范围 / 带教辅导与对话质检 / 场景发布池热更新 / 逐轮对话回读 / 金标集校准 / 本地 ASR·TTS 语音 / 能力雷达与成长路径 / 学员批量导入 / 移动端 e2e）",
+  "description": "新员工仿真培训系统 V1.0 —— 微信风格销售话术人机对练",
   "engines": {
     "node": ">=22.5"
   },
