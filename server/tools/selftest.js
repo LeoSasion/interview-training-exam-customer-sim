@@ -421,8 +421,13 @@ async function login(account, password) {
       (au1.items || []).length + '/' + au1.total);
     const au2 = data(await call('GET', '/audit?limit=50&offset=100', undefined, { token: adm.token })) || {};
     const a1 = (au1.items || []).map((x) => x.id), a2 = (au2.items || []).map((x) => x.id);
-    ok('审计翻页与首页无重叠（offset=100 起的第二页）',
-      a1.length > 0 && a2.length > 0 && a2.every((x) => a1.indexOf(x) < 0));
+    if ((au1.total || 0) <= 100) {
+      // 刚 reset 过的库审计只有几十条，offset=100 必然取空——这是数据量问题，不是翻页坏了
+      skip('审计翻页与首页无重叠', '审计记录仅 ' + au1.total + ' 条，不足 100 条无法验证翻页（reset 后常见）');
+    } else {
+      ok('审计翻页与首页无重叠（offset=100 起的第二页）',
+        a1.length > 0 && a2.length > 0 && a2.every((x) => a1.indexOf(x) < 0));
+    }
     // 老实现的坑：先 LIMIT 再 JS 过滤 → 带范围账号看到少于 limit 的行且 total 语义缺失。
     // SQL 化修正后：条数 === total，且范围（dept）账号的 total 不超过全量。
     const auc = data(await call('GET', '/audit?limit=500', undefined, { token: cch.token })) || {};

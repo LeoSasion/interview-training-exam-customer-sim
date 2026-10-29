@@ -479,7 +479,12 @@ const LT = win.TRAIN;
     '每轮同时给出「学员作答」与「本轮得分」');
   ok(realHtml.indexOf('<details class="refd">') >= 0 && realHtml.indexOf('<details class="refd" open>') < 0,
     '有真实作答时参考表达默认收起（把版面让给学员的话）');
-  ok(realHtml.indexOf(demoScene.objectives[0].text) >= 0, '每轮带上该轮训练目标');
+  /* ⚠️ 这里必须用 realScene 的目标：realHtml 是拿 realScene 渲染的。
+     原来写 demoScene（固定 s1），只有在取到的记录恰好属于 s1 时才过——
+     换了记录就假红。断言口径也得跟渲染口径一致。 */
+  const realObjText = (realScene.objectives && realScene.objectives[0] && realScene.objectives[0].text) || '';
+  ok(realObjText && realHtml.indexOf(realObjText) >= 0,
+    '每轮带上该轮训练目标（' + (realScene.id || '') + '）');
 
   /* ------------------------------------------------------------ *
    * 3f. 审计翻页真接口往返（P9）：同步层 auditLog({limit,offset}) →

@@ -520,7 +520,11 @@ body{
             <span class="title" id="chatTitle">张经理</span>
             <div class="side-btn" onclick="startCall()" title="发起微信语音通话">
               <svg width="22" height="22" viewBox="0 0 24 24"><path d="M6.2 3.5h3.1l1.6 4-2 1.3a12 12 0 0 0 6.3 6.3l1.3-2 4 1.6v3.1c0 1-.8 1.8-1.8 1.7C11 19.1 4.9 13 4.5 5.3c-.1-1 .7-1.8 1.7-1.8z" fill="currentColor"/></svg>
-              <svg width="20" height="20" viewBox="0 0 24 24" style="margin-left:2px"><circle cx="5" cy="12" r="1.9" fill="currentColor"/><circle cx="12" cy="12" r="1.9" fill="currentColor"/><circle cx="19" cy="12" r="1.9" fill="currentColor"/></svg>
+            </div>
+            <!-- 结束练习（P27）：此前学员练到一半只能刷新页面，成绩直接丢；
+                 演示时也无法控节奏。二次点击确认，防误触。 -->
+            <div class="side-btn" onclick="endPractice()" title="结束本次练习并查看报告" role="button" tabindex="0" aria-label="结束本次练习">
+              <svg width="20" height="20" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.9" fill="currentColor"/><circle cx="12" cy="12" r="1.9" fill="currentColor"/><circle cx="19" cy="12" r="1.9" fill="currentColor"/></svg>
             </div>
           </div>
           <div class="chat-body" id="chatBody"></div>
@@ -1371,6 +1375,28 @@ function stopRealVoice(){
 }
 /* 轻量提示条（语音链路专用，不动已验收的提示区） */
 let vtT = null;
+/**
+ * 结束本次练习（P27）
+ *
+ * 场景：学员练到一半有事要停；或演示时需要控制节奏。
+ * 此前没有出口，只能刷新页面 —— 已练的轮次全部丢失（sessions 里有、records 里没有）。
+ * 用「3 秒内点两次」防误触，不弹确认框（预览面板里 confirm 会被拦）。
+ */
+let endAskAt = 0;
+function endPractice(){
+  if (typeof running === 'undefined' || !running) {
+    toast2('本次练习已结束，可直接查看报告');
+    return;
+  }
+  if (Date.now() - endAskAt > 3000) {
+    endAskAt = Date.now();
+    toast2('再点一次右上角「…」结束练习并生成报告');
+    return;
+  }
+  endAskAt = 0;
+  if (typeof finish === 'function') finish();
+}
+
 function toast2(msg){
   let el = $('vtoast');
   if(!el){
