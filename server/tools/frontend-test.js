@@ -741,6 +741,13 @@ const LT = win.TRAIN;
   const coachSrcP29 = fs.readFileSync(path.join(ROOT, '教练工作台-带教主管.html'), 'utf8');
   ok(coachSrcP29.indexOf('note-rep') >= 0 && coachSrcP29.indexOf('学员回复') >= 0,
     '教练抽屉里能看到学员回复（高亮块）');
+  /* 实测踩到的两处（都会让"学员回复了但主管看不到"）：
+     ① 映射函数漏 replyTo → 回复被当成独立留言平铺，挂不到父留言下；
+     ② notes 只在启动时拉一次 → 学员在另一个标签页刚回复时，教练必须刷整页才看得见。 */
+  ok(coachSrcP29.indexOf('function mapNote(n)') >= 0 && coachSrcP29.indexOf("replyTo: n.replyTo || ''") >= 0,
+    '留言映射带上 replyTo（字段集只在这一处定义）');
+  ok(coachSrcP29.indexOf('drawerLid') >= 0 && coachSrcP29.indexOf('if (drawerLid === lid) openLearnerDrawer(lid)') >= 0,
+    '抽屉打开时刷新该学员留言（学员刚回复也能立刻看到）');
 
   /* ---- P30：学员练习记录 + 历史逐轮回看 ---- */
   const recLibP30 = fs.readFileSync(path.join(ROOT, 'server/lib/records.js'), 'utf8');

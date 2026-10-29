@@ -421,6 +421,7 @@
   var SCOPE_KIND = 'all';    // 服务端授予的数据范围：all | dept | mentor
   var scope = 'mine';        // 当前视图：mine | all
   var notes = [];            // 辅导记录（服务端为准，离线落 localStorage）
+  var drawerLid = '';        // 当前抽屉里的学员（用于"拉到新数据后只重渲染同一个人的抽屉"）
   var qcState = {};          // 质检结论 recordId -> 'ok' | 'flag'
   var NOTES_KEY = 'TRAIN_COACH_NOTES_V1';
   var QC_KEY = 'TRAIN_COACH_QC_V1';
@@ -580,14 +581,26 @@
     try { localStorage.setItem(QC_KEY, JSON.stringify(qcState)); } catch (e) { /* ignore */ }
   }
 
+  /**
+   * 服务端留言 → 本地形状（唯一一处映射，铁律 7）
+   *
+   * ⚠️ 必须带上 replyTo：学员回复是同一张表里的一条记录，靠 replyTo 挂到父留言下。
+   * 之前这里漏了这个字段，导致学员回复被当成"独立留言"平铺（永远挂不上去）。
+   */
+  function mapNote(n) {
+    return {
+      id: n.id, learnerId: n.learnerId, recordId: n.recordId, type: n.type,
+      text: n.text, by: n.by, byId: n.byId || '', at: n.at,
+      replyTo: n.replyTo || ''
+    };
+  }
+
   /** 从服务端拉辅导记录与质检结论（服务端为准，覆盖本地缓存） */
   function loadCoachData() {
     if (!srvOnline()) return Promise.resolve(null);
     return Promise.all([SYNC.coachNotes(), SYNC.qcList()]).then(function (res) {
       var ns = res[0], qs = res[1];
-      if (ns) notes = ns.map(function (n) {
-        return { id: n.id, learnerId: n.learnerId, recordId: n.recordId, type: n.type, text: n.text, by: n.by, byId: n.byId || '', at: n.at };
-      });
+      if (ns) notes = ns.map(mapNote);
       if (qs) {
         qcState = {};
         qs.forEach(function (q) { qcState[q.recordId] = q.state; });
@@ -1359,6 +1372,22 @@
   }
 
   function openLearnerDrawer(lid) {
+    drawerLid = lid;
+    /* 抽屉打开时后台刷新这个学员的留言与回复（P29）
+     * notes 只在启动时拉一次，学员在另一个标签页刚回复时教练看不到——
+     * 演示/实际带教都会踩（"我明明回了，主管说没看到"）。
+     * 只在条数变化时重渲染，避免每次开抽屉都闪一下。 */
+    if (srvOnline() && SYNC && SYNC.coachNotes) {
+      SYNC.coachNotes({ learnerId: lid }).then(function (list) {
+        if (!list) return;
+        var mine = notes.filter(function (n) { return n.learnerId === lid; });
+        if (mine.length === list.length) return;
+        notes = notes.filter(function (n) { return n.learnerId !== lid; }).concat(list.map(mapNote));
+        saveLocal();
+        if (drawerLid === lid) openLearnerDrawer(lid);
+      }).catch(function () { /* 离线 / 未登录：用缓存，不打扰 */ });
+    }
+
     var l = T.learnerById(lid), st = H.statsOf(lid), risk = H.riskOf(lid);
     var rs = H.recordsOf(lid);
     var last = st.last;
