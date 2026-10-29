@@ -887,8 +887,13 @@
         '其中高风险 <b class="down"' + (risk.red ? ' data-kpi-go="students:red" style="cursor:pointer;text-decoration:underline dotted" title="只看高风险"' : '') + '>' + risk.red + '</b> 人',
         'students:all'),
       kpi('累计练习', recs.length, '场', '人均 ' + (myLearners().length ? (recs.length / myLearners().length).toFixed(1) : 0) + ' 场'),
-      /* 主数是「我这组」，脚注明确写「全体」——两个数字是刻意对照，不是口径打架 */
-      kpi('平均分', avg, '分', '本组均分 · 全体 ' + ov.avgScore + ' 分'),
+      /* 主数是「我这组」，脚注写「全体」做对照。
+         但管理员范围是 all（本组 = 全体），此时写「本组均分 · 全体 69」两个数一样会让人疑惑，
+         改成直接说明是全部学员。 */
+      kpi('平均分', avg, '分',
+        (myLearners().length >= ov.learnerCount
+          ? '全部学员均分（共 ' + ov.learnerCount + ' 人）'
+          : '本组均分 · 全体 ' + ov.avgScore + ' 分')),
       kpi('达标率', passRate, '%', passNote),
       kpi('待完成人次', pending, '人次', overdue ? '其中 <b class="down">' + overdue + '</b> 人次已逾期' : '暂无逾期')
     ].join('');
