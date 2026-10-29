@@ -788,6 +788,18 @@ const LT = win.TRAIN;
   ok(adminSrcP31.indexOf("status: 'draft'") >= 0,
     '草稿存为待审核（不会绕过审核闸门直接下发）');
 
+  /* ---- P33：上线前安全（静态资源白名单 / 云端监听地址）---- */
+  const idxSrcP33 = fs.readFileSync(path.join(ROOT, 'server/index.js'), 'utf8');
+  const cfgSrcP33 = fs.readFileSync(path.join(ROOT, 'server/config.js'), 'utf8');
+  ok(idxSrcP33.indexOf('function staticDenied(rel)') >= 0, '静态资源有白名单校验');
+  ok(idxSrcP33.indexOf('if (staticDenied(rel))') >= 0, 'serveStatic 真的调用了白名单（不是只定义）');
+  ok(idxSrcP33.indexOf("'.db'") < 0 && idxSrcP33.indexOf("'.txt'") < 0 && idxSrcP33.indexOf("'.md'") < 0,
+    '白名单里没有 db/txt/md（这三种曾能直接下载：训练库、key.txt、文档）');
+  ok(idxSrcP33.indexOf("'server', 'docs', 'node_modules'") >= 0, '后端与文档目录在黑名单里');
+  ok(idxSrcP33.indexOf("if (seg.startsWith('.')) return true;") >= 0, '隐藏文件/目录一律不发（.env.json / .git）');
+  ok(cfgSrcP33.indexOf("process.env.PORT ? '0.0.0.0' : '127.0.0.1'") >= 0,
+    '有 PORT（容器/托管）时绑 0.0.0.0，本地仍绑 127.0.0.1（云端反代否则 502）');
+
   /* ---- P27：学员可提前结束练习 ---- */
   ok(learnSrc.indexOf('function endPractice(') >= 0, '学员可提前结束练习（此前只能刷新，成绩丢失）');
   ok(learnSrc.indexOf('endPractice()') >= 0 && learnSrc.indexOf('再点一次右上角') >= 0,

@@ -58,10 +58,25 @@
   } catch (e) { /* ignore */ }
   state.user = state.user || 'U-ADMIN';
 
-  /* ---- 登录态持久化 ---- */
+  /* ---- 登录态持久化 ----
+   * 存 **sessionStorage** 而不是 localStorage（P33）。
+   *
+   * 教练台和管理端同源，localStorage 只有一份 token：谁后登录谁覆盖。
+   * 结果是两个页面没法同时以不同身份在线——演示时管理端会显示"周敏（4 人）"
+   * 而不是 admin（12 人），任务下发/审批也会用错权限。
+   * sessionStorage 按标签页隔离：各页面各自登录互不干扰，刷新仍保留，关掉即退出
+   * （对后台来说这个生命周期反而更合适）。
+   *
+   * 兼容：老版本把 token 存在 localStorage，这里顺手清掉，避免"看起来登录了但读的是旧身份"。
+   */
+  function authStore() {
+    try { return root.sessionStorage || root.localStorage; } catch (e) { return null; }
+  }
   function loadAuth() {
     try {
-      var raw = root.localStorage.getItem(AUTH_KEY);
+      var st = authStore();
+      if (!st) return null;
+      var raw = st.getItem(AUTH_KEY);
       if (!raw) return null;
       var o = JSON.parse(raw);
       if (!o || !o.token) return null;
@@ -70,9 +85,11 @@
     } catch (e) { return null; }
   }
   function saveAuth(o) {
-    try { root.localStorage.setItem(AUTH_KEY, JSON.stringify(o)); } catch (e) { /* ignore */ }
+    try { authStore().setItem(AUTH_KEY, JSON.stringify(o)); } catch (e) { /* ignore */ }
+    try { root.localStorage.removeItem(AUTH_KEY); } catch (e) { /* 清掉旧版本遗留 */ }
   }
   function clearAuth() {
+    try { authStore().removeItem(AUTH_KEY); } catch (e) { /* ignore */ }
     try { root.localStorage.removeItem(AUTH_KEY); } catch (e) { /* ignore */ }
   }
   state.auth = loadAuth();

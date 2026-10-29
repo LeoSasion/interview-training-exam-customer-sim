@@ -81,9 +81,42 @@ function readBody(req, raw) {
   });
 }
 
+/* 静态资源白名单 + 目录黑名单（P33，上线前安全）
+ *
+ * 原实现把项目根目录下**任意文件**都发出去。实测（本地就跑）：
+ *   GET /key.txt                  → 200  ← LLM API Key 明文
+ *   GET /server/.env.json         → 200  ← 同上
+ *   GET /server/store/training.db → 200  ← 全部学员姓名/成绩/辅导记录
+ * 本地无所谓，一旦发布到公网就是"把钥匙挂在门上"。
+ *
+ * 双保险：只发前端真正需要的类型（扩展名白名单），后端/文档/隐藏目录一律不发。
+ * 用 404 而不是 403 —— 不透露这些文件是否存在。
+ */
+const STATIC_EXT = new Set([
+  '.html', '.js', '.css', '.json', '.map',
+  '.png', '.jpg', '.jpeg', '.svg', '.ico', '.webp', '.gif',
+  '.wav', '.webm', '.mp3', '.mp4',
+  '.woff', '.woff2', '.ttf'
+]);
+const DENY_DIRS = new Set(['server', 'docs', 'node_modules', '.git', '.workbuddy', 'refs', 'tools', 'voice']);
+
+function staticDenied(rel) {
+  const segs = rel.split('/').filter(Boolean);
+  for (const seg of segs) {
+    if (seg.startsWith('.')) return true;                    // .env.json / .git / .workbuddy
+    if (DENY_DIRS.has(seg.toLowerCase())) return true;       // 后端与文档目录
+  }
+  return !STATIC_EXT.has(path.extname(rel).toLowerCase());   // .db / .log / .md / .txt / .pdf
+}
+
 function serveStatic(req, res, pathname) {
   let rel = decodeURIComponent(pathname);
   if (rel === '/' || rel === '') rel = '/index.html';
+  if (staticDenied(rel)) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('404 Not Found');
+    return;
+  }
   // 防目录穿越
   const target = path.normalize(path.join(config.root, rel));
   if (!target.startsWith(config.root)) { res.writeHead(403); res.end('Forbidden'); return; }
