@@ -66,10 +66,17 @@ const { calibrate, listGold } = require('../goldset');
   const channelLabel = run.meaningful ? 'llm（真实模型）'
     : (run.mock ? 'mock（本地模拟通道，仅验证链路）' : 'keyword（关键词引擎）');
   console.log('  通道      ' + channelLabel);
-  console.log('  样本数    ' + n + ' / ' + gold.length);
+  console.log('  样本数    ' + n + ' / ' + gold.length +
+    (n < gold.length ? '  [33m（' + (gold.length - n) + ' 条评分失败，指标基于其余样本）[0m' : '  ✓ 全量'));
   console.log('  Pearson   ' + fmt(p) + '   ' + (passP ? '\x1b[32m✓ ≥ 0.60\x1b[0m' : '\x1b[31m✗ 未达 0.60\x1b[0m'));
   console.log('  MAE       ' + fmt(m, 2) + '    ' + (passM ? '\x1b[32m✓ ≤ 15\x1b[0m' : '\x1b[31m✗ 超过 15\x1b[0m'));
   console.log('');
+
+  if (n < gold.length * 0.9) {
+    console.log('  [31m⚠ 失败率过高[0m：' + (gold.length - n) + '/' + gold.length +
+      ' 条评分失败，看 detail 排查（常见：超时、输出不是合法 JSON、场景已下线）');
+    console.log('');
+  }
 
   if (run.channel === 'llm' && run.meaningful) {
     if (passP && passM) {

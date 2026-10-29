@@ -26,3 +26,8 @@ Thumbs.db
 
 # 交付产物（源码 zip 是「打包结果」，不是源码本身）
 *.zip
+
+# 本地密钥（LLM API Key 等，绝不入库）
+key.txt
+*.key
+.env
