@@ -32,3 +32,6 @@ Thumbs.db
 key.txt
 *.key
 .env
+# 临时提交信息模板（每次都删，别入库）
+.git-msg.txt
+.tmp-*
