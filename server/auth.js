@@ -204,12 +204,12 @@ function resolve(req, body, query) {
  * ------------------------------------------------------------------ */
 const DEFAULT_ACCOUNTS = {
   'U-ADMIN': { account: 'admin', password: 'admin123' },
-  'U-OP01': { account: 'wangqian', password: 'op123456' },
-  'U-OP02': { account: 'limeng', password: 'op123456' },
-  'U-REV01': { account: 'zhangtao', password: 'rev123456' },
-  'U-COACH1': { account: 'chenxi', password: 'coach123' },
-  'U-COACH2': { account: 'zhoumin', password: 'coach123' },
-  'U-COACH3': { account: 'zhaolei', password: 'coach123' }
+  'U-OP01': { account: 'operator1', password: 'op123456' },
+  'U-OP02': { account: 'operator2', password: 'op123456' },
+  'U-REV01': { account: 'reviewer1', password: 'rev123456' },
+  'U-COACH1': { account: 'coach1', password: 'coach123' },
+  'U-COACH2': { account: 'coach2', password: 'coach123' },
+  'U-COACH3': { account: 'coach3', password: 'coach123' }
 };
 
 /**

@@ -751,7 +751,7 @@ html[data-theme="light"] .code .ky{color:#2F6FD0}
         <text x="186" y="349" text-anchor="middle" style="fill:var(--txt3);font-size:11px">含说话人分离与时间戳</text>
         <rect x="334" y="286" width="256" height="78" rx="9" style="fill:var(--panel2);stroke:var(--blue-bd)"/>
         <text x="462" y="312" text-anchor="middle" style="fill:var(--blue);font-size:12.5px;font-weight:600">LLM · 客户 NPC（角色 A）</text>
-        <text x="462" y="332" text-anchor="middle" style="fill:var(--txt3);font-size:11px">扮演张经理 / 王姐 / 李总</text>
+        <text x="462" y="332" text-anchor="middle" style="fill:var(--txt3);font-size:11px">扮演经理 / 店长 / 老板</text>
         <text x="462" y="349" text-anchor="middle" style="fill:var(--txt3);font-size:11px">生成下一句 + 情绪 + 是否松口</text>
         <rect x="610" y="286" width="256" height="78" rx="9" style="fill:var(--panel2);stroke:var(--acc-bd)"/>
         <text x="738" y="312" text-anchor="middle" style="fill:var(--acc-txt);font-size:12.5px;font-weight:600">LLM · Rubric 评分（角色 B）</text>
@@ -814,7 +814,7 @@ html[data-theme="light"] .code .ky{color:#2F6FD0}
   },
   "history": [
     { "role": "customer", "text": "你们这个价格…高不少啊。" },
-    { "role": "learner",  "text": "张经理您好，我是XX食品的小陈…" }
+    { "role": "learner",  "text": "经理您好，我是示例食品的小张…" }
   ],
   "rubricVersion": "rubric-v1"  // 评分标准版本，可追溯
 }</pre>
@@ -836,7 +836,7 @@ html[data-theme="light"] .code .ky{color:#2F6FD0}
   "passLine": 60,                      // 回显，前端用于即时达标提示
   "objectives": [
     { "dim": "d1", "text": "主动自我介绍并说明来意",
-      "achieved": true,  "evidence": "张经理您好，我是XX食品的小陈" },
+      "achieved": true,  "evidence": "经理您好，我是示例食品的小张" },
     { "dim": "d2", "text": "问清客户真正的顾虑（价格 / 质量 / 售后）",
       "achieved": false, "evidence": null }
   ],
@@ -1163,7 +1163,7 @@ helpers.statsOf(learnerId) · helpers.riskOf(learnerId) · helpers.overview()</p
   setH('tblScene', fields([
     ['id', 'string PK', '场景唯一标识，如 s1'],
     ['code', 'string', '业务编号，如 SC-001'],
-    ['name', 'string', '客户代号，如 张经理'],
+    ['name', 'string', '客户代号，如 经理'],
     ['subtitle', 'string', '客户身份，如 连锁餐饮 · 采购负责人'],
     ['avatarText', 'string', '头像文字（1 个字）'],
     ['color', 'string', '头像底色（hex）'],

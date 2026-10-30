@@ -554,7 +554,7 @@ body{
               <svg width="11" height="19" viewBox="0 0 11 19"><path d="M9.5 1.5L2 9.5l7.5 8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <b id="backNum">3</b>
             </div>
-            <span class="title" id="chatTitle">张经理</span>
+            <span class="title" id="chatTitle">经理</span>
             <div class="side-btn" onclick="startCall()" title="发起微信语音通话">
               <svg width="22" height="22" viewBox="0 0 24 24"><path d="M6.2 3.5h3.1l1.6 4-2 1.3a12 12 0 0 0 6.3 6.3l1.3-2 4 1.6v3.1c0 1-.8 1.8-1.8 1.7C11 19.1 4.9 13 4.5 5.3c-.1-1 .7-1.8 1.7-1.8z" fill="currentColor"/></svg>
             </div>
@@ -612,7 +612,7 @@ body{
           </div>
           <div class="call-top">
             <div class="call-ava" id="callAva">张</div>
-            <div class="call-name" id="callName">张经理</div>
+            <div class="call-name" id="callName">经理</div>
             <div class="call-state" id="callState">正在呼叫…</div>
             <div class="call-trans" style="width:calc(100% - 52px);margin-left:26px;margin-right:26px">
               <div class="lb">培训辅助 · 实时转写</div>
@@ -747,7 +747,7 @@ const $ = id => document.getElementById(id);
 const curScene = () => SCENES[cur];
 
 /* ===================== 学员身份 =====================
-   ?as=L01 可切换演示学员（默认 L01 陈晓，与 data/app-data.js 的 learners 对应）。
+   ?as=L01 可切换演示学员（默认 L01 张三，与 data/app-data.js 的 learners 对应）。
    只有「指派给我」的任务才会出现在「我的任务」里 —— 之前是列出全部任务，
    与"我的任务"这个标题不符。 */
 const ME = (function(){
@@ -2029,7 +2029,7 @@ function boot(){
       dimScore=[88,76,63,71,55];
       objDone=[true,true,false,true,false];
       reviewed=[
-        {q:SCENES[0].script[0].t, a:'张经理您好，我是XX食品的小陈，上次给您发的报价单您看到啦？想先了解一下，您主要是觉得价格有压力，还是对品质有顾虑？', ok:true},
+        {q:SCENES[0].script[0].t, a:'经理您好，我是示例食品的小张，上次给您发的报价单您看到啦？想先了解一下，您主要是觉得价格有压力，还是对品质有顾虑？', ok:true},
         {q:SCENES[0].script[1].t, a:'您一年用量大概在什么量级？我按量重新给您算一版整体成本。', ok:true},
         {q:SCENES[0].script[2].t, a:'理解您的担心。上个月我们刚给同城另一家连锁供了一批，可以安排您去看看。', ok:false},
         {q:SCENES[0].script[3].t, a:'售后我们承诺同城4小时到场，出问题先补货、后对账。', ok:true},
@@ -2045,7 +2045,7 @@ function boot(){
   setTimeout(()=>{
     $('chatBody').innerHTML = `<div class="time-div">今天 ${nowTime()}</div>`;
     addMsg('in', sc.script[0].t, {voice:sc.script[0].v});
-    addMsg('out','张经理您好，我是XX食品的小陈，上次给您发的报价单您看到啦？');
+    addMsg('out','经理您好，我是示例食品的小张，上次给您发的报价单您看到啦？');
     addMsg('in', sc.script[1].t, {voice:sc.script[1].v});
     addMsg('out','您方便的话，我想先了解一下，您主要是觉得价格有压力，还是对品质有顾虑？');
     addMsg('in', sc.script[2].t, {voice:sc.script[2].v});

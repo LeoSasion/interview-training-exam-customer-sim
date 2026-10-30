@@ -122,18 +122,18 @@ npm run mock                 # 或手动：node server/mock-llm.js 8999
 | 账号 | 初始口令 | 角色 | 权限 | 数据可见范围 |
 |---|---|---|---|---|
 | `admin` | `admin123` | 系统管理员 | 编辑 + 审核 | 全部数据 |
-| `wangqian` | `op123456` | 培训运营（培训运营组） | 编辑 | 全部数据 |
-| `limeng` | `op123456` | 培训运营（连锁渠道事业部） | 编辑 | 本部门数据 |
-| `zhangtao` | `rev123456` | 带教主管 | 审核 | 全部数据 |
-| `chenxi` | `coach123` | 区域教练（华东大区） | 只读 | 本部门数据 |
-| `zhoumin` | `coach123` | 区域教练（连锁渠道事业部） | 只读 | 本人带教（周敏名下学员） |
-| `zhaolei` | `coach123` | 区域教练（华东大区） | 只读 | 本人带教（赵磊名下学员） |
+| `operator1` | `op123456` | 培训运营（培训运营组） | 编辑 | 全部数据 |
+| `operator2` | `op123456` | 培训运营（连锁渠道事业部） | 编辑 | 本部门数据 |
+| `reviewer1` | `rev123456` | 带教主管 | 审核 | 全部数据 |
+| `coach1` | `coach123` | 区域教练（华东大区） | 只读 | 本部门数据 |
+| `coach2` | `coach123` | 区域教练（连锁渠道事业部） | 只读 | 本人带教（蒋教练名下学员） |
+| `coach3` | `coach123` | 区域教练（华东大区） | 只读 | 本人带教（韩教练名下学员） |
 
 > 口令用 `scrypt` 加盐哈希存库，**服务端不保存明文**；登录后可用 `POST /auth/password` 修改。
 > 生产环境请登录后立即改密，或把账号接到企业统一身份（替换 `server/auth.js` 即可，接口不变）。
 
-> ⚠️ `users.name` 是**带前缀的展示名**（如「区域教练 · 周敏」），永远匹配不上
-> `learners.coach`（那里存的是干净姓名「周敏」）。所以 P5 起 `users` 多了一列
+> ⚠️ `users.name` 是**带前缀的展示名**（如「区域教练 · 蒋教练」），永远匹配不上
+> `learners.coach`（那里存的是干净姓名「蒋教练」）。所以 P5 起 `users` 多了一列
 > `staff_name`（干净姓名），登录响应里叫 `staffName`，**教练台用它来筛「我带的学员」**。
 > 老库由 `migrateP5()` 自动回填，规则是取展示名「 · 」之后的片段。
 
@@ -146,12 +146,12 @@ npm run mock                 # 或手动：node server/mock-llm.js 8999
 |---|---|---|
 | `all` | 全部数据 | 不过滤 |
 | `dept` | 本部门数据 | `learners.dept == users.dept` |
-| `mentor` | 本人带教 | `learners.coach == users.scope_ref`（存导师姓名，如 `周敏`） |
+| `mentor` | 本人带教 | `learners.coach == users.scope_ref`（存导师姓名，如 `蒋教练`） |
 
 - 未识别取值 **fail-closed**（看不到任何人），不会因为写错范围而放开全量。
 - 匹配走的是**学员 id 集合**（进程内 5 秒缓存），所以列表与详情口径必然一致。
 - 想让某个教练只带自己名下学员，把 `users.data_scope='mentor'`、`users.scope_ref='其姓名'` 即可；
-  注意**姓名用 `scope_ref` 而不是 `users.name`** —— `users.name` 是「区域教练 · 周敏」这种带前缀的展示名，永远匹配不上。
+  注意**姓名用 `scope_ref` 而不是 `users.name`** —— `users.name` 是「区域教练 · 蒋教练」这种带前缀的展示名，永远匹配不上。
 - ⚠️ 老库升级时 `learners.coach` 曾被写成空（`app-data.js` 里字段叫 `mentor`，播种脚本读的是 `coach`），
   `migrateTasksP4()` 已自动从 `payload.mentor` 回填；若手工改过数据发现 mentor 范围查不到人，先查这一列。
 
@@ -470,11 +470,11 @@ P7 修的是一处**"看起来有、其实没有"**的缺口：
 | 账号 | 角色 | 可编辑场景 | 可审批 |
 |---|---|---|---|
 | `admin`（U-ADMIN） | 系统管理员 | ✅ | ✅ |
-| `wangqian` / `limeng` | 培训运营（按部门） | ✅ | ❌ |
-| `zhangtao`（U-REV01） | 带教主管（审核） | ❌ | ✅ |
-| `chenxi`（U-COACH1） | 区域教练 | ❌ | ❌ |
-| `zhoumin`（U-COACH2） | 区域教练 | ❌ | ❌ |
-| `zhaolei`（U-COACH3） | 区域教练 | ❌ | ❌ |
+| `operator1` / `operator2` | 培训运营（按部门） | ✅ | ❌ |
+| `reviewer1`（U-REV01） | 带教主管（审核） | ❌ | ✅ |
+| `coach1`（U-COACH1） | 区域教练 | ❌ | ❌ |
+| `coach2`（U-COACH2） | 区域教练 | ❌ | ❌ |
+| `coach3`（U-COACH3） | 区域教练 | ❌ | ❌ |
 
 规则：**提交人不能审批自己提交的场景**；越权返回 `403`；所有写操作写入 `audit_log`。
 **权限（能否改）与可见范围（能看谁）是两把独立的锁**：前者是 `can_edit/can_review`，后者是
@@ -764,8 +764,8 @@ node server/tools/reset.js --yes      # 真删（含 -wal / -shm），下次启�
 |---|---|---|
 | 角标显示「离线模式」 | 后端未启动 / 端口被占 | `node server/index.js`；检查 8848 是否被占用 |
 | 角标显示「服务已连接（降级模式）」 | 未配置 `LLM_API_KEY` | 按第三节配置 Key |
-| 后台点「保存」提示「服务端拒绝：角色…无场景编辑权限」 | 当前登录账号无编辑权（如教练） | 换 `wangqian` / `limeng` / `admin` 登录 |
-| 后台点「审核通过」提示「提交人不能审核自己提交的场景」 | 角色分离规则（设计如此） | 用**另一个**账号审批：`zhangtao` |
+| 后台点「保存」提示「服务端拒绝：角色…无场景编辑权限」 | 当前登录账号无编辑权（如教练） | 换 `operator1` / `operator2` / `admin` 登录 |
+| 后台点「审核通过」提示「提交人不能审核自己提交的场景」 | 角色分离规则（设计如此） | 用**另一个**账号审批：`reviewer1` |
 | 登录提示「登录状态已失效」 | token 过期（默认 12h） | 重新登录；或调大 `AUTH_TTL_HOURS` |
 | 登录提示「登录失败次数过多」 | 同一账号 5 次错口令，锁 5 分钟 | 等 5 分钟，或重启服务清空节流计数 |
 | 忘记口令 | 服务端只存哈希，无法找回 | 删除该用户的 `salt`/`password_hash` 后重启服务会重新生成并打印：<br>`UPDATE users SET salt=NULL, password_hash=NULL WHERE account='xxx';` |

@@ -82,20 +82,20 @@ async function login(account, password) {
   eq('外键约束已开启', pgm && pgm.foreignKeys, true);
 
   /* ---- 1. 登录 ---- */
-  const bad = await call('POST', '/auth/login', { account: 'wangqian', password: 'definitely-wrong' });
+  const bad = await call('POST', '/auth/login', { account: 'operator1', password: 'definitely-wrong' });
   eq('错误口令被拒', bad.status, 401);
-  const miss = await call('POST', '/auth/login', { account: 'wangqian' });
+  const miss = await call('POST', '/auth/login', { account: 'operator1' });
   eq('缺字段被拒', miss.status, 400);
 
-  const op = await login('wangqian', 'op123456');            // 培训运营（可编辑）
-  const rv = await login('zhangtao', 'rev123456');           // 带教主管（可审核）
-  const cch = await login('chenxi', 'coach123');             // 教练（无编辑无审核）
+  const op = await login('operator1', 'op123456');            // 培训运营（可编辑）
+  const rv = await login('reviewer1', 'rev123456');           // 带教主管（可审核）
+  const cch = await login('coach1', 'coach123');             // 教练（无编辑无审核）
   const adm = await login('admin', 'admin123');              // 管理员
-  const cch2 = await login('zhoumin', 'coach123');           // P4 新增：带教范围教练
+  const cch2 = await login('coach2', 'coach123');           // P4 新增：带教范围教练
   ok('运营账号登录成功', !!op && !!op.token && op.user.id === 'U-OP01');
   ok('审核账号登录成功', !!rv && rv.user.id === 'U-REV01');
   ok('教练账号登录成功', !!cch && cch.user.id === 'U-COACH1');
-  ok('P4 新增带教账号可登录（周敏 / mentor 范围）', !!cch2 && cch2.user.id === 'U-COACH2' && cch2.user.scope === 'mentor');
+  ok('P4 新增带教账号可登录（蒋教练 / mentor 范围）', !!cch2 && cch2.user.id === 'U-COACH2' && cch2.user.scope === 'mentor');
   ok('登录响应不含口令哈希', !!op && !('password_hash' in op.user) && !('salt' in op.user));
   ok('登录响应带数据范围说明', !!op && !!op.user.scopeLabel);
 
@@ -189,7 +189,7 @@ async function login(account, password) {
   const appr = await call('POST', `/scenes/${sid}/approve`, {}, { token: rv.token });
   eq('带教主管审批通过', appr.status, 200);
   eq('审批后状态为 published', data(appr) && data(appr).audit.status, 'published');
-  eq('审批人记录正确', data(appr) && data(appr).audit.reviewBy, '带教主管 · 张涛');
+  eq('审批人记录正确', data(appr) && data(appr).audit.reviewBy, '带教主管 · 秦主管');
 
   // 可下发判定
   const assignable = await call('GET', '/scenes?assignable=1', undefined, { token: op.token });
@@ -244,7 +244,7 @@ async function login(account, password) {
   const sid2 = 'selfcheck-' + Date.now();
   const turn = await call('POST', `/session/${sid2}/turn`, {
     learnerId: 'L01', sceneId: 's1',
-    learnerText: '王总您好，我是XX食品的小李，想跟您聊两分钟门店动销，方便吗？'
+    learnerText: '王总您好，我是示例食品的小李，想跟您聊两分钟门店动销，方便吗？'
   });
   ok('练习通道匿名可打分（' + turn.status + '）', turn.status === 200 && !!data(turn), errText(turn));
   ok('返回体含 source / dimScores / customerReply',
@@ -605,7 +605,7 @@ async function login(account, password) {
   const sid3 = 'selfcheck-task-' + Date.now();
   await call('POST', `/session/${sid3}/turn`, {
     taskId: TKID, learnerId: 'L01', sceneId: 's1',
-    learnerText: '您好，我是XX食品的小李，想先了解一下您现在门店的动销情况，方便吗？'
+    learnerText: '您好，我是示例食品的小李，想先了解一下您现在门店的动销情况，方便吗？'
   });
   const fin3 = await call('POST', `/session/${sid3}/finish`, {});
   const recId = data(fin3) && data(fin3).recordId;
@@ -653,7 +653,7 @@ async function login(account, password) {
   const allN = allLr.length;
   const allRn = allRr.length;
 
-  const opT = await login('limeng', 'op123456');
+  const opT = await login('operator2', 'op123456');
   const dpL = await call('GET', '/learners', undefined, { token: opT.token });
   const dpLr = (data(dpL) && data(dpL).items) || [];
   const dpR = await call('GET', '/records', undefined, { token: opT.token });
@@ -671,7 +671,7 @@ async function login(account, password) {
   ok('事业部账号的任务只含本部门学员的指派',
     dpTr.length > 0 && dpTr.every((t) => t.assignees.every((x) => dpIds.indexOf(x) >= 0)));
 
-  const coT = await login('zhoumin', 'coach123');
+  const coT = await login('coach2', 'coach123');
   const coL = await call('GET', '/learners', undefined, { token: coT.token });
   const coLr = (data(coL) && data(coL).items) || [];
   const coIds = coLr.map((l) => l.id); // 8c-2 也要用，故定义在块外
@@ -679,7 +679,7 @@ async function login(account, password) {
   ok('带教账号范围=本人带教（' + ((data(meCo) && data(meCo).user.scopeLabel) || '?') + '）',
     !!(data(meCo) && data(meCo).user.scope === 'mentor'));
   ok('带教账号只看到本人带教的学员（' + coLr.length + ' 人）',
-    coLr.length > 0 && coLr.length < allN && coLr.every((l) => l.coach === '周敏'));
+    coLr.length > 0 && coLr.length < allN && coLr.every((l) => l.coach === '蒋教练'));
 
   /* 匿名读成绩（P30 收紧）
    * 原来这条断言是「open 模式无 token 也返回 200」——那意味着**任何人能拉全库成绩**：
@@ -700,11 +700,11 @@ async function login(account, password) {
   console.log('  ─────────────────────────────────────────');
   console.log('  P5：教练动作与数据范围');
 
-  const cch3 = await login('zhaolei', 'coach123');
-  ok('P5 新增带教账号可登录（赵磊 / mentor 范围）',
-    !!cch3 && cch3.user.id === 'U-COACH3' && cch3.user.scope === 'mentor' && cch3.user.scopeRef === '赵磊');
+  const cch3 = await login('coach3', 'coach123');
+  ok('P5 新增带教账号可登录（韩教练 / mentor 范围）',
+    !!cch3 && cch3.user.id === 'U-COACH3' && cch3.user.scope === 'mentor' && cch3.user.scopeRef === '韩教练');
   ok('身份带「干净姓名」staffName（用于匹配 learners.coach，避开带前缀的展示名）',
-    !!cch3 && cch3.user.staffName === '赵磊');
+    !!cch3 && cch3.user.staffName === '韩教练');
   ok('教练角色确实没有场景编辑权（辅导/质检不该卡这一位）', !!coT && coT.user.canEdit === false);
 
   // 读：只能读范围内学员的辅导记录
@@ -718,7 +718,7 @@ async function login(account, password) {
     { learnerId: coIds[0], text: '自测临时辅导记录（跑完删除）', type: '一对一辅导' }, { token: coT.token });
   const myNote = data(addNote);
   ok('教练可写辅导记录（本职动作，不卡 can_edit）', addNote.status === 200 && !!(myNote && myNote.id));
-  eq('记录人落库为干净姓名', myNote && myNote.by, '周敏');
+  eq('记录人落库为干净姓名', myNote && myNote.by, '蒋教练');
   const notesOne = await call('GET', '/coach-notes?learnerId=' + coIds[0], undefined, { token: coT.token });
   ok('按学员收窄能查到刚写的记录',
     ((data(notesOne) && data(notesOne).items) || []).some((n) => n.id === myNote.id));
@@ -920,8 +920,8 @@ async function login(account, password) {
   {
     const csv1 = [
       '姓名,部门,岗位,带教人,入职日期',
-      '测试导入甲,连锁渠道事业部,销售代表,周敏,2026-11-01',
-      '陈晓,连锁渠道事业部,客户经理,周敏,2026-09-15',
+      '测试导入甲,连锁渠道事业部,销售代表,蒋教练,2026-11-01',
+      '张三,连锁渠道事业部,客户经理,蒋教练,2026-09-15',
       '测试导入乙,连锁渠道事业部,销售代表,查无此人,2026-11-02'
     ].join('\n');
     const r1 = await call('POST', '/admin/learners/import', { csv: csv1 }, { token: adm.token });
@@ -935,12 +935,12 @@ async function login(account, password) {
     if (d1.created && d1.created[0]) importedIds.push(d1.created[0].id);
 
     const noHeader = await call('POST', '/admin/learners/import',
-      { csv: '测试导入丙,华东大区,销售代表,陈曦' }, { token: adm.token });
+      { csv: '测试导入丙,华东大区,销售代表,尤教练' }, { token: adm.token });
     ok('无表头纯数据也能导（按列序）', noHeader.status === 200 && (data(noHeader).created || []).length === 1);
     if (data(noHeader) && data(noHeader).created[0]) importedIds.push(data(noHeader).created[0].id);
 
     const coachTry = await call('POST', '/admin/learners/import',
-      { csv: '测试导入丁,华东大区,销售代表,陈曦' }, { token: cch.token });
+      { csv: '测试导入丁,华东大区,销售代表,尤教练' }, { token: cch.token });
     eq('教练账号无导入权限 403', coachTry.status, 403);
 
     const badCsv = await call('POST', '/admin/learners/import', { csv: '' }, { token: adm.token });
@@ -1046,7 +1046,7 @@ async function checkEnforce() {
     const lg = await (async () => {
       const r = await fetch(EB + '/auth/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: 'wangqian', password: 'op123456' })
+        body: JSON.stringify({ account: 'operator1', password: 'op123456' })
       });
       return { status: r.status, body: await r.json() };
     })();

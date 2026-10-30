@@ -129,7 +129,7 @@
       <div class="brand">
         <div class="logo">训</div>
         <div>新员工仿真培训系统
-          <small id="orgName">XX食品 · 连锁渠道事业部</small>
+          <small id="orgName">示例食品 · 连锁渠道事业部</small>
         </div>
       </div>
       <nav class="nav-tabs" id="navTabs">
@@ -375,7 +375,7 @@
       <button class="btn ghost" id="lgClose">稍后（用演示身份）</button>
     </div>
     <p class="muted" style="font-size:11.5px;margin:12px 0 0;line-height:1.7">
-      演示账号：<code>zhoumin</code> / <code>zhaolei</code>（本人带教）、<code>chenxi</code>（本部门）、<code>admin</code>（全部）<br>
+      演示账号：<code>coach2</code> / <code>coach3</code>（本人带教）、<code>coach1</code>（本部门）、<code>admin</code>（全部）<br>
       口令：教练 <code>coach123</code> · 管理员 <code>admin123</code>
     </p>
   </div>
@@ -412,11 +412,11 @@
     ? TRAIN.helpers.nowDate() : new Date();
 
   /* ---------------- 身份与数据范围 ----------------
-   * 离线时用演示教练（周敏）跑通全部界面；服务端在线时身份以 **token / 服务端返回** 为准，
+   * 离线时用演示教练（蒋教练）跑通全部界面；服务端在线时身份以 **token / 服务端返回** 为准，
    * 学员集合也由服务端按 data_scope 过滤后再水合进来 —— 也就是说：
    * 「全部学员」这一档最多只能看到服务端允许他看到的人，界面永远不会比权限大。
    */
-  var COACH = '周敏';        // 当前带教人姓名（用于筛「我带的学员」）
+  var COACH = '蒋教练';        // 当前带教人姓名（用于筛「我带的学员」）
   var IDENT = null;          // 服务端身份（/auth/me 的 user）
   var SCOPE_KIND = 'all';    // 服务端授予的数据范围：all | dept | mentor
   var scope = 'mine';        // 当前视图：mine | all

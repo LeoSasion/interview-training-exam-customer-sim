@@ -264,7 +264,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     <a class="btn sm ghost" href="仿真培训原型-微信风格.html" target="_blank" rel="noopener">学员端</a>
     <a class="btn sm ghost" href="教练工作台-带教主管.html" target="_blank" rel="noopener">教练端</a>
     <a class="btn sm ghost" href="产品规划-新员工培训系统.html" target="_blank" rel="noopener">产品规划</a>
-    <div class="who" id="whoChip" data-act="auth" title="点击登录 / 退出"><span class="av" id="whoAv">王</span><span id="whoTxt">培训运营组 · 王倩</span></div>
+    <div class="who" id="whoChip" data-act="auth" title="点击登录 / 退出"><span class="av" id="whoAv">王</span><span id="whoTxt">培训运营组 · 杨运营</span></div>
     <button class="btn sm ghost" id="authBtn" data-act="auth">登录</button>
   </div>
 </div>
@@ -399,7 +399,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
           <button class="btn sm ghost" data-act="imp-sample">填入示例</button>
         </div>
         <textarea class="txa" id="impCsv" style="height:170px;font-family:var(--mono,monospace);font-size:12px"
-          placeholder="姓名,部门,岗位,带教人,入职日期&#10;张三,连锁渠道事业部,销售代表,周敏,2026-11-01"></textarea>
+          placeholder="姓名,部门,岗位,带教人,入职日期&#10;张三,连锁渠道事业部,销售代表,蒋教练,2026-11-01"></textarea>
         <div id="impResult" style="margin-top:12px;font-size:12.5px;line-height:1.8"></div>
         <div class="btn-row" style="margin-top:12px">
           <button class="btn" data-act="imp-submit">开始导入</button>
@@ -575,7 +575,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     <p class="hint" id="authHint" style="margin:0 0 14px">用「培训运营 / 带教主管 / 教练」账号登录后，所有场景改动会写入服务端并留痕，权限按角色强制校验。</p>
     <div class="field">
       <label>账号</label>
-      <input class="inp" id="authAcc" autocomplete="username" placeholder="如 wangqian">
+      <input class="inp" id="authAcc" autocomplete="username" placeholder="如 operator1">
     </div>
     <div class="field">
       <label>口令</label>
@@ -1287,7 +1287,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
           '<div class="card" style="background:var(--panel2);border-color:var(--line2)">' +
             '<div class="kvline"><span class="k">场景</span><span class="v">' + esc(sceneTag(WIZ.sceneId)) + '</span></div>' +
             '<div class="kvline"><span class="k">参与学员</span><span class="v">' + selectedLearners().length + ' 人</span></div>' +
-            '<div class="kvline"><span class="k">下发人</span><span class="v">培训运营组 · 王倩</span></div>' +
+            '<div class="kvline"><span class="k">下发人</span><span class="v">培训运营组 · 杨运营</span></div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -1306,7 +1306,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
           '<div class="kvline"><span class="k">达标线</span><span class="v">' + esc(WIZ.passLine === '' ? (scene ? scene.passLine : 60) : WIZ.passLine) + ' 分</span></div>' +
           '<div class="kvline"><span class="k">截止时间</span><span class="v">' + esc(due) + '</span></div>' +
           '<div class="kvline"><span class="k">参与人数</span><span class="v">' + sels.length + ' 人</span></div>' +
-          '<div class="kvline"><span class="k">下发人</span><span class="v">培训运营组 · 王倩</span></div>' +
+          '<div class="kvline"><span class="k">下发人</span><span class="v">培训运营组 · 杨运营</span></div>' +
           '<div class="kvline"><span class="k">任务备注</span><span class="v" style="max-width:60%;font-weight:400;color:var(--txt2)">' + esc(WIZ.note || '无') + '</span></div>' +
         '</div>' +
         '<div class="card" style="background:var(--panel2);border-color:var(--line2)">' +
@@ -1890,8 +1890,8 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     var ta = document.getElementById('impCsv');
     if (ta) {
       ta.value = '姓名,部门,岗位,带教人,入职日期\n' +
-        '张三,连锁渠道事业部,销售代表,周敏,2026-11-01\n' +
-        '李四,华东大区,客户经理,陈曦,2026-11-03';
+        '张三,连锁渠道事业部,销售代表,蒋教练,2026-11-01\n' +
+        '李四,华东大区,客户经理,尤教练,2026-11-03';
     }
   }
   function submitImport() {
@@ -2802,7 +2802,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
         box.innerHTML = '<p class="hint" style="margin:9px 0 0">未能读取账号列表（需要服务端在线）。</p>';
         return;
       }
-      var pwHint = { admin: 'admin123', wangqian: 'op123456', limeng: 'op123456', zhangtao: 'rev123456', chenxi: 'coach123' };
+      var pwHint = { admin: 'admin123', operator1: 'op123456', operator2: 'op123456', reviewer1: 'rev123456', coach1: 'coach123' };
       box.innerHTML = '<table class="acctbl"><thead><tr><th>账号</th><th>口令</th><th>角色</th><th>权限</th></tr></thead><tbody>'
         + SRV.accounts.map(function (u) {
             var p = pwHint[u.account] || '（已改密）';
@@ -3070,7 +3070,7 @@ tr.flash td{animation:flashRow 2.2s ease-out}
     var ta = $('goldText');
     if (!ta) return;
     ta.value = JSON.stringify([
-      { id: 'G101', sceneId: 's1', turnIndex: 1, customerText: '你们又来了，我忙着呢，说重点。', learnerText: '王总您好，我是XX食品的小李，今天想跟您聊聊门店动销，方便占用您五分钟吗？', humanScores: { d1: 85, d2: 78, d3: 70, d4: 62, d5: 60 }, annotator: '双盲均值', note: '示例：开场规范' },
+      { id: 'G101', sceneId: 's1', turnIndex: 1, customerText: '你们又来了，我忙着呢，说重点。', learnerText: '王总您好，我是示例食品的小李，今天想跟您聊聊门店动销，方便占用您五分钟吗？', humanScores: { d1: 85, d2: 78, d3: 70, d4: 62, d5: 60 }, annotator: '双盲均值', note: '示例：开场规范' },
       { id: 'G102', sceneId: 's1', turnIndex: 2, customerText: '价格太贵了，隔壁那家比你们便宜。', learnerText: '您说的便宜是单价还是整体成本？我先帮您算一下单店月用量对应的实际支出。', humanScores: { d1: 70, d2: 88, d3: 82, d4: 75, d5: 66 }, annotator: '双盲均值', note: '示例：异议处理' }
     ], null, 2);
     $('goldMsg').textContent = '已填入 2 条示例，可直接点「导入」。humanTotal 不填会按 5 维加权自动算。';

@@ -247,9 +247,23 @@ async function runTurn(ctx) {
   };
 }
 
+/**
+ * 模型状态（P34：加 30 秒缓存）
+ *
+ * 原来 /status 每次都真调一次 llm.health()——实测一次 0.9~1.0s。
+ * 前端开页面第一件事就是 probe() 打 /status，于是首屏要等 1 秒才敢判定"在线"，
+ * 而且每次刷新都白花一次模型调用（真实计费）。
+ * 状态不是实时指标，30 秒粒度足够；失败也缓存 30 秒，避免模型挂掉时每次请求都去撞超时。
+ */
+let __statusCache = null;      // { at, value }
+const STATUS_TTL = 30 * 1000;
+
 async function aiStatus() {
+  const now = Date.now();
+  if (__statusCache && now - __statusCache.at < STATUS_TTL) return __statusCache.value;
+
   const h = await llm.health();
-  return {
+  const value = {
     configured: config.llm.enabled,
     baseUrl: config.llm.baseUrl,
     model: config.llm.model,
@@ -258,6 +272,8 @@ async function aiStatus() {
     lowConfidenceThreshold: config.llm.lowConfidence,
     live: h
   };
+  __statusCache = { at: now, value };
+  return value;
 }
 
 module.exports = { runTurn, scoreByKeyword, scoreByLLM, npcReply, npcFallback, aiStatus, DIM_FALLBACK };

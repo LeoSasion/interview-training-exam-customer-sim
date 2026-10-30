@@ -294,8 +294,8 @@ ensureColumn('users', 'created_at', 'TEXT');
 ensureColumn('users', 'data_scope', "TEXT DEFAULT 'all'");
 // P4：scope=mentor 时用于匹配 learners.coach 的值
 ensureColumn('users', 'scope_ref', 'TEXT');
-// P5：可匹配的「本人姓名」（如「周敏」）。
-//   users.name 是带前缀的展示名（「区域教练 · 周敏」），拿它去匹配 learners.coach 永远匹配不上；
+// P5：可匹配的「本人姓名」（如「蒋教练」）。
+//   users.name 是带前缀的展示名（「区域教练 · 蒋教练」），拿它去匹配 learners.coach 永远匹配不上；
 //   教练台要按姓名筛「我带的学员」，所以需要一个独立的、干净的姓名列。
 ensureColumn('users', 'staff_name', 'TEXT');
 db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_account ON users(lower(account));');
@@ -322,20 +322,20 @@ const P = (s, dflt) => { try { return s ? JSON.parse(s) : dflt; } catch (e) { re
 /* ------------------------------------------------------------------ *
  * 演示用户（播种与迁移共用一份定义）
  *   scope    : all 全量 / dept 仅本人部门 / mentor 仅本人带教学员
- *   scopeRef : scope=mentor 时用于匹配 learners.coach 的值（如「周敏」）
- *              因为 users.name 是带前缀的展示名（「区域教练 · 周敏」），
+ *   scopeRef : scope=mentor 时用于匹配 learners.coach 的值（如「蒋教练」）
+ *              因为 users.name 是带前缀的展示名（「区域教练 · 蒋教练」），
  *              直接用 name 匹配永远匹配不上，必须有独立的匹配值。
  * ------------------------------------------------------------------ */
 const DEMO_USERS = [
   { id: 'U-ADMIN', name: '系统管理员', staff: '系统管理员', role: 'admin', dept: '培训运营组', canEdit: 1, canReview: 1, scope: 'all', scopeRef: '' },
-  { id: 'U-OP01', name: '培训运营 · 王倩', staff: '王倩', role: 'operator', dept: '培训运营组', canEdit: 1, canReview: 0, scope: 'all', scopeRef: '' },
-  { id: 'U-OP02', name: '培训运营 · 李萌', staff: '李萌', role: 'operator', dept: '连锁渠道事业部', canEdit: 1, canReview: 0, scope: 'dept', scopeRef: '' },
-  { id: 'U-REV01', name: '带教主管 · 张涛', staff: '张涛', role: 'reviewer', dept: '连锁渠道事业部', canEdit: 0, canReview: 1, scope: 'all', scopeRef: '' },
-  // 华东大区的两位教练：一个只能看本部门（陈曦），一个只能看自己名下带教（赵磊）
+  { id: 'U-OP01', name: '培训运营 · 杨运营', staff: '杨运营', role: 'operator', dept: '培训运营组', canEdit: 1, canReview: 0, scope: 'all', scopeRef: '' },
+  { id: 'U-OP02', name: '培训运营 · 朱运营', staff: '朱运营', role: 'operator', dept: '连锁渠道事业部', canEdit: 1, canReview: 0, scope: 'dept', scopeRef: '' },
+  { id: 'U-REV01', name: '带教主管 · 秦主管', staff: '秦主管', role: 'reviewer', dept: '连锁渠道事业部', canEdit: 0, canReview: 1, scope: 'all', scopeRef: '' },
+  // 华东大区的两位教练：一个只能看本部门（尤教练），一个只能看自己名下带教（韩教练）
   // —— 刻意做成两种范围，用来演示 dept 与 mentor 的真实差别
-  { id: 'U-COACH1', name: '区域教练 · 陈曦', staff: '陈曦', role: 'coach', dept: '华东大区', canEdit: 0, canReview: 0, scope: 'dept', scopeRef: '' },
-  { id: 'U-COACH2', name: '区域教练 · 周敏', staff: '周敏', role: 'coach', dept: '连锁渠道事业部', canEdit: 0, canReview: 0, scope: 'mentor', scopeRef: '周敏' },
-  { id: 'U-COACH3', name: '区域教练 · 赵磊', staff: '赵磊', role: 'coach', dept: '华东大区', canEdit: 0, canReview: 0, scope: 'mentor', scopeRef: '赵磊' }
+  { id: 'U-COACH1', name: '区域教练 · 尤教练', staff: '尤教练', role: 'coach', dept: '华东大区', canEdit: 0, canReview: 0, scope: 'dept', scopeRef: '' },
+  { id: 'U-COACH2', name: '区域教练 · 蒋教练', staff: '蒋教练', role: 'coach', dept: '连锁渠道事业部', canEdit: 0, canReview: 0, scope: 'mentor', scopeRef: '蒋教练' },
+  { id: 'U-COACH3', name: '区域教练 · 韩教练', staff: '韩教练', role: 'coach', dept: '华东大区', canEdit: 0, canReview: 0, scope: 'mentor', scopeRef: '韩教练' }
 ];
 
 function insertDemoUsers() {
@@ -418,8 +418,8 @@ function seedDemoCoachContent() {
   const q0 = db.prepare('SELECT COUNT(*) AS n FROM record_qc').get().n;
   if (n0 > 0 || q0 > 0) return { coachNotes: 0, qcMarks: 0, contentSkipped: true };
 
-  // 演示主角是「周敏」（U-COACH2 · mentor 范围）名下学员
-  const ids = db.prepare('SELECT id FROM learners WHERE coach = ? ORDER BY id').all('周敏').map((r) => r.id);
+  // 演示主角是「蒋教练」（U-COACH2 · mentor 范围）名下学员
+  const ids = db.prepare('SELECT id FROM learners WHERE coach = ? ORDER BY id').all('蒋教练').map((r) => r.id);
   if (!ids.length) return { coachNotes: 0, qcMarks: 0, contentSkipped: true };
 
   // 每个学员只取最近一条成绩：若按「全局最近 3 条」取，会全落在同一个学员头上，
@@ -444,7 +444,7 @@ function seedDemoCoachContent() {
   ].forEach((text, i) => {
     const r = recs[i];
     if (!r) return;
-    insNote.run('N-SEED-0' + (i + 1), r.learnerId, r.id, '一对一辅导', text, '周敏', 'U-COACH2', at);
+    insNote.run('N-SEED-0' + (i + 1), r.learnerId, r.id, '一对一辅导', text, '蒋教练', 'U-COACH2', at);
     coachNotes++;
   });
 
@@ -456,7 +456,7 @@ function seedDemoCoachContent() {
   ].forEach((q, i) => {
     const r = recs[i];
     if (!r) return;
-    insQc.run(r.id, q.state, q.note, '周敏', 'U-COACH2', at);
+    insQc.run(r.id, q.state, q.note, '蒋教练', 'U-COACH2', at);
     qcMarks++;
   });
 
@@ -467,7 +467,7 @@ function seedDemoCoachContent() {
  * P5 迁移：让教练台真正可用（身份可匹配 + 辅导/质检可落库）
  *   1. users.staff_name 回填 —— 老库没有这一列，而教练台要按「干净姓名」
  *      筛「我带的学员」（users.name 带「区域教练 · 」前缀，匹配不上）
- *   2. 补齐演示账号（新增 U-COACH3 赵磊，华东大区 · mentor 范围）
+ *   2. 补齐演示账号（新增 U-COACH3 韩教练，华东大区 · mentor 范围）
  *   3. 补齐演示用的辅导记录 / 质检结论 —— 否则老库升到 P5 后教练台一片空白
  *      ⚠️ 一开始漏了这条：建表语句只建空表，而 seedIfEmpty() 对老库直接
  *      返回「已有数据」，于是 schema 升到 p5-v1 但教练台没内容。

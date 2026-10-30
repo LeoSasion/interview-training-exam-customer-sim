@@ -78,7 +78,7 @@ function buildScorerSystemPrompt(rubric) {
    低分特征：${d.low}`;
   }).join('\n');
 
-  return `你是「XX食品 · 连锁渠道事业部」新员工销售话术训练的资深评分官。
+  return `你是「示例食品 · 连锁渠道事业部」新员工销售话术训练的资深评分官。
 你的任务：对学员在一轮客户对话中的发言，按 5 个能力维度打分，并判定训练目标是否达成。
 
 ## 评分维度与锚点（Rubric ${rubric.version}）

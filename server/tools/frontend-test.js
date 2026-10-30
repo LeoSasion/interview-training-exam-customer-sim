@@ -203,8 +203,8 @@ const LT = win.TRAIN;
   ok(mine.every((t) => t.assignees.indexOf('L06') >= 0 && t.status !== 'draft'), 'tasksOf 只返回派给该学员且已下发的任务');
 
   // 登录切换范围
-  const lg = await SYNC.login('limeng', 'op123456');
-  ok(lg.ok && lg.user.scopeLabel.indexOf('连锁渠道事业部') >= 0, '登录 李萌 → 范围「' + (lg.user && lg.user.scopeLabel) + '」');
+  const lg = await SYNC.login('operator2', 'op123456');
+  ok(lg.ok && lg.user.scopeLabel.indexOf('连锁渠道事业部') >= 0, '登录 朱运营 → 范围「' + (lg.user && lg.user.scopeLabel) + '」');
   const ls2 = await SYNC.learners(); const ts2 = await SYNC.tasks(); const rs2 = await SYNC.records();
   ok(ls2.length > 0 && ls2.length < ls1.length, '登录后学员收紧：' + ls2.length + ' / ' + ls1.length);
   ok(ls2.every((l) => l.dept === '连锁渠道事业部'), '可见学员全部属于本部门');
@@ -229,20 +229,20 @@ const LT = win.TRAIN;
   ok(rm.ok && rm.status === 200, 'removeTask 删除 → HTTP ' + rm.status);
 
   // 越权：教练不能下发
-  const lg2 = await SYNC.login('zhoumin', 'coach123');
-  ok(lg2.ok && lg2.user.scopeLabel.indexOf('周敏') >= 0, '登录 周敏 → 范围「' + (lg2.user && lg2.user.scopeLabel) + '」');
+  const lg2 = await SYNC.login('coach2', 'coach123');
+  ok(lg2.ok && lg2.user.scopeLabel.indexOf('蒋教练') >= 0, '登录 蒋教练 → 范围「' + (lg2.user && lg2.user.scopeLabel) + '」');
   const deny = await SYNC.saveTask({ title: 'x', sceneId: 's1', assignees: ['L01'] });
   ok(!deny.ok && deny.status === 403, '教练下发被拒：HTTP ' + deny.status + ' · ' + deny.error);
 
   const ls3 = await SYNC.learners();
-  ok(ls3.length > 0 && ls3.length < ls1.length && ls3.every((l) => l.mentor === '周敏'),
+  ok(ls3.length > 0 && ls3.length < ls1.length && ls3.every((l) => l.mentor === '蒋教练'),
     '教练（带教范围）可见学员 = ' + ls3.length + ' 人，且都是本人带教');
 
   /* ------------------------------------------------------------ *
    * 3b. 教练端（P5）：辅导记录 / 质检结论 + 数据范围
-   *   此时登录身份是周敏（mentor 范围，只带 4 名学员）
+   *   此时登录身份是蒋教练（mentor 范围，只带 4 名学员）
    * ------------------------------------------------------------ */
-  sec('3b. 教练端：辅导记录与质检（周敏 · 本人带教）');
+  sec('3b. 教练端：辅导记录与质检（蒋教练 · 本人带教）');
 
   const zRecs = await SYNC.records();
   ok(zRecs.every((r) => ls3.some((l) => l.id === r.learnerId)),
@@ -306,7 +306,7 @@ const LT = win.TRAIN;
   /* ------------------------------------------------------------ *
    * 3c. 学员端场景池（P6）：匿名拉取 → 合并进场景库
    *   这是「运营发布场景 → 学员能练到」这条链路的最后一跳。
-   *   注意此时登录身份仍是周敏（教练），而这一步**不带任何身份**，
+   *   注意此时登录身份仍是蒋教练（教练），而这一步**不带任何身份**，
    *   正好验证该接口对匿名可用（学员没登录也要能拿到场景）。
    * ------------------------------------------------------------ */
   sec('3c. 学员端场景池：匿名拉取 + 合并（P6）');
@@ -382,7 +382,7 @@ const LT = win.TRAIN;
    *   这一节验同步层的 turns()：
    *     有数据 → 数组（字段集完整）
    *     越范围 / 不存在 → null（静默降级，绝不抛错、绝不用空数组骗调用方）
-   *   此时登录身份是周敏（mentor 范围，只带 4 名学员），
+   *   此时登录身份是蒋教练（mentor 范围，只带 4 名学员），
    *   所以"范围内读得到 / 越范围读不到"两件事可以一起验。
    * ------------------------------------------------------------ */
   sec('3d. 逐轮对话：同步层按需读取（P7）');
@@ -390,7 +390,7 @@ const LT = win.TRAIN;
   const TURN_FIELDS = ['idx', 'learnerText', 'customerReply', 'emotion', 'score', 'dimScores', 'confidence', 'source', 'at'];
   const mineRecs = (await SYNC.records()) || [];
   const mineT = mineRecs.filter((r) => r.turnCount > 0);
-  ok(mineT.length > 0, '周敏可见范围内有逐轮对话的成绩 ' + mineT.length + ' 条');
+  ok(mineT.length > 0, '蒋教练可见范围内有逐轮对话的成绩 ' + mineT.length + ' 条');
   ok(mineRecs.every((r) => r.evidence === undefined),
     'records() 不再把对话正文带进列表（只给 turnCount：' +
     [...new Set(mineRecs.map((r) => r.turnCount))].sort().join('/') + ' 轮）');
@@ -411,12 +411,12 @@ const LT = win.TRAIN;
   const allIds = allRecs.map((r) => r.id);
   const mineIds = mineRecs.map((r) => r.id);
   const outsideId = allIds.filter((id) => mineIds.indexOf(id) < 0)[0];
-  await SYNC.login('zhoumin', 'coach123');                 // 切回带教范围
+  await SYNC.login('coach2', 'coach123');                 // 切回带教范围
   if (outsideId) {
     const tOut = await SYNC.turns(outsideId);
     ok(tOut === null, '越范围读逐轮（' + outsideId + '）返回 null（服务端 403，不泄漏对话）');
   } else {
-    ok(false, '无法构造越范围样本（周敏可见全部记录？）');
+    ok(false, '无法构造越范围样本（蒋教练可见全部记录？）');
   }
   ok((await SYNC.turns('R-NO-SUCH-RECORD')) === null, '不存在的成绩返回 null');
   ok((await SYNC.turns('')) === null, '空 id 直接返回 null（不打无意义的请求）');
@@ -1112,7 +1112,7 @@ const LT = win.TRAIN;
   const PAGE_SCENE_NAME = '自测临时场景·学员端热更新验证';
 
   // 先按真实流程把它发布出去：运营新建 → 提交 → 审核通过
-  await SYNC.login('wangqian', 'op123456');
+  await SYNC.login('operator1', 'op123456');
   const mk = await SYNC.save({
     id: PAGE_SCENE_ID, name: PAGE_SCENE_NAME, subtitle: '前端 harness 创建，跑完删除',
     avatarText: '热', color: '#5B9DF9', taskName: '热更新验证', channel: '微信文字',
@@ -1127,7 +1127,7 @@ const LT = win.TRAIN;
   const sub1 = await SYNC.act(mkId, 'submit');
   ok(sub1.ok, '提交审核 → ' + (sub1.ok ? 'ok' : sub1.error));
 
-  await SYNC.login('zhangtao', 'rev123456');
+  await SYNC.login('reviewer1', 'rev123456');
   const ap1 = await SYNC.act(mkId, 'approve');
   ok(ap1.ok, '审核通过 → ' + (ap1.ok ? 'ok' : ap1.error));
 
@@ -1180,8 +1180,10 @@ const LT = win.TRAIN;
   } catch (e) { pageErr = e; }
   ok(!pageErr, '学员端整页脚本能在沙箱里跑完初始化' + (pageErr ? ' — ' + pageErr.message : ''));
 
-  // loadScenes() 是异步的（页面刻意不 await，避免阻塞首屏），这里等它落地
-  await new Promise((r) => setTimeout(r, 1200));
+  /* loadScenes() 是异步的（页面刻意不 await，避免阻塞首屏），这里等它落地。
+     P34：等待从 1200ms 放宽到 2600ms —— 首次 probe 会走一次真实模型 health（约 1s），
+     1200ms 正好卡在边缘，表现为"偶发只拿到本地 3 个场景"。 */
+  await new Promise((r) => setTimeout(r, 2600));
 
   const probe = pageCtx.window.__LRN;
   const lrn = typeof probe === 'function' ? probe() : null;
@@ -1193,7 +1195,7 @@ const LT = win.TRAIN;
   const listHtml = domDoc.getElementById('convList').innerHTML;
   ok(listHtml.indexOf(PAGE_SCENE_NAME) !== -1,
     '会话列表里渲染出了新场景「' + PAGE_SCENE_NAME + '」');
-  ok(listHtml.indexOf('张经理') !== -1, '原有种子场景仍在列表里（热更新没有清掉本地种子）');
+  ok(listHtml.indexOf('经理') !== -1, '原有种子场景仍在列表里（热更新没有清掉本地种子）');
 
   /* P8：任务在身标记 —— L01 的进行中任务（T01→s1、T02→s2）对应场景必须渲染出
    * on-task 实底标记，其余场景保持「陪练」标。断言数关系而不是写死 2，
@@ -1214,7 +1216,7 @@ const LT = win.TRAIN;
   ok(off1.ok, '临时场景已下线（审核员身份）→ ' + (off1.ok ? 'ok' : off1.error));
   const pool4 = await BOOT.scenes();
   ok(!!pool4 && !pool4.some((s) => s.id === mkId), '下线后立刻从匿名场景池消失');
-  await SYNC.login('wangqian', 'op123456');
+  await SYNC.login('operator1', 'op123456');
   const del1 = await SYNC.remove(mkId);
   ok(del1.ok, '临时场景已删除 → HTTP ' + del1.status);
 
@@ -1240,7 +1242,7 @@ const LT = win.TRAIN;
   check(coachSrc, /服务端拒绝：/, '服务端拒绝时如实提示（不静默失败）');
   // 否定断言：check() 要的是 RegExp，这里直接判布尔（否则 re.test 不是函数）
   ok(!/记录只保存在本次会话/.test(coachSrc), '「只保存在本次会话」的旧提示已移除');
-  ok(!/by: '周敏'/.test(coachSrc), '辅导记录不再硬编码记录人');
+  ok(!/by: '蒋教练'/.test(coachSrc), '辅导记录不再硬编码记录人');
 
   // 契约断言：页面调用的每个 SYNC.xxx 都必须在同步层的导出块里真的存在。
   // 这是"同类对象跨文件流转必须锁死字段集"的落地 —— 页面里只写方法名字符串，

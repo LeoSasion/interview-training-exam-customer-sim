@@ -18,7 +18,7 @@
  *
  * 用法：
  *   ADMIN_SYNC.probe(true).then(ok => ...)
- *   ADMIN_SYNC.login('wangqian','op123456').then(r => ...)
+ *   ADMIN_SYNC.login('operator1','op123456').then(r => ...)
  *   ADMIN_SYNC.pull().then(lib => { if (lib) applyServerLib(lib); });
  *   ADMIN_SYNC.save(scene).then(...);
  *   ADMIN_SYNC.act(id, 'submit'|'approve'|'reject'|'offline'|'rollback', extra)
@@ -62,7 +62,7 @@
    * 存 **sessionStorage** 而不是 localStorage（P33）。
    *
    * 教练台和管理端同源，localStorage 只有一份 token：谁后登录谁覆盖。
-   * 结果是两个页面没法同时以不同身份在线——演示时管理端会显示"周敏（4 人）"
+   * 结果是两个页面没法同时以不同身份在线——演示时管理端会显示"蒋教练（4 人）"
    * 而不是 admin（12 人），任务下发/审批也会用错权限。
    * sessionStorage 按标签页隔离：各页面各自登录互不干扰，刷新仍保留，关掉即退出
    * （对后台来说这个生命周期反而更合适）。

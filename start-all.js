@@ -146,7 +146,7 @@ process.on('SIGTERM', () => shutdown(0));
   console.log('  页面入口（同一地址打开，天然同源）');
   const base = 'http://127.0.0.1:8848/';
   console.log(`    学员端     ${base}仿真培训原型-微信风格.html`);
-  console.log(`    教练工作台 ${base}教练工作台-带教主管.html   ${C.d('admin/admin123 或 zhoumin/coach123')}`);
+  console.log(`    教练工作台 ${base}教练工作台-带教主管.html   ${C.d('admin/admin123 或 coach2/coach123')}`);
   console.log(`    管理后台   ${base}管理后台-仿真培训.html`);
   console.log(`    项目门户   ${base}index.html`);
   console.log('');
